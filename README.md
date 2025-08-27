@@ -13,3 +13,7 @@ curl --header "Content-Type: application/json" \
 
 Never log in the console.
 Use a logger instead : https://github.com/charroux/rentalservice/blob/main/src/main/java/com/example/rent/RentWebService.java
+
+## Java Persistance API
+
+The Java class to be persisted:
