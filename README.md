@@ -48,5 +48,6 @@ http://localhost:8080/h2-console
 
 Retrieve the connection's info in the logs.
 Example : H2 console available at '/h2-console'. Database available at 'jdbc:h2:mem:414949e9-2995-4cb8-a50b-0010fa244021'
+
 Use this value as the JDBC URL
 
