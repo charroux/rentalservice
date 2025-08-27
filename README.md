@@ -40,7 +40,7 @@ See: https://github.com/charroux/rentalservice/blob/main/build.gradle
 ```
 spring.h2.console.enabled=true
 ```
-See: https://github.com/charroux/rentalservice/blob/main/build.gradle
+See: https://github.com/charroux/rentalservice/blob/main/src/main/resources/application.properties
 
 ### Start the project and get an accesss to the console
 
