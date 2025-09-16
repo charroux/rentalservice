@@ -20,7 +20,7 @@ public class RentApplication {
 		return (args) -> {
 			Car car = new Car();
 			car.setPlateNumber("AA11BB");
-			// carRepository.save(car);
+			carRepository.save(car);
 
 			RentalContract contract1 = new RentalContract();
 			RentalContract contract2 = new RentalContract();
@@ -32,6 +32,7 @@ public class RentApplication {
 			contract2.setCar(car);
 
 			Person tintin = new Person();
+			personRepository.save(tintin);
 			tintin.getContracts().add(contract1);
 			contract1.setPerson(tintin);
 

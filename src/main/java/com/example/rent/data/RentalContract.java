@@ -38,7 +38,7 @@ public class RentalContract {
         this.dateFin = dateFin;
     }
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne(cascade = CascadeType.MERGE)
     public Car getCar() {
         return car;
     }
@@ -47,7 +47,7 @@ public class RentalContract {
         this.car = car;
     }
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne(cascade = CascadeType.MERGE)
     public Person getPerson() {
         return person;
     }
