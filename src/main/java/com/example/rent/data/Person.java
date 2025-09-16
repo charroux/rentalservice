@@ -1,14 +1,15 @@
 package com.example.rent.data;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 public class Person {
 
     int id;
+    List<RentalContract> contracts = new ArrayList<RentalContract>();
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -18,5 +19,15 @@ public class Person {
 
     public void setId(int id) {
         this.id = id;
+    }
+
+
+    @OneToMany(mappedBy = "person")
+    public List<RentalContract> getContracts() {
+        return contracts;
+    }
+
+    public void setContracts(List<RentalContract> contracts) {
+        this.contracts = contracts;
     }
 }

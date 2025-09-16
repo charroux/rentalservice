@@ -1,9 +1,6 @@
 package com.example.rent;
 
-import com.example.rent.data.Car;
-import com.example.rent.data.CarRepository;
-import com.example.rent.data.Person;
-import com.example.rent.data.PersonRepository;
+import com.example.rent.data.*;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -17,21 +14,32 @@ public class RentApplication {
 	}
 
 	@Bean
-	public CommandLineRunner demo(CarRepository carRepository, PersonRepository personRepository) {
+	public CommandLineRunner demo(CarRepository carRepository,
+								  PersonRepository personRepository,
+								  ContractRepository contractRepository) {
 		return (args) -> {
 			Car car = new Car();
 			car.setPlateNumber("AA11BB");
-			carRepository.save(car);
+			// carRepository.save(car);
+
+			RentalContract contract1 = new RentalContract();
+			RentalContract contract2 = new RentalContract();
+
+			car.getContracts().add(contract1);
+			contract1.setCar(car);
+
+			car.getContracts().add(contract2);
+			contract2.setCar(car);
 
 			Person tintin = new Person();
-			Person haddock = new Person();
+			tintin.getContracts().add(contract1);
+			contract1.setPerson(tintin);
 
-			car.getPersons().add(tintin);
-			car.getPersons().add(haddock);
+			tintin.getContracts().add(contract2);
+			contract2.setPerson(tintin);
 
-			carRepository.save(car);
-			//personRepository.save(tintin);
-			//personRepository.save(haddock);
+			contractRepository.save(contract1);
+			contractRepository.save(contract2);
 
 		};
 	};

@@ -11,16 +11,15 @@ public class Car {
 
     String plateNumber;
     int id;
-    Dates dates;
-    List<Person> persons = new ArrayList<Person>();
+    List<RentalContract> contracts = new ArrayList<RentalContract>();
 
-    @OneToMany(cascade = CascadeType.ALL)
-    public List<Person> getPersons() {
-        return persons;
+    @OneToMany(mappedBy = "car")
+    public List<RentalContract> getContracts() {
+        return contracts;
     }
 
-    public void setPersons(List<Person> persons) {
-        this.persons = persons;
+    public void setContracts(List<RentalContract> contracts) {
+        this.contracts = contracts;
     }
 
     public String getPlateNumber() {
@@ -41,12 +40,4 @@ public class Car {
         this.id = id;
     }
 
-    @Transient
-    public Dates getDates() {
-        return dates;
-    }
-
-    public void setDates(Dates dates) {
-        this.dates = dates;
-    }
 }
