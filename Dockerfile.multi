@@ -1,0 +1,21 @@
+# Multi-target Dockerfile
+# Targets:
+#  - carRental: builds the carRental jar and produces a runtime image
+#  - postgres: re-tag official postgres image and copy optional init scripts
+
+# Builder for carRental
+FROM gradle:8.6-jdk21 AS carRental-builder
+WORKDIR /home/gradle/project
+COPY . .
+WORKDIR /home/gradle/project/carRental
+RUN ./gradlew clean bootJar -x test --no-daemon
+
+FROM eclipse-temurin:21-jre AS carRental
+COPY --from=carRental-builder /home/gradle/project/carRental/build/libs/*.jar /app/car-rental.jar
+EXPOSE 8080
+ENTRYPOINT ["java","-jar","/app/car-rental.jar"]
+
+# Simple postgres target that uses the official image and allows adding init scripts
+FROM postgres:15 AS postgres
+# Copy any SQL init scripts placed in docker/postgres-init/ into the image entrypoint init dir
+COPY docker/postgres-init/ /docker-entrypoint-initdb.d/

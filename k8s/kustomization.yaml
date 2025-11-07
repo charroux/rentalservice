@@ -1,0 +1,14 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: car-rental
+resources:
+  - namespace.yaml
+  - postgres-secret.yaml
+  - postgres-statefulset.yaml
+  - car-rental-deployment.yaml
+
+# Optional: add other microservices manifests when available
+#  - agreement-service-deployment.yaml
+#  - agreement-service-service.yaml
+#  - agreement-server-deployment.yaml
+#  - agreement-server-service.yaml
