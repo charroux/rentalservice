@@ -1,19 +1,41 @@
-# Multi-stage Dockerfile for auctionServiceServer
+# Multi-stage Dockerfile for auctionServiceServer - Optimized
 FROM gradle:8.6-jdk21 AS builder
-
 WORKDIR /home/gradle/project
-# Copy the project files
+
+# Optimisation : copier d'abord les fichiers de build pour utiliser le cache Docker
+COPY gradle/ gradle/
+COPY gradlew gradlew.bat settings.gradle build.gradle ./
+COPY */build.gradle ./*/
+
+# Télécharger les dépendances (mise en cache Docker)
+RUN chmod +x ./gradlew && ./gradlew dependencies --no-daemon || true
+
+# Copier le code source
 COPY . .
-# Build the project
-RUN chmod +x ./gradlew && \
-    ./gradlew :auctionServiceServer:bootJar -x test --no-daemon
 
-# Runtime stage
-FROM eclipse-temurin:21-jre
+# Build optimisé
+RUN ./gradlew :auctionServiceServer:bootJar -x test --no-daemon --parallel
 
-# Install netcat for healthcheck
-RUN apt-get update && apt-get install -y netcat-traditional && rm -rf /var/lib/apt/lists/*
+# Runtime stage: image JRE optimisée
+FROM eclipse-temurin:21-jre-jammy
 
-COPY --from=builder /home/gradle/project/auctionServiceServer/build/libs/*.jar /app/app.jar
+# Créer un utilisateur non-root pour la sécurité
+RUN addgroup --system spring && adduser --system spring --ingroup spring
+
+# Installer les outils nécessaires (netcat pour healthcheck + curl)
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends netcat-traditional curl && \
+    rm -rf /var/lib/apt/lists/*
+
+# Configuration optimisée
+WORKDIR /app
+COPY --from=builder /home/gradle/project/auctionServiceServer/build/libs/*.jar app.jar
+
+# Changer vers utilisateur non-root
+USER spring:spring
+
+# JVM optimisée pour containers + gRPC
+ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -Dio.netty.tryReflectionSetAccessible=true"
+
 EXPOSE 9090
-ENTRYPOINT ["java","-jar","/app/app.jar"]
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]

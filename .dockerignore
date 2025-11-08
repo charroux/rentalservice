@@ -1,0 +1,57 @@
+# .dockerignore pour optimiser le contexte de build
+
+# Fichiers Git
+.git/
+.gitignore
+
+# Build artifacts
+*/build/
+*/target/
+*.jar
+*.war
+
+# Gradle wrapper (on le copie explicitement dans le Dockerfile)
+!gradle/
+!gradlew*
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Documentation
+README.md
+*.md
+
+# Docker files (éviter la récursion)
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+*.tmp
+*.swp
+
+# Node modules (pour le front Angular)
+node_modules/
+
+# Angular build
+car-rental-angular/dist/
+car-rental-angular/.angular/
+
+# Environnement
+.env*
+
+# Tests
+*/src/test/
