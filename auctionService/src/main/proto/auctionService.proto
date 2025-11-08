@@ -14,22 +14,35 @@ service AuctionService {
   rpc CarModels(google.protobuf.Empty) returns (CarModelsToBeRented);
 }
 
+enum AuctionStatus {
+  ACTIVE = 0;
+  ENDED_BY_TIME = 1;
+  ENDED_BY_MAX_PRICE = 2;
+  NO_BIDS = 3;
+}
+
 message Bidding {
-  google.protobuf.Timestamp timestamp = 1;
-  CarModel car = 2;
-  string carRentalCompany = 3;
-  uint32 amount = 4;
+  string carRentalCompanyId = 1;
+  string carModelId = 2;           // Format: "brand:model" (ex: "Ferrari:F8")
+  uint32 bidAmount = 3;
+  int64 timestamp = 4;             // Timestamp pour gérer les enchères simultanées
 }
 
 message BidResponse {
-  Bidding bidding = 1;
-  bool winning = 2;
-  string plateNumber = 3;
+  bool winning = 1;
+  string plateNumber = 2;
+  uint32 finalPrice = 3;           // Prix final (soit enchère gagnante, soit lowestPrice si aucune enchère)
+  AuctionStatus status = 4;        // Statut de l'enchère
+  int32 remainingSeconds = 5;      // Temps restant (si ACTIVE)
+  string currentHighestBidder = 6; // ID de l'enchérisseur actuel
+  uint32 currentHighestBid = 7;    // Montant de l'enchère actuelle
 }
 
 message CarModel {
   string brand = 1;
   string model = 2;
+  uint32 lowestPrice = 3;
+  uint32 highestPrice = 4;
 }
 
 message CarModelsToBeRented {

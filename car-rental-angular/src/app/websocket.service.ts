@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Client } from '@stomp/stompjs';
-import SockJS  from 'sockjs-client';
+import SockJS from 'sockjs-client';
 import { BehaviorSubject } from 'rxjs';
 import { environment } from '../environments/environment';
 
@@ -11,9 +11,11 @@ export class WebSocketService {
  // private client: Client;
   private plateNumberUpdates = new BehaviorSubject<any>(null);
 
+  private client: Client;
+
   constructor() {
-  /*  this.client = new Client({
-      webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
+    this.client = new Client({
+      webSocketFactory: () => new SockJS(environment.wsEndpoint),
       onConnect: () => {
         console.log('Connected to WebSocket');
         this.subscribeToPlateNumbers();
@@ -24,22 +26,22 @@ export class WebSocketService {
       onStompError: (frame) => {
         console.error('STOMP error', frame);
       }
-    });*/
+    });
   }
 
   connect(): void {
-  //  this.client.activate();
+    this.client.activate();
   }
 
   disconnect(): void {
-  //  this.client.deactivate();
+    this.client.deactivate();
   }
 
   private subscribeToPlateNumbers(): void {
- /*   this.client.subscribe('/topic/cars', (message) => {
+    this.client.subscribe('/topic/cars', (message) => {
       const carUpdate = JSON.parse(message.body);
       this.plateNumberUpdates.next(carUpdate);
-    });*/
+    });
   }
 
   getPlateNumberUpdates() {

@@ -1,7 +1,7 @@
 export interface Cardetail {
     plateNumber: string;
     brand: string;
-    price: number;
+    model: string;
+    rentalPrice: number;    // Prix de location en €/jour
     photo: string;
-    horsepower: number;
 }

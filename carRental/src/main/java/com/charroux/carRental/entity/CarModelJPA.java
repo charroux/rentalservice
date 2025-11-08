@@ -15,6 +15,8 @@ public class CarModelJPA {
 
     private String brand;
     private String model;
+    private Integer lowestPrice;   // Prix le plus bas en €/jour
+    private Integer highestPrice;  // Prix le plus élevé en €/jour
 
     @OneToMany(mappedBy = "carModel", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
@@ -31,6 +33,13 @@ public class CarModelJPA {
     public CarModelJPA(String brand, String model) {
         this.brand = brand;
         this.model = model;
+    }
+
+    public CarModelJPA(String brand, String model, Integer lowestPrice, Integer highestPrice) {
+        this.brand = brand;
+        this.model = model;
+        this.lowestPrice = lowestPrice;
+        this.highestPrice = highestPrice;
     }
 
     public Long getId() {
@@ -55,6 +64,22 @@ public class CarModelJPA {
 
     public void setModel(String model) {
         this.model = model;
+    }
+
+    public Integer getLowestPrice() {
+        return lowestPrice;
+    }
+
+    public void setLowestPrice(Integer lowestPrice) {
+        this.lowestPrice = lowestPrice;
+    }
+
+    public Integer getHighestPrice() {
+        return highestPrice;
+    }
+
+    public void setHighestPrice(Integer highestPrice) {
+        this.highestPrice = highestPrice;
     }
 
     public Collection<Car> getCars() {
@@ -99,6 +124,8 @@ public class CarModelJPA {
                 "id=" + id +
                 ", brand='" + brand + '\'' +
                 ", model='" + model + '\'' +
+                ", lowestPrice=" + lowestPrice +
+                ", highestPrice=" + highestPrice +
                 ", carsCount=" + cars.size() +
                 ", biddingsCount=" + biddings.size() +
                 '}';

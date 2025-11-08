@@ -30,4 +30,16 @@ public interface CarModelOrBuilder extends
    */
   com.google.protobuf.ByteString
       getModelBytes();
+
+  /**
+   * <code>uint32 lowestPrice = 3;</code>
+   * @return The lowestPrice.
+   */
+  int getLowestPrice();
+
+  /**
+   * <code>uint32 highestPrice = 4;</code>
+   * @return The highestPrice.
+   */
+  int getHighestPrice();
 }

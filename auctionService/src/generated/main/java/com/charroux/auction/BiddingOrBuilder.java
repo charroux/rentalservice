@@ -8,50 +8,50 @@ public interface BiddingOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>.google.protobuf.Timestamp timestamp = 1;</code>
-   * @return Whether the timestamp field is set.
+   * <code>string carRentalCompanyId = 1;</code>
+   * @return The carRentalCompanyId.
    */
-  boolean hasTimestamp();
+  java.lang.String getCarRentalCompanyId();
   /**
-   * <code>.google.protobuf.Timestamp timestamp = 1;</code>
-   * @return The timestamp.
-   */
-  com.google.protobuf.Timestamp getTimestamp();
-  /**
-   * <code>.google.protobuf.Timestamp timestamp = 1;</code>
-   */
-  com.google.protobuf.TimestampOrBuilder getTimestampOrBuilder();
-
-  /**
-   * <code>.com.charroux.CarModel car = 2;</code>
-   * @return Whether the car field is set.
-   */
-  boolean hasCar();
-  /**
-   * <code>.com.charroux.CarModel car = 2;</code>
-   * @return The car.
-   */
-  com.charroux.auction.CarModel getCar();
-  /**
-   * <code>.com.charroux.CarModel car = 2;</code>
-   */
-  com.charroux.auction.CarModelOrBuilder getCarOrBuilder();
-
-  /**
-   * <code>string carRentalCompany = 3;</code>
-   * @return The carRentalCompany.
-   */
-  java.lang.String getCarRentalCompany();
-  /**
-   * <code>string carRentalCompany = 3;</code>
-   * @return The bytes for carRentalCompany.
+   * <code>string carRentalCompanyId = 1;</code>
+   * @return The bytes for carRentalCompanyId.
    */
   com.google.protobuf.ByteString
-      getCarRentalCompanyBytes();
+      getCarRentalCompanyIdBytes();
 
   /**
-   * <code>uint32 amount = 4;</code>
-   * @return The amount.
+   * <pre>
+   * Format: "brand:model" (ex: "Ferrari:F8")
+   * </pre>
+   *
+   * <code>string carModelId = 2;</code>
+   * @return The carModelId.
    */
-  int getAmount();
+  java.lang.String getCarModelId();
+  /**
+   * <pre>
+   * Format: "brand:model" (ex: "Ferrari:F8")
+   * </pre>
+   *
+   * <code>string carModelId = 2;</code>
+   * @return The bytes for carModelId.
+   */
+  com.google.protobuf.ByteString
+      getCarModelIdBytes();
+
+  /**
+   * <code>uint32 bidAmount = 3;</code>
+   * @return The bidAmount.
+   */
+  int getBidAmount();
+
+  /**
+   * <pre>
+   * Timestamp pour gérer les enchères simultanées
+   * </pre>
+   *
+   * <code>int64 timestamp = 4;</code>
+   * @return The timestamp.
+   */
+  long getTimestamp();
 }

@@ -118,6 +118,28 @@ private static final long serialVersionUID = 0L;
     }
   }
 
+  public static final int LOWESTPRICE_FIELD_NUMBER = 3;
+  private int lowestPrice_ = 0;
+  /**
+   * <code>uint32 lowestPrice = 3;</code>
+   * @return The lowestPrice.
+   */
+  @java.lang.Override
+  public int getLowestPrice() {
+    return lowestPrice_;
+  }
+
+  public static final int HIGHESTPRICE_FIELD_NUMBER = 4;
+  private int highestPrice_ = 0;
+  /**
+   * <code>uint32 highestPrice = 4;</code>
+   * @return The highestPrice.
+   */
+  @java.lang.Override
+  public int getHighestPrice() {
+    return highestPrice_;
+  }
+
   private byte memoizedIsInitialized = -1;
   @java.lang.Override
   public final boolean isInitialized() {
@@ -138,6 +160,12 @@ private static final long serialVersionUID = 0L;
     if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(model_)) {
       com.google.protobuf.GeneratedMessageV3.writeString(output, 2, model_);
     }
+    if (lowestPrice_ != 0) {
+      output.writeUInt32(3, lowestPrice_);
+    }
+    if (highestPrice_ != 0) {
+      output.writeUInt32(4, highestPrice_);
+    }
     getUnknownFields().writeTo(output);
   }
 
@@ -152,6 +180,14 @@ private static final long serialVersionUID = 0L;
     }
     if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(model_)) {
       size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, model_);
+    }
+    if (lowestPrice_ != 0) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeUInt32Size(3, lowestPrice_);
+    }
+    if (highestPrice_ != 0) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeUInt32Size(4, highestPrice_);
     }
     size += getUnknownFields().getSerializedSize();
     memoizedSize = size;
@@ -172,6 +208,10 @@ private static final long serialVersionUID = 0L;
         .equals(other.getBrand())) return false;
     if (!getModel()
         .equals(other.getModel())) return false;
+    if (getLowestPrice()
+        != other.getLowestPrice()) return false;
+    if (getHighestPrice()
+        != other.getHighestPrice()) return false;
     if (!getUnknownFields().equals(other.getUnknownFields())) return false;
     return true;
   }
@@ -187,6 +227,10 @@ private static final long serialVersionUID = 0L;
     hash = (53 * hash) + getBrand().hashCode();
     hash = (37 * hash) + MODEL_FIELD_NUMBER;
     hash = (53 * hash) + getModel().hashCode();
+    hash = (37 * hash) + LOWESTPRICE_FIELD_NUMBER;
+    hash = (53 * hash) + getLowestPrice();
+    hash = (37 * hash) + HIGHESTPRICE_FIELD_NUMBER;
+    hash = (53 * hash) + getHighestPrice();
     hash = (29 * hash) + getUnknownFields().hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -320,6 +364,8 @@ private static final long serialVersionUID = 0L;
       bitField0_ = 0;
       brand_ = "";
       model_ = "";
+      lowestPrice_ = 0;
+      highestPrice_ = 0;
       return this;
     }
 
@@ -358,6 +404,12 @@ private static final long serialVersionUID = 0L;
       }
       if (((from_bitField0_ & 0x00000002) != 0)) {
         result.model_ = model_;
+      }
+      if (((from_bitField0_ & 0x00000004) != 0)) {
+        result.lowestPrice_ = lowestPrice_;
+      }
+      if (((from_bitField0_ & 0x00000008) != 0)) {
+        result.highestPrice_ = highestPrice_;
       }
     }
 
@@ -415,6 +467,12 @@ private static final long serialVersionUID = 0L;
         bitField0_ |= 0x00000002;
         onChanged();
       }
+      if (other.getLowestPrice() != 0) {
+        setLowestPrice(other.getLowestPrice());
+      }
+      if (other.getHighestPrice() != 0) {
+        setHighestPrice(other.getHighestPrice());
+      }
       this.mergeUnknownFields(other.getUnknownFields());
       onChanged();
       return this;
@@ -451,6 +509,16 @@ private static final long serialVersionUID = 0L;
               bitField0_ |= 0x00000002;
               break;
             } // case 18
+            case 24: {
+              lowestPrice_ = input.readUInt32();
+              bitField0_ |= 0x00000004;
+              break;
+            } // case 24
+            case 32: {
+              highestPrice_ = input.readUInt32();
+              bitField0_ |= 0x00000008;
+              break;
+            } // case 32
             default: {
               if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                 done = true; // was an endgroup tag
@@ -608,6 +676,70 @@ private static final long serialVersionUID = 0L;
       checkByteStringIsUtf8(value);
       model_ = value;
       bitField0_ |= 0x00000002;
+      onChanged();
+      return this;
+    }
+
+    private int lowestPrice_ ;
+    /**
+     * <code>uint32 lowestPrice = 3;</code>
+     * @return The lowestPrice.
+     */
+    @java.lang.Override
+    public int getLowestPrice() {
+      return lowestPrice_;
+    }
+    /**
+     * <code>uint32 lowestPrice = 3;</code>
+     * @param value The lowestPrice to set.
+     * @return This builder for chaining.
+     */
+    public Builder setLowestPrice(int value) {
+
+      lowestPrice_ = value;
+      bitField0_ |= 0x00000004;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>uint32 lowestPrice = 3;</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearLowestPrice() {
+      bitField0_ = (bitField0_ & ~0x00000004);
+      lowestPrice_ = 0;
+      onChanged();
+      return this;
+    }
+
+    private int highestPrice_ ;
+    /**
+     * <code>uint32 highestPrice = 4;</code>
+     * @return The highestPrice.
+     */
+    @java.lang.Override
+    public int getHighestPrice() {
+      return highestPrice_;
+    }
+    /**
+     * <code>uint32 highestPrice = 4;</code>
+     * @param value The highestPrice to set.
+     * @return This builder for chaining.
+     */
+    public Builder setHighestPrice(int value) {
+
+      highestPrice_ = value;
+      bitField0_ |= 0x00000008;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>uint32 highestPrice = 4;</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearHighestPrice() {
+      bitField0_ = (bitField0_ & ~0x00000008);
+      highestPrice_ = 0;
       onChanged();
       return this;
     }

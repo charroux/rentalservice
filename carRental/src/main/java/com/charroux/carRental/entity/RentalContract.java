@@ -75,10 +75,6 @@ public class RentalContract {
     }
 
     // Méthodes utilitaires
-    public int getTotalPrice() {
-        return car != null ? car.getPrice() : 0;
-    }
-
     public String getCarInfo() {
         if (car != null && car.getCarModel() != null) {
             return car.getCarModel().getBrand() + " " + car.getCarModel().getModel() + " (" + car.getPlateNumber() + ")";

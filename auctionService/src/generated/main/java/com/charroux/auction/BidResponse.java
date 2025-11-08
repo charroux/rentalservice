@@ -17,6 +17,8 @@ private static final long serialVersionUID = 0L;
   }
   private BidResponse() {
     plateNumber_ = "";
+    status_ = 0;
+    currentHighestBidder_ = "";
   }
 
   @java.lang.Override
@@ -39,36 +41,10 @@ private static final long serialVersionUID = 0L;
             com.charroux.auction.BidResponse.class, com.charroux.auction.BidResponse.Builder.class);
   }
 
-  public static final int BIDDING_FIELD_NUMBER = 1;
-  private com.charroux.auction.Bidding bidding_;
-  /**
-   * <code>.com.charroux.Bidding bidding = 1;</code>
-   * @return Whether the bidding field is set.
-   */
-  @java.lang.Override
-  public boolean hasBidding() {
-    return bidding_ != null;
-  }
-  /**
-   * <code>.com.charroux.Bidding bidding = 1;</code>
-   * @return The bidding.
-   */
-  @java.lang.Override
-  public com.charroux.auction.Bidding getBidding() {
-    return bidding_ == null ? com.charroux.auction.Bidding.getDefaultInstance() : bidding_;
-  }
-  /**
-   * <code>.com.charroux.Bidding bidding = 1;</code>
-   */
-  @java.lang.Override
-  public com.charroux.auction.BiddingOrBuilder getBiddingOrBuilder() {
-    return bidding_ == null ? com.charroux.auction.Bidding.getDefaultInstance() : bidding_;
-  }
-
-  public static final int WINNING_FIELD_NUMBER = 2;
+  public static final int WINNING_FIELD_NUMBER = 1;
   private boolean winning_ = false;
   /**
-   * <code>bool winning = 2;</code>
+   * <code>bool winning = 1;</code>
    * @return The winning.
    */
   @java.lang.Override
@@ -76,11 +52,11 @@ private static final long serialVersionUID = 0L;
     return winning_;
   }
 
-  public static final int PLATENUMBER_FIELD_NUMBER = 3;
+  public static final int PLATENUMBER_FIELD_NUMBER = 2;
   @SuppressWarnings("serial")
   private volatile java.lang.Object plateNumber_ = "";
   /**
-   * <code>string plateNumber = 3;</code>
+   * <code>string plateNumber = 2;</code>
    * @return The plateNumber.
    */
   @java.lang.Override
@@ -97,7 +73,7 @@ private static final long serialVersionUID = 0L;
     }
   }
   /**
-   * <code>string plateNumber = 3;</code>
+   * <code>string plateNumber = 2;</code>
    * @return The bytes for plateNumber.
    */
   @java.lang.Override
@@ -115,6 +91,124 @@ private static final long serialVersionUID = 0L;
     }
   }
 
+  public static final int FINALPRICE_FIELD_NUMBER = 3;
+  private int finalPrice_ = 0;
+  /**
+   * <pre>
+   * Prix final (soit enchère gagnante, soit lowestPrice si aucune enchère)
+   * </pre>
+   *
+   * <code>uint32 finalPrice = 3;</code>
+   * @return The finalPrice.
+   */
+  @java.lang.Override
+  public int getFinalPrice() {
+    return finalPrice_;
+  }
+
+  public static final int STATUS_FIELD_NUMBER = 4;
+  private int status_ = 0;
+  /**
+   * <pre>
+   * Statut de l'enchère
+   * </pre>
+   *
+   * <code>.com.charroux.AuctionStatus status = 4;</code>
+   * @return The enum numeric value on the wire for status.
+   */
+  @java.lang.Override public int getStatusValue() {
+    return status_;
+  }
+  /**
+   * <pre>
+   * Statut de l'enchère
+   * </pre>
+   *
+   * <code>.com.charroux.AuctionStatus status = 4;</code>
+   * @return The status.
+   */
+  @java.lang.Override public com.charroux.auction.AuctionStatus getStatus() {
+    com.charroux.auction.AuctionStatus result = com.charroux.auction.AuctionStatus.forNumber(status_);
+    return result == null ? com.charroux.auction.AuctionStatus.UNRECOGNIZED : result;
+  }
+
+  public static final int REMAININGSECONDS_FIELD_NUMBER = 5;
+  private int remainingSeconds_ = 0;
+  /**
+   * <pre>
+   * Temps restant (si ACTIVE)
+   * </pre>
+   *
+   * <code>int32 remainingSeconds = 5;</code>
+   * @return The remainingSeconds.
+   */
+  @java.lang.Override
+  public int getRemainingSeconds() {
+    return remainingSeconds_;
+  }
+
+  public static final int CURRENTHIGHESTBIDDER_FIELD_NUMBER = 6;
+  @SuppressWarnings("serial")
+  private volatile java.lang.Object currentHighestBidder_ = "";
+  /**
+   * <pre>
+   * ID de l'enchérisseur actuel
+   * </pre>
+   *
+   * <code>string currentHighestBidder = 6;</code>
+   * @return The currentHighestBidder.
+   */
+  @java.lang.Override
+  public java.lang.String getCurrentHighestBidder() {
+    java.lang.Object ref = currentHighestBidder_;
+    if (ref instanceof java.lang.String) {
+      return (java.lang.String) ref;
+    } else {
+      com.google.protobuf.ByteString bs = 
+          (com.google.protobuf.ByteString) ref;
+      java.lang.String s = bs.toStringUtf8();
+      currentHighestBidder_ = s;
+      return s;
+    }
+  }
+  /**
+   * <pre>
+   * ID de l'enchérisseur actuel
+   * </pre>
+   *
+   * <code>string currentHighestBidder = 6;</code>
+   * @return The bytes for currentHighestBidder.
+   */
+  @java.lang.Override
+  public com.google.protobuf.ByteString
+      getCurrentHighestBidderBytes() {
+    java.lang.Object ref = currentHighestBidder_;
+    if (ref instanceof java.lang.String) {
+      com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString.copyFromUtf8(
+              (java.lang.String) ref);
+      currentHighestBidder_ = b;
+      return b;
+    } else {
+      return (com.google.protobuf.ByteString) ref;
+    }
+  }
+
+  public static final int CURRENTHIGHESTBID_FIELD_NUMBER = 7;
+  private int currentHighestBid_ = 0;
+  /**
+   * <pre>
+   * Montant de l'enchère actuelle
+   * </pre>
+   *
+   * <code>uint32 currentHighestBid = 7;</code>
+   * @return The currentHighestBid.
+   */
+  @java.lang.Override
+  public int getCurrentHighestBid() {
+    return currentHighestBid_;
+  }
+
   private byte memoizedIsInitialized = -1;
   @java.lang.Override
   public final boolean isInitialized() {
@@ -129,14 +223,26 @@ private static final long serialVersionUID = 0L;
   @java.lang.Override
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
-    if (bidding_ != null) {
-      output.writeMessage(1, getBidding());
-    }
     if (winning_ != false) {
-      output.writeBool(2, winning_);
+      output.writeBool(1, winning_);
     }
     if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(plateNumber_)) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 3, plateNumber_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 2, plateNumber_);
+    }
+    if (finalPrice_ != 0) {
+      output.writeUInt32(3, finalPrice_);
+    }
+    if (status_ != com.charroux.auction.AuctionStatus.ACTIVE.getNumber()) {
+      output.writeEnum(4, status_);
+    }
+    if (remainingSeconds_ != 0) {
+      output.writeInt32(5, remainingSeconds_);
+    }
+    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(currentHighestBidder_)) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 6, currentHighestBidder_);
+    }
+    if (currentHighestBid_ != 0) {
+      output.writeUInt32(7, currentHighestBid_);
     }
     getUnknownFields().writeTo(output);
   }
@@ -147,16 +253,31 @@ private static final long serialVersionUID = 0L;
     if (size != -1) return size;
 
     size = 0;
-    if (bidding_ != null) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeMessageSize(1, getBidding());
-    }
     if (winning_ != false) {
       size += com.google.protobuf.CodedOutputStream
-        .computeBoolSize(2, winning_);
+        .computeBoolSize(1, winning_);
     }
     if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(plateNumber_)) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, plateNumber_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, plateNumber_);
+    }
+    if (finalPrice_ != 0) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeUInt32Size(3, finalPrice_);
+    }
+    if (status_ != com.charroux.auction.AuctionStatus.ACTIVE.getNumber()) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeEnumSize(4, status_);
+    }
+    if (remainingSeconds_ != 0) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeInt32Size(5, remainingSeconds_);
+    }
+    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(currentHighestBidder_)) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(6, currentHighestBidder_);
+    }
+    if (currentHighestBid_ != 0) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeUInt32Size(7, currentHighestBid_);
     }
     size += getUnknownFields().getSerializedSize();
     memoizedSize = size;
@@ -173,15 +294,19 @@ private static final long serialVersionUID = 0L;
     }
     com.charroux.auction.BidResponse other = (com.charroux.auction.BidResponse) obj;
 
-    if (hasBidding() != other.hasBidding()) return false;
-    if (hasBidding()) {
-      if (!getBidding()
-          .equals(other.getBidding())) return false;
-    }
     if (getWinning()
         != other.getWinning()) return false;
     if (!getPlateNumber()
         .equals(other.getPlateNumber())) return false;
+    if (getFinalPrice()
+        != other.getFinalPrice()) return false;
+    if (status_ != other.status_) return false;
+    if (getRemainingSeconds()
+        != other.getRemainingSeconds()) return false;
+    if (!getCurrentHighestBidder()
+        .equals(other.getCurrentHighestBidder())) return false;
+    if (getCurrentHighestBid()
+        != other.getCurrentHighestBid()) return false;
     if (!getUnknownFields().equals(other.getUnknownFields())) return false;
     return true;
   }
@@ -193,15 +318,21 @@ private static final long serialVersionUID = 0L;
     }
     int hash = 41;
     hash = (19 * hash) + getDescriptor().hashCode();
-    if (hasBidding()) {
-      hash = (37 * hash) + BIDDING_FIELD_NUMBER;
-      hash = (53 * hash) + getBidding().hashCode();
-    }
     hash = (37 * hash) + WINNING_FIELD_NUMBER;
     hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
         getWinning());
     hash = (37 * hash) + PLATENUMBER_FIELD_NUMBER;
     hash = (53 * hash) + getPlateNumber().hashCode();
+    hash = (37 * hash) + FINALPRICE_FIELD_NUMBER;
+    hash = (53 * hash) + getFinalPrice();
+    hash = (37 * hash) + STATUS_FIELD_NUMBER;
+    hash = (53 * hash) + status_;
+    hash = (37 * hash) + REMAININGSECONDS_FIELD_NUMBER;
+    hash = (53 * hash) + getRemainingSeconds();
+    hash = (37 * hash) + CURRENTHIGHESTBIDDER_FIELD_NUMBER;
+    hash = (53 * hash) + getCurrentHighestBidder().hashCode();
+    hash = (37 * hash) + CURRENTHIGHESTBID_FIELD_NUMBER;
+    hash = (53 * hash) + getCurrentHighestBid();
     hash = (29 * hash) + getUnknownFields().hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -333,13 +464,13 @@ private static final long serialVersionUID = 0L;
     public Builder clear() {
       super.clear();
       bitField0_ = 0;
-      bidding_ = null;
-      if (biddingBuilder_ != null) {
-        biddingBuilder_.dispose();
-        biddingBuilder_ = null;
-      }
       winning_ = false;
       plateNumber_ = "";
+      finalPrice_ = 0;
+      status_ = 0;
+      remainingSeconds_ = 0;
+      currentHighestBidder_ = "";
+      currentHighestBid_ = 0;
       return this;
     }
 
@@ -374,15 +505,25 @@ private static final long serialVersionUID = 0L;
     private void buildPartial0(com.charroux.auction.BidResponse result) {
       int from_bitField0_ = bitField0_;
       if (((from_bitField0_ & 0x00000001) != 0)) {
-        result.bidding_ = biddingBuilder_ == null
-            ? bidding_
-            : biddingBuilder_.build();
-      }
-      if (((from_bitField0_ & 0x00000002) != 0)) {
         result.winning_ = winning_;
       }
-      if (((from_bitField0_ & 0x00000004) != 0)) {
+      if (((from_bitField0_ & 0x00000002) != 0)) {
         result.plateNumber_ = plateNumber_;
+      }
+      if (((from_bitField0_ & 0x00000004) != 0)) {
+        result.finalPrice_ = finalPrice_;
+      }
+      if (((from_bitField0_ & 0x00000008) != 0)) {
+        result.status_ = status_;
+      }
+      if (((from_bitField0_ & 0x00000010) != 0)) {
+        result.remainingSeconds_ = remainingSeconds_;
+      }
+      if (((from_bitField0_ & 0x00000020) != 0)) {
+        result.currentHighestBidder_ = currentHighestBidder_;
+      }
+      if (((from_bitField0_ & 0x00000040) != 0)) {
+        result.currentHighestBid_ = currentHighestBid_;
       }
     }
 
@@ -430,16 +571,30 @@ private static final long serialVersionUID = 0L;
 
     public Builder mergeFrom(com.charroux.auction.BidResponse other) {
       if (other == com.charroux.auction.BidResponse.getDefaultInstance()) return this;
-      if (other.hasBidding()) {
-        mergeBidding(other.getBidding());
-      }
       if (other.getWinning() != false) {
         setWinning(other.getWinning());
       }
       if (!other.getPlateNumber().isEmpty()) {
         plateNumber_ = other.plateNumber_;
-        bitField0_ |= 0x00000004;
+        bitField0_ |= 0x00000002;
         onChanged();
+      }
+      if (other.getFinalPrice() != 0) {
+        setFinalPrice(other.getFinalPrice());
+      }
+      if (other.status_ != 0) {
+        setStatusValue(other.getStatusValue());
+      }
+      if (other.getRemainingSeconds() != 0) {
+        setRemainingSeconds(other.getRemainingSeconds());
+      }
+      if (!other.getCurrentHighestBidder().isEmpty()) {
+        currentHighestBidder_ = other.currentHighestBidder_;
+        bitField0_ |= 0x00000020;
+        onChanged();
+      }
+      if (other.getCurrentHighestBid() != 0) {
+        setCurrentHighestBid(other.getCurrentHighestBid());
       }
       this.mergeUnknownFields(other.getUnknownFields());
       onChanged();
@@ -467,23 +622,41 @@ private static final long serialVersionUID = 0L;
             case 0:
               done = true;
               break;
-            case 10: {
-              input.readMessage(
-                  getBiddingFieldBuilder().getBuilder(),
-                  extensionRegistry);
+            case 8: {
+              winning_ = input.readBool();
               bitField0_ |= 0x00000001;
               break;
-            } // case 10
-            case 16: {
-              winning_ = input.readBool();
+            } // case 8
+            case 18: {
+              plateNumber_ = input.readStringRequireUtf8();
               bitField0_ |= 0x00000002;
               break;
-            } // case 16
-            case 26: {
-              plateNumber_ = input.readStringRequireUtf8();
+            } // case 18
+            case 24: {
+              finalPrice_ = input.readUInt32();
               bitField0_ |= 0x00000004;
               break;
-            } // case 26
+            } // case 24
+            case 32: {
+              status_ = input.readEnum();
+              bitField0_ |= 0x00000008;
+              break;
+            } // case 32
+            case 40: {
+              remainingSeconds_ = input.readInt32();
+              bitField0_ |= 0x00000010;
+              break;
+            } // case 40
+            case 50: {
+              currentHighestBidder_ = input.readStringRequireUtf8();
+              bitField0_ |= 0x00000020;
+              break;
+            } // case 50
+            case 56: {
+              currentHighestBid_ = input.readUInt32();
+              bitField0_ |= 0x00000040;
+              break;
+            } // case 56
             default: {
               if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                 done = true; // was an endgroup tag
@@ -501,128 +674,9 @@ private static final long serialVersionUID = 0L;
     }
     private int bitField0_;
 
-    private com.charroux.auction.Bidding bidding_;
-    private com.google.protobuf.SingleFieldBuilderV3<
-        com.charroux.auction.Bidding, com.charroux.auction.Bidding.Builder, com.charroux.auction.BiddingOrBuilder> biddingBuilder_;
-    /**
-     * <code>.com.charroux.Bidding bidding = 1;</code>
-     * @return Whether the bidding field is set.
-     */
-    public boolean hasBidding() {
-      return ((bitField0_ & 0x00000001) != 0);
-    }
-    /**
-     * <code>.com.charroux.Bidding bidding = 1;</code>
-     * @return The bidding.
-     */
-    public com.charroux.auction.Bidding getBidding() {
-      if (biddingBuilder_ == null) {
-        return bidding_ == null ? com.charroux.auction.Bidding.getDefaultInstance() : bidding_;
-      } else {
-        return biddingBuilder_.getMessage();
-      }
-    }
-    /**
-     * <code>.com.charroux.Bidding bidding = 1;</code>
-     */
-    public Builder setBidding(com.charroux.auction.Bidding value) {
-      if (biddingBuilder_ == null) {
-        if (value == null) {
-          throw new NullPointerException();
-        }
-        bidding_ = value;
-      } else {
-        biddingBuilder_.setMessage(value);
-      }
-      bitField0_ |= 0x00000001;
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>.com.charroux.Bidding bidding = 1;</code>
-     */
-    public Builder setBidding(
-        com.charroux.auction.Bidding.Builder builderForValue) {
-      if (biddingBuilder_ == null) {
-        bidding_ = builderForValue.build();
-      } else {
-        biddingBuilder_.setMessage(builderForValue.build());
-      }
-      bitField0_ |= 0x00000001;
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>.com.charroux.Bidding bidding = 1;</code>
-     */
-    public Builder mergeBidding(com.charroux.auction.Bidding value) {
-      if (biddingBuilder_ == null) {
-        if (((bitField0_ & 0x00000001) != 0) &&
-          bidding_ != null &&
-          bidding_ != com.charroux.auction.Bidding.getDefaultInstance()) {
-          getBiddingBuilder().mergeFrom(value);
-        } else {
-          bidding_ = value;
-        }
-      } else {
-        biddingBuilder_.mergeFrom(value);
-      }
-      bitField0_ |= 0x00000001;
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>.com.charroux.Bidding bidding = 1;</code>
-     */
-    public Builder clearBidding() {
-      bitField0_ = (bitField0_ & ~0x00000001);
-      bidding_ = null;
-      if (biddingBuilder_ != null) {
-        biddingBuilder_.dispose();
-        biddingBuilder_ = null;
-      }
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>.com.charroux.Bidding bidding = 1;</code>
-     */
-    public com.charroux.auction.Bidding.Builder getBiddingBuilder() {
-      bitField0_ |= 0x00000001;
-      onChanged();
-      return getBiddingFieldBuilder().getBuilder();
-    }
-    /**
-     * <code>.com.charroux.Bidding bidding = 1;</code>
-     */
-    public com.charroux.auction.BiddingOrBuilder getBiddingOrBuilder() {
-      if (biddingBuilder_ != null) {
-        return biddingBuilder_.getMessageOrBuilder();
-      } else {
-        return bidding_ == null ?
-            com.charroux.auction.Bidding.getDefaultInstance() : bidding_;
-      }
-    }
-    /**
-     * <code>.com.charroux.Bidding bidding = 1;</code>
-     */
-    private com.google.protobuf.SingleFieldBuilderV3<
-        com.charroux.auction.Bidding, com.charroux.auction.Bidding.Builder, com.charroux.auction.BiddingOrBuilder> 
-        getBiddingFieldBuilder() {
-      if (biddingBuilder_ == null) {
-        biddingBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
-            com.charroux.auction.Bidding, com.charroux.auction.Bidding.Builder, com.charroux.auction.BiddingOrBuilder>(
-                getBidding(),
-                getParentForChildren(),
-                isClean());
-        bidding_ = null;
-      }
-      return biddingBuilder_;
-    }
-
     private boolean winning_ ;
     /**
-     * <code>bool winning = 2;</code>
+     * <code>bool winning = 1;</code>
      * @return The winning.
      */
     @java.lang.Override
@@ -630,23 +684,23 @@ private static final long serialVersionUID = 0L;
       return winning_;
     }
     /**
-     * <code>bool winning = 2;</code>
+     * <code>bool winning = 1;</code>
      * @param value The winning to set.
      * @return This builder for chaining.
      */
     public Builder setWinning(boolean value) {
 
       winning_ = value;
-      bitField0_ |= 0x00000002;
+      bitField0_ |= 0x00000001;
       onChanged();
       return this;
     }
     /**
-     * <code>bool winning = 2;</code>
+     * <code>bool winning = 1;</code>
      * @return This builder for chaining.
      */
     public Builder clearWinning() {
-      bitField0_ = (bitField0_ & ~0x00000002);
+      bitField0_ = (bitField0_ & ~0x00000001);
       winning_ = false;
       onChanged();
       return this;
@@ -654,7 +708,7 @@ private static final long serialVersionUID = 0L;
 
     private java.lang.Object plateNumber_ = "";
     /**
-     * <code>string plateNumber = 3;</code>
+     * <code>string plateNumber = 2;</code>
      * @return The plateNumber.
      */
     public java.lang.String getPlateNumber() {
@@ -670,7 +724,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>string plateNumber = 3;</code>
+     * <code>string plateNumber = 2;</code>
      * @return The bytes for plateNumber.
      */
     public com.google.protobuf.ByteString
@@ -687,7 +741,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>string plateNumber = 3;</code>
+     * <code>string plateNumber = 2;</code>
      * @param value The plateNumber to set.
      * @return This builder for chaining.
      */
@@ -695,22 +749,22 @@ private static final long serialVersionUID = 0L;
         java.lang.String value) {
       if (value == null) { throw new NullPointerException(); }
       plateNumber_ = value;
-      bitField0_ |= 0x00000004;
+      bitField0_ |= 0x00000002;
       onChanged();
       return this;
     }
     /**
-     * <code>string plateNumber = 3;</code>
+     * <code>string plateNumber = 2;</code>
      * @return This builder for chaining.
      */
     public Builder clearPlateNumber() {
       plateNumber_ = getDefaultInstance().getPlateNumber();
-      bitField0_ = (bitField0_ & ~0x00000004);
+      bitField0_ = (bitField0_ & ~0x00000002);
       onChanged();
       return this;
     }
     /**
-     * <code>string plateNumber = 3;</code>
+     * <code>string plateNumber = 2;</code>
      * @param value The bytes for plateNumber to set.
      * @return This builder for chaining.
      */
@@ -719,7 +773,304 @@ private static final long serialVersionUID = 0L;
       if (value == null) { throw new NullPointerException(); }
       checkByteStringIsUtf8(value);
       plateNumber_ = value;
+      bitField0_ |= 0x00000002;
+      onChanged();
+      return this;
+    }
+
+    private int finalPrice_ ;
+    /**
+     * <pre>
+     * Prix final (soit enchère gagnante, soit lowestPrice si aucune enchère)
+     * </pre>
+     *
+     * <code>uint32 finalPrice = 3;</code>
+     * @return The finalPrice.
+     */
+    @java.lang.Override
+    public int getFinalPrice() {
+      return finalPrice_;
+    }
+    /**
+     * <pre>
+     * Prix final (soit enchère gagnante, soit lowestPrice si aucune enchère)
+     * </pre>
+     *
+     * <code>uint32 finalPrice = 3;</code>
+     * @param value The finalPrice to set.
+     * @return This builder for chaining.
+     */
+    public Builder setFinalPrice(int value) {
+
+      finalPrice_ = value;
       bitField0_ |= 0x00000004;
+      onChanged();
+      return this;
+    }
+    /**
+     * <pre>
+     * Prix final (soit enchère gagnante, soit lowestPrice si aucune enchère)
+     * </pre>
+     *
+     * <code>uint32 finalPrice = 3;</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearFinalPrice() {
+      bitField0_ = (bitField0_ & ~0x00000004);
+      finalPrice_ = 0;
+      onChanged();
+      return this;
+    }
+
+    private int status_ = 0;
+    /**
+     * <pre>
+     * Statut de l'enchère
+     * </pre>
+     *
+     * <code>.com.charroux.AuctionStatus status = 4;</code>
+     * @return The enum numeric value on the wire for status.
+     */
+    @java.lang.Override public int getStatusValue() {
+      return status_;
+    }
+    /**
+     * <pre>
+     * Statut de l'enchère
+     * </pre>
+     *
+     * <code>.com.charroux.AuctionStatus status = 4;</code>
+     * @param value The enum numeric value on the wire for status to set.
+     * @return This builder for chaining.
+     */
+    public Builder setStatusValue(int value) {
+      status_ = value;
+      bitField0_ |= 0x00000008;
+      onChanged();
+      return this;
+    }
+    /**
+     * <pre>
+     * Statut de l'enchère
+     * </pre>
+     *
+     * <code>.com.charroux.AuctionStatus status = 4;</code>
+     * @return The status.
+     */
+    @java.lang.Override
+    public com.charroux.auction.AuctionStatus getStatus() {
+      com.charroux.auction.AuctionStatus result = com.charroux.auction.AuctionStatus.forNumber(status_);
+      return result == null ? com.charroux.auction.AuctionStatus.UNRECOGNIZED : result;
+    }
+    /**
+     * <pre>
+     * Statut de l'enchère
+     * </pre>
+     *
+     * <code>.com.charroux.AuctionStatus status = 4;</code>
+     * @param value The status to set.
+     * @return This builder for chaining.
+     */
+    public Builder setStatus(com.charroux.auction.AuctionStatus value) {
+      if (value == null) {
+        throw new NullPointerException();
+      }
+      bitField0_ |= 0x00000008;
+      status_ = value.getNumber();
+      onChanged();
+      return this;
+    }
+    /**
+     * <pre>
+     * Statut de l'enchère
+     * </pre>
+     *
+     * <code>.com.charroux.AuctionStatus status = 4;</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearStatus() {
+      bitField0_ = (bitField0_ & ~0x00000008);
+      status_ = 0;
+      onChanged();
+      return this;
+    }
+
+    private int remainingSeconds_ ;
+    /**
+     * <pre>
+     * Temps restant (si ACTIVE)
+     * </pre>
+     *
+     * <code>int32 remainingSeconds = 5;</code>
+     * @return The remainingSeconds.
+     */
+    @java.lang.Override
+    public int getRemainingSeconds() {
+      return remainingSeconds_;
+    }
+    /**
+     * <pre>
+     * Temps restant (si ACTIVE)
+     * </pre>
+     *
+     * <code>int32 remainingSeconds = 5;</code>
+     * @param value The remainingSeconds to set.
+     * @return This builder for chaining.
+     */
+    public Builder setRemainingSeconds(int value) {
+
+      remainingSeconds_ = value;
+      bitField0_ |= 0x00000010;
+      onChanged();
+      return this;
+    }
+    /**
+     * <pre>
+     * Temps restant (si ACTIVE)
+     * </pre>
+     *
+     * <code>int32 remainingSeconds = 5;</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearRemainingSeconds() {
+      bitField0_ = (bitField0_ & ~0x00000010);
+      remainingSeconds_ = 0;
+      onChanged();
+      return this;
+    }
+
+    private java.lang.Object currentHighestBidder_ = "";
+    /**
+     * <pre>
+     * ID de l'enchérisseur actuel
+     * </pre>
+     *
+     * <code>string currentHighestBidder = 6;</code>
+     * @return The currentHighestBidder.
+     */
+    public java.lang.String getCurrentHighestBidder() {
+      java.lang.Object ref = currentHighestBidder_;
+      if (!(ref instanceof java.lang.String)) {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        currentHighestBidder_ = s;
+        return s;
+      } else {
+        return (java.lang.String) ref;
+      }
+    }
+    /**
+     * <pre>
+     * ID de l'enchérisseur actuel
+     * </pre>
+     *
+     * <code>string currentHighestBidder = 6;</code>
+     * @return The bytes for currentHighestBidder.
+     */
+    public com.google.protobuf.ByteString
+        getCurrentHighestBidderBytes() {
+      java.lang.Object ref = currentHighestBidder_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        currentHighestBidder_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    /**
+     * <pre>
+     * ID de l'enchérisseur actuel
+     * </pre>
+     *
+     * <code>string currentHighestBidder = 6;</code>
+     * @param value The currentHighestBidder to set.
+     * @return This builder for chaining.
+     */
+    public Builder setCurrentHighestBidder(
+        java.lang.String value) {
+      if (value == null) { throw new NullPointerException(); }
+      currentHighestBidder_ = value;
+      bitField0_ |= 0x00000020;
+      onChanged();
+      return this;
+    }
+    /**
+     * <pre>
+     * ID de l'enchérisseur actuel
+     * </pre>
+     *
+     * <code>string currentHighestBidder = 6;</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearCurrentHighestBidder() {
+      currentHighestBidder_ = getDefaultInstance().getCurrentHighestBidder();
+      bitField0_ = (bitField0_ & ~0x00000020);
+      onChanged();
+      return this;
+    }
+    /**
+     * <pre>
+     * ID de l'enchérisseur actuel
+     * </pre>
+     *
+     * <code>string currentHighestBidder = 6;</code>
+     * @param value The bytes for currentHighestBidder to set.
+     * @return This builder for chaining.
+     */
+    public Builder setCurrentHighestBidderBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) { throw new NullPointerException(); }
+      checkByteStringIsUtf8(value);
+      currentHighestBidder_ = value;
+      bitField0_ |= 0x00000020;
+      onChanged();
+      return this;
+    }
+
+    private int currentHighestBid_ ;
+    /**
+     * <pre>
+     * Montant de l'enchère actuelle
+     * </pre>
+     *
+     * <code>uint32 currentHighestBid = 7;</code>
+     * @return The currentHighestBid.
+     */
+    @java.lang.Override
+    public int getCurrentHighestBid() {
+      return currentHighestBid_;
+    }
+    /**
+     * <pre>
+     * Montant de l'enchère actuelle
+     * </pre>
+     *
+     * <code>uint32 currentHighestBid = 7;</code>
+     * @param value The currentHighestBid to set.
+     * @return This builder for chaining.
+     */
+    public Builder setCurrentHighestBid(int value) {
+
+      currentHighestBid_ = value;
+      bitField0_ |= 0x00000040;
+      onChanged();
+      return this;
+    }
+    /**
+     * <pre>
+     * Montant de l'enchère actuelle
+     * </pre>
+     *
+     * <code>uint32 currentHighestBid = 7;</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearCurrentHighestBid() {
+      bitField0_ = (bitField0_ & ~0x00000040);
+      currentHighestBid_ = 0;
       onChanged();
       return this;
     }

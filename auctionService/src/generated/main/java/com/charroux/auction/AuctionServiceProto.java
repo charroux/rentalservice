@@ -45,21 +45,26 @@ public final class AuctionServiceProto {
     java.lang.String[] descriptorData = {
       "\n\024auctionService.proto\022\014com.charroux\032\033go" +
       "ogle/protobuf/empty.proto\032\037google/protob" +
-      "uf/timestamp.proto\"\207\001\n\007Bidding\022-\n\ttimest" +
-      "amp\030\001 \001(\0132\032.google.protobuf.Timestamp\022#\n" +
-      "\003car\030\002 \001(\0132\026.com.charroux.CarModel\022\030\n\020ca" +
-      "rRentalCompany\030\003 \001(\t\022\016\n\006amount\030\004 \001(\r\"[\n\013" +
-      "BidResponse\022&\n\007bidding\030\001 \001(\0132\025.com.charr" +
-      "oux.Bidding\022\017\n\007winning\030\002 \001(\010\022\023\n\013plateNum" +
-      "ber\030\003 \001(\t\"(\n\010CarModel\022\r\n\005brand\030\001 \001(\t\022\r\n\005" +
-      "model\030\002 \001(\t\";\n\023CarModelsToBeRented\022$\n\004ca" +
-      "rs\030\001 \003(\0132\026.com.charroux.CarModel2\234\001\n\016Auc" +
-      "tionService\022B\n\nCarAuction\022\025.com.charroux" +
-      ".Bidding\032\031.com.charroux.BidResponse(\0010\001\022" +
-      "F\n\tCarModels\022\026.google.protobuf.Empty\032!.c" +
-      "om.charroux.CarModelsToBeRentedB-\n\024com.c" +
-      "harroux.auctionB\023AuctionServiceProtoP\001b\006" +
-      "proto3"
+      "uf/timestamp.proto\"_\n\007Bidding\022\032\n\022carRent" +
+      "alCompanyId\030\001 \001(\t\022\022\n\ncarModelId\030\002 \001(\t\022\021\n" +
+      "\tbidAmount\030\003 \001(\r\022\021\n\ttimestamp\030\004 \001(\003\"\307\001\n\013" +
+      "BidResponse\022\017\n\007winning\030\001 \001(\010\022\023\n\013plateNum" +
+      "ber\030\002 \001(\t\022\022\n\nfinalPrice\030\003 \001(\r\022+\n\006status\030" +
+      "\004 \001(\0162\033.com.charroux.AuctionStatus\022\030\n\020re" +
+      "mainingSeconds\030\005 \001(\005\022\034\n\024currentHighestBi" +
+      "dder\030\006 \001(\t\022\031\n\021currentHighestBid\030\007 \001(\r\"S\n" +
+      "\010CarModel\022\r\n\005brand\030\001 \001(\t\022\r\n\005model\030\002 \001(\t\022" +
+      "\023\n\013lowestPrice\030\003 \001(\r\022\024\n\014highestPrice\030\004 \001" +
+      "(\r\";\n\023CarModelsToBeRented\022$\n\004cars\030\001 \003(\0132" +
+      "\026.com.charroux.CarModel*S\n\rAuctionStatus" +
+      "\022\n\n\006ACTIVE\020\000\022\021\n\rENDED_BY_TIME\020\001\022\026\n\022ENDED" +
+      "_BY_MAX_PRICE\020\002\022\013\n\007NO_BIDS\020\0032\234\001\n\016Auction" +
+      "Service\022B\n\nCarAuction\022\025.com.charroux.Bid" +
+      "ding\032\031.com.charroux.BidResponse(\0010\001\022F\n\tC" +
+      "arModels\022\026.google.protobuf.Empty\032!.com.c" +
+      "harroux.CarModelsToBeRentedB-\n\024com.charr" +
+      "oux.auctionB\023AuctionServiceProtoP\001b\006prot" +
+      "o3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -72,19 +77,19 @@ public final class AuctionServiceProto {
     internal_static_com_charroux_Bidding_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_com_charroux_Bidding_descriptor,
-        new java.lang.String[] { "Timestamp", "Car", "CarRentalCompany", "Amount", });
+        new java.lang.String[] { "CarRentalCompanyId", "CarModelId", "BidAmount", "Timestamp", });
     internal_static_com_charroux_BidResponse_descriptor =
       getDescriptor().getMessageTypes().get(1);
     internal_static_com_charroux_BidResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_com_charroux_BidResponse_descriptor,
-        new java.lang.String[] { "Bidding", "Winning", "PlateNumber", });
+        new java.lang.String[] { "Winning", "PlateNumber", "FinalPrice", "Status", "RemainingSeconds", "CurrentHighestBidder", "CurrentHighestBid", });
     internal_static_com_charroux_CarModel_descriptor =
       getDescriptor().getMessageTypes().get(2);
     internal_static_com_charroux_CarModel_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_com_charroux_CarModel_descriptor,
-        new java.lang.String[] { "Brand", "Model", });
+        new java.lang.String[] { "Brand", "Model", "LowestPrice", "HighestPrice", });
     internal_static_com_charroux_CarModelsToBeRented_descriptor =
       getDescriptor().getMessageTypes().get(3);
     internal_static_com_charroux_CarModelsToBeRented_fieldAccessorTable = new

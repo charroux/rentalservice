@@ -5,16 +5,14 @@ public class RentCarCommand {
     String firstName;
     String lastName;
     String email;
-    int price;
 
     public RentCarCommand() {
     }
 
-    public RentCarCommand(String firstName, String lastName, String email, int price) {
+    public RentCarCommand(String firstName, String lastName, String email) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
-        this.price = price;
     }
 
     public String getFirstName() {
@@ -41,11 +39,5 @@ public class RentCarCommand {
         this.email = email;
     }
 
-    public int getPrice() {
-        return price;
-    }
 
-    public void setPrice(int price) {
-        this.price = price;
-    }
 }

@@ -26,9 +26,64 @@ public class CarRentalRestService {
     }
 
     @GetMapping("/cars")
-    public List<CarModelJPA> getListOfCars(){
+    public List<Car> getListOfCars(){
         logger.info("Fetching list of cars to be rented");      
-        return rentalService.carsToBeRented();
+        return rentalService.getAvailableCars();
+    }
+
+    @GetMapping("/cars/{plateNumber}")
+    public ResponseEntity<Car> getCarByPlateNumber(@PathVariable("plateNumber") String plateNumber) {
+        logger.info("Fetching car with plate number: {}", plateNumber);
+        
+        Car foundCar = rentalService.getCarByPlateNumber(plateNumber);
+            
+        if (foundCar != null) {
+            return ResponseEntity.ok(foundCar);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+    
+    @GetMapping("/cars/{plateNumber}/margin")
+    public ResponseEntity<String> getCarMargin(@PathVariable("plateNumber") String plateNumber) {
+        logger.info("Fetching margin info for car: {}", plateNumber);
+        
+        Car foundCar = rentalService.getCarByPlateNumber(plateNumber);
+            
+        if (foundCar != null) {
+            String marginInfo = String.format(
+                "Voiture %s - Prix d'acquisition: %d€, Prix de location: %d€, Marge: %d€ (%.1f%%)",
+                foundCar.getPlateNumber(), 
+                foundCar.getFinalPrice(),
+                foundCar.getRentalPrice(),
+                foundCar.getMargin(),
+                foundCar.getMarginPercentage()
+            );
+            return ResponseEntity.ok(marginInfo);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @GetMapping("/cars/model/{brand}/{model}")
+    public ResponseEntity<CarModelJPA> getCarModelDetails(
+            @PathVariable("brand") String brand,
+            @PathVariable("model") String model) {
+        logger.info("Fetching details for car model: {} {}", brand, model);
+        
+        // TODO: Ajouter une méthode dans le service pour récupérer par marque et modèle
+        List<CarModelJPA> allCars = rentalService.carsToBeRented();
+        
+        CarModelJPA foundModel = allCars.stream()
+            .filter(car -> car.getBrand().equalsIgnoreCase(brand) && car.getModel().equalsIgnoreCase(model))
+            .findFirst()
+            .orElse(null);
+            
+        if (foundModel != null) {
+            return ResponseEntity.ok(foundModel);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
     
     @GetMapping("/debug/reload-cars")
@@ -54,6 +109,30 @@ public class CarRentalRestService {
             logger.error("Erreur lors du rechargement forcé : {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Erreur : " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/auction/{brand}/{model}")
+    public ResponseEntity<Car> participateInAuction(
+            @PathVariable("brand") String brand,
+            @PathVariable("model") String model,
+            @RequestParam(value = "companyId", defaultValue = "DEFAULT_COMPANY") String companyId) {
+        
+        logger.info("Demande de participation à l'enchère pour {} {} par {}", brand, model, companyId);
+        
+        try {
+            Car resultCar = rentalService.participateInAuction(brand, model, companyId);
+            
+            if (resultCar != null) {
+                logger.info("Enchère réussie: voiture {} attribuée", resultCar.getPlateNumber());
+                return ResponseEntity.ok(resultCar);
+            } else {
+                logger.warn("Échec de l'enchère pour {} {}", brand, model);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            }
+        } catch (Exception e) {
+            logger.error("Erreur lors de la participation à l'enchère: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 

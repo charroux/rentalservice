@@ -16,7 +16,7 @@ import {RouterLink} from '@angular/router';
             crossorigin
           />
           <h2 class="listing-heading">{{ cardetail.brand }}</h2>
-          <p class="listing-location">{{ cardetail.price }} Euros</p>
+          <p class="listing-location">{{ cardetail.rentalPrice }} €/day</p>
           <p class="plate-number" [class.updated]="isUpdated">Plate: {{ cardetail.plateNumber }}</p>
           <a [routerLink]="['/details', cardetail.plateNumber]">Learn More</a>
         </section>

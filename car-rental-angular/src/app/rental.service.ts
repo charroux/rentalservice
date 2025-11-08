@@ -1,15 +1,15 @@
 import { Injectable, inject, signal } from '@angular/core';
 import {Cardetail} from './cardetail';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
+import { Observable, tap, catchError, of } from 'rxjs';
+import { environment } from '../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class RentalService {
 
-  //url: string = 'http://localhost:3000/cars';
-  readonly url = 'http://localhost:8080/cars';
+  readonly url = `${environment.apiUrl}/cars`;
   private http = inject(HttpClient);
   private cars = signal<Cardetail[]>([])
 
@@ -20,11 +20,32 @@ export class RentalService {
   getAllCars(): Observable<Cardetail[]> {
     return this.http.get<Cardetail[]>(this.url).pipe(
       tap(cars => this.cars.set(cars)),
+      catchError(error => {
+        console.error('Error fetching cars:', error);
+        return of([]);
+      })
     );
   }  
 
   getAllCarsByPlateNumber(plateNumber: string): Observable<Cardetail> {
-    return this.http.get<Cardetail>(`${this.url}/${plateNumber}`);
+    return this.http.get<Cardetail>(`${this.url}/${plateNumber}`).pipe(
+      catchError(error => {
+        console.error('Error fetching car by plate number:', error);
+        throw error;
+      })
+    );
+  }
+
+  participateInAuction(brand: string, model: string, companyId: string = 'DEFAULT_COMPANY'): Observable<Cardetail> {
+    const auctionUrl = `${environment.apiUrl}/auction/${brand}/${model}`;
+    return this.http.post<Cardetail>(auctionUrl, null, {
+      params: { companyId: companyId }
+    }).pipe(
+      catchError(error => {
+        console.error('Error participating in auction:', error);
+        throw error;
+      })
+    );
   }
 
   submitApplication(firstName: string, lastName: string, email: string, beginDate: string, endDate: string, plateNumber: string): void {

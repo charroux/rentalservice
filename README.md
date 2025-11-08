@@ -1,5 +1,9 @@
 # Cloud native app
 
+```
+Voilà la logique du projet : le fichier aunctionService.proto définit un CarModel comme ayant un lowestPrice et un highestPrice. La classe JPA CarModelJPA (projet carRental) reflète bien cela. Cependant, ce n'est pas un CarModelJPA que les utilisateurs finaux vont louer mais un Car (voir la classe Car du projet carRental). Car correspond à une instance réel d'un CarModel ayant une plaque d'immatriculation et un prix de location qui peut être différent des lowestPrice et highestPrice. Pour éviter toute confusion je suggère de renommer price de la classe Car en rentalPrice. Côté front angular, l'utilisateur ne doit voir que ce rentalPrice. Je suggère donc de supprimer côté front les champs lowestPrice et highestPrice au profit du seul champ rentalPrice. Mais attention ! Au démarrage du projet seuls les CarModel sont initialisés (voir le constructeur de la classe RentalServiceImpl), et donc seuls les lowestPrice et highestPrice sont connus. Ainsi le champs rentalPrice côté front ne peut être initialisé qu'avec un de ces deux champs. Je propose que ce soit avec highestPrice. Nous réaliseront ensemle mais plus tard la logique de sélection d'une Car particulière via une vente aux enchères parmi un ensemble de voitures issues du même CzrModel, et finalement c'est cette voiture qui sera proposées à la location. Peux-tu me dire si c'est bien clair pour toi avant de procéder aux changements ?
+```
+
 <div id="user-content-toc">
   <ul>
     <li><a href="#start-the-app">1. Start the app</a>
@@ -64,6 +68,195 @@
     <li><a href="#Delete-resources-and-stop-the-cluster">9. Delete resources and stop the cluster</a></li>
   </ul>
 </div>
+
+## Build Instructions avec Gradle
+
+Ce projet utilise Gradle comme système de build. Voici les commandes principales pour compiler les différents modules :
+
+### Build complet du projet
+
+```bash
+# Builder tous les modules du projet
+./gradlew build
+
+# Clean et rebuild complet (recommandé après modifications importantes)
+./gradlew clean build
+```
+
+### Build par module individuel
+
+```bash
+# Module auctionService (définitions protobuf + client gRPC)
+./gradlew :auctionService:build
+
+# Module auctionServiceServer (serveur gRPC)
+./gradlew :auctionServiceServer:build
+
+# Module carRental (service principal REST + JPA)
+./gradlew :carRental:build
+```
+
+### Commandes spécifiques pour les fichiers Protobuf/gRPC
+
+Après modification des fichiers `.proto`, régénérer les classes Java :
+
+```bash
+# Régénération pour le module auctionService
+./gradlew :auctionService:clean :auctionService:generateProto :auctionService:compileJava
+
+# Régénération complète (recommandée après modification de .proto)
+./gradlew clean build
+
+# Génération protobuf uniquement (sans compilation)
+./gradlew :auctionService:generateProto
+```
+
+### Autres commandes utiles
+
+```bash
+# Tests uniquement
+./gradlew test
+
+# Tests pour un module spécifique
+./gradlew :carRental:test
+
+# Build sans tests (plus rapide)
+./gradlew build -x test
+
+# Nettoyage des builds
+./gradlew clean
+
+# Vérifier les dépendances
+./gradlew dependencies
+```
+
+### Structure des modules
+
+- **auctionService** : Contient les définitions protobuf (`.proto`) et génère les classes Java client
+- **auctionServiceServer** : Implémente le serveur gRPC à partir des définitions protobuf
+- **carRental** : Service principal avec API REST, JPA, et client gRPC
+- **car-rental-angular** : Frontend Angular (build séparé avec npm/ng)
+
+⚠️ **Important** : Après modification d'un fichier `.proto`, vous devez rebuilder TOUS les modules qui l'utilisent pour éviter les erreurs de compilation.
+
+## Test des Enchères de Voitures
+
+Le système d'enchères permet aux carRentalCompany de participer à des enchères en temps réel pour obtenir des voitures à louer. Voici comment tester cette fonctionnalité :
+
+### Démarrage des services
+
+```bash
+# Méthode 1: Docker Compose (recommandée pour les tests)
+docker compose -f docker-compose.dev.yml up
+
+# Méthode 2: Gradle (pour le développement)
+# Terminal 1 - Serveur gRPC d'enchères
+./gradlew :auctionServiceServer:bootRun
+
+# Terminal 2 - Service principal
+./gradlew :carRental:bootRun
+
+# Terminal 3 - Frontend Angular (optionnel)
+cd car-rental-angular && npm start
+```
+
+### Commandes curl pour tester les enchères
+
+#### 1. **Lister les modèles de voitures disponibles**
+```bash
+curl -X GET http://localhost:8080/cars
+```
+
+#### 2. **Participer à une enchère Ferrari F8**
+```bash
+# Enchère avec companyId par défaut
+curl -X POST http://localhost:8080/auction/Ferrari/F8
+
+# Enchère avec une entreprise spécifique
+curl -X POST http://localhost:8080/auction/Ferrari/F8?companyId=HERTZ_COMPANY
+```
+
+#### 3. **Enchères pour différents modèles**
+```bash
+# Porsche 911 (600€-900€)
+curl -X POST http://localhost:8080/auction/Porsche/911?companyId=AVIS_RENTAL
+
+# Tesla Model S (300€-500€) - Attention à l'encodage URL
+curl -X POST "http://localhost:8080/auction/Tesla/Model%20S?companyId=ENTERPRISE"
+```
+
+#### 4. **Tests d'enchères simultanées**
+Pour tester la logique de concurrence, lancez plusieurs enchères en parallèle :
+
+```bash
+# Terminal 1
+curl -X POST http://localhost:8080/auction/Ferrari/F8?companyId=COMPANY_A &
+
+# Terminal 2
+curl -X POST http://localhost:8080/auction/Ferrari/F8?companyId=COMPANY_B &
+
+# Terminal 3
+curl -X POST http://localhost:8080/auction/Ferrari/F8?companyId=COMPANY_C &
+```
+
+#### 5. **Vérifier les résultats d'enchère**
+
+Après une enchère réussie, vous obtenez une plaque d'immatriculation. Vous pouvez alors :
+
+```bash
+# Voir les détails de la voiture (pour l'utilisateur final)
+curl -X GET http://localhost:8080/cars/FE-001-F8
+
+# Voir la marge de la carRentalCompany
+curl -X GET http://localhost:8080/cars/FE-001-F8/margin
+```
+
+### Réponses attendues
+
+#### Enchère réussie :
+```json
+{
+  "plateNumber": "FE-001-F8",
+  "brand": "Ferrari",
+  "model": "F8", 
+  "rentalPrice": 1200,
+  "photo": "default_photo_url"
+}
+```
+
+#### Informations sur la marge :
+```
+Voiture FE-001-F8 - Prix d'acquisition: 800€, Prix de location: 1200€, Marge: 400€ (50.0%)
+```
+
+### Logique d'enchères
+
+- **Durée** : 5 secondes (configuré pour les tests, 30s en production)
+- **Prix initial** : `lowestPrice` du modèle (ex: 800€ pour Ferrari F8)
+- **Prix utilisateur final** : Toujours `highestPrice` (ex: 1200€ pour Ferrari F8)
+- **Marge carRentalCompany** : Différence entre `rentalPrice` et `finalPrice`
+- **Incrément minimal** : 10€ entre les enchères
+- **Limitation** : Une participation par entreprise et par modèle
+
+### Cas d'usage typique
+
+1. **Utilisateur frontend** sélectionne "Ferrari F8"
+2. **carRentalCompany** participe automatiquement à l'enchère (800€)
+3. **Enchère de 5s** - autres entreprises peuvent surenchérir
+4. **Résultat** : Voiture attribuée avec plaque d'immatriculation
+5. **Utilisateur final** voit le prix fixe de 1200€/jour
+6. **carRentalCompany** connaît sa marge (ex: 400€ de bénéfice)
+
+### Debug et logs
+
+Pour voir les logs détaillés des enchères :
+```bash
+# Logs du service principal
+docker compose -f docker-compose.dev.yml logs -f car-rental
+
+# Logs du serveur d'enchères
+docker compose -f docker-compose.dev.yml logs -f auction-service
+```
 
 ## Start the app
 

@@ -13,7 +13,11 @@ public class Car {
     private long id;
     
     private String plateNumber;
-    private int price;
+    
+    @JsonIgnore // Masquer le prix d'acquisition côté frontend pour confidentialité
+    private int finalPrice;    // Prix d'acquisition après enchère (coût pour la carRentalCompany)
+    
+    private int rentalPrice;   // Prix facturé à l'utilisateur final (toujours highestPrice)
     
     // Relation ManyToOne vers CarModel (un modèle peut avoir plusieurs voitures)
     @ManyToOne(fetch = FetchType.LAZY)
@@ -35,9 +39,17 @@ public class Car {
     public Car() {
     }
 
-    public Car(String plateNumber, int price) {
+    public Car(String plateNumber, int finalPrice, int rentalPrice) {
         this.plateNumber = plateNumber;
-        this.price = price;
+        this.finalPrice = finalPrice;
+        this.rentalPrice = rentalPrice;
+    }
+    
+    // Constructeur pour compatibilité (utilise rentalPrice comme finalPrice)
+    public Car(String plateNumber, int rentalPrice) {
+        this.plateNumber = plateNumber;
+        this.finalPrice = rentalPrice;
+        this.rentalPrice = rentalPrice;
     }
 
     // Getters et Setters
@@ -57,12 +69,20 @@ public class Car {
         this.plateNumber = plateNumber;
     }
 
-    public int getPrice() {
-        return price;
+    public int getFinalPrice() {
+        return finalPrice;
     }
 
-    public void setPrice(int price) {
-        this.price = price;
+    public void setFinalPrice(int finalPrice) {
+        this.finalPrice = finalPrice;
+    }
+
+    public int getRentalPrice() {
+        return rentalPrice;
+    }
+
+    public void setRentalPrice(int rentalPrice) {
+        this.rentalPrice = rentalPrice;
     }
 
     public CarModelJPA getCarModel() {
@@ -114,6 +134,15 @@ public class Car {
         return getCurrentActiveContract() != null;
     }
 
+    // Méthodes utilitaires pour la gestion des prix
+    public int getMargin() {
+        return rentalPrice - finalPrice;
+    }
+    
+    public double getMarginPercentage() {
+        return finalPrice > 0 ? ((double) getMargin() / finalPrice) * 100 : 0;
+    }
+
     // Méthodes utilitaires
     // Méthodes utilitaires pour la relation bidirectionnelle avec BiddingJPA
     public boolean hasWinningBid() {
@@ -132,7 +161,9 @@ public class Car {
         return "Car{" +
                 "id=" + id +
                 ", plateNumber='" + plateNumber + '\'' +
-                ", price=" + price +
+                ", finalPrice=" + finalPrice +
+                ", rentalPrice=" + rentalPrice +
+                ", margin=" + getMargin() + "€" +
                 ", contractsCount=" + rentalContracts.size() +
                 ", hasWinningBid=" + hasWinningBid() +
                 '}';

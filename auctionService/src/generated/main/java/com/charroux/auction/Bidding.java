@@ -16,7 +16,8 @@ private static final long serialVersionUID = 0L;
     super(builder);
   }
   private Bidding() {
-    carRentalCompany_ = "";
+    carRentalCompanyId_ = "";
+    carModelId_ = "";
   }
 
   @java.lang.Override
@@ -39,106 +40,116 @@ private static final long serialVersionUID = 0L;
             com.charroux.auction.Bidding.class, com.charroux.auction.Bidding.Builder.class);
   }
 
-  public static final int TIMESTAMP_FIELD_NUMBER = 1;
-  private com.google.protobuf.Timestamp timestamp_;
-  /**
-   * <code>.google.protobuf.Timestamp timestamp = 1;</code>
-   * @return Whether the timestamp field is set.
-   */
-  @java.lang.Override
-  public boolean hasTimestamp() {
-    return timestamp_ != null;
-  }
-  /**
-   * <code>.google.protobuf.Timestamp timestamp = 1;</code>
-   * @return The timestamp.
-   */
-  @java.lang.Override
-  public com.google.protobuf.Timestamp getTimestamp() {
-    return timestamp_ == null ? com.google.protobuf.Timestamp.getDefaultInstance() : timestamp_;
-  }
-  /**
-   * <code>.google.protobuf.Timestamp timestamp = 1;</code>
-   */
-  @java.lang.Override
-  public com.google.protobuf.TimestampOrBuilder getTimestampOrBuilder() {
-    return timestamp_ == null ? com.google.protobuf.Timestamp.getDefaultInstance() : timestamp_;
-  }
-
-  public static final int CAR_FIELD_NUMBER = 2;
-  private com.charroux.auction.CarModel car_;
-  /**
-   * <code>.com.charroux.CarModel car = 2;</code>
-   * @return Whether the car field is set.
-   */
-  @java.lang.Override
-  public boolean hasCar() {
-    return car_ != null;
-  }
-  /**
-   * <code>.com.charroux.CarModel car = 2;</code>
-   * @return The car.
-   */
-  @java.lang.Override
-  public com.charroux.auction.CarModel getCar() {
-    return car_ == null ? com.charroux.auction.CarModel.getDefaultInstance() : car_;
-  }
-  /**
-   * <code>.com.charroux.CarModel car = 2;</code>
-   */
-  @java.lang.Override
-  public com.charroux.auction.CarModelOrBuilder getCarOrBuilder() {
-    return car_ == null ? com.charroux.auction.CarModel.getDefaultInstance() : car_;
-  }
-
-  public static final int CARRENTALCOMPANY_FIELD_NUMBER = 3;
+  public static final int CARRENTALCOMPANYID_FIELD_NUMBER = 1;
   @SuppressWarnings("serial")
-  private volatile java.lang.Object carRentalCompany_ = "";
+  private volatile java.lang.Object carRentalCompanyId_ = "";
   /**
-   * <code>string carRentalCompany = 3;</code>
-   * @return The carRentalCompany.
+   * <code>string carRentalCompanyId = 1;</code>
+   * @return The carRentalCompanyId.
    */
   @java.lang.Override
-  public java.lang.String getCarRentalCompany() {
-    java.lang.Object ref = carRentalCompany_;
+  public java.lang.String getCarRentalCompanyId() {
+    java.lang.Object ref = carRentalCompanyId_;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      carRentalCompany_ = s;
+      carRentalCompanyId_ = s;
       return s;
     }
   }
   /**
-   * <code>string carRentalCompany = 3;</code>
-   * @return The bytes for carRentalCompany.
+   * <code>string carRentalCompanyId = 1;</code>
+   * @return The bytes for carRentalCompanyId.
    */
   @java.lang.Override
   public com.google.protobuf.ByteString
-      getCarRentalCompanyBytes() {
-    java.lang.Object ref = carRentalCompany_;
+      getCarRentalCompanyIdBytes() {
+    java.lang.Object ref = carRentalCompanyId_;
     if (ref instanceof java.lang.String) {
       com.google.protobuf.ByteString b = 
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
-      carRentalCompany_ = b;
+      carRentalCompanyId_ = b;
       return b;
     } else {
       return (com.google.protobuf.ByteString) ref;
     }
   }
 
-  public static final int AMOUNT_FIELD_NUMBER = 4;
-  private int amount_ = 0;
+  public static final int CARMODELID_FIELD_NUMBER = 2;
+  @SuppressWarnings("serial")
+  private volatile java.lang.Object carModelId_ = "";
   /**
-   * <code>uint32 amount = 4;</code>
-   * @return The amount.
+   * <pre>
+   * Format: "brand:model" (ex: "Ferrari:F8")
+   * </pre>
+   *
+   * <code>string carModelId = 2;</code>
+   * @return The carModelId.
    */
   @java.lang.Override
-  public int getAmount() {
-    return amount_;
+  public java.lang.String getCarModelId() {
+    java.lang.Object ref = carModelId_;
+    if (ref instanceof java.lang.String) {
+      return (java.lang.String) ref;
+    } else {
+      com.google.protobuf.ByteString bs = 
+          (com.google.protobuf.ByteString) ref;
+      java.lang.String s = bs.toStringUtf8();
+      carModelId_ = s;
+      return s;
+    }
+  }
+  /**
+   * <pre>
+   * Format: "brand:model" (ex: "Ferrari:F8")
+   * </pre>
+   *
+   * <code>string carModelId = 2;</code>
+   * @return The bytes for carModelId.
+   */
+  @java.lang.Override
+  public com.google.protobuf.ByteString
+      getCarModelIdBytes() {
+    java.lang.Object ref = carModelId_;
+    if (ref instanceof java.lang.String) {
+      com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString.copyFromUtf8(
+              (java.lang.String) ref);
+      carModelId_ = b;
+      return b;
+    } else {
+      return (com.google.protobuf.ByteString) ref;
+    }
+  }
+
+  public static final int BIDAMOUNT_FIELD_NUMBER = 3;
+  private int bidAmount_ = 0;
+  /**
+   * <code>uint32 bidAmount = 3;</code>
+   * @return The bidAmount.
+   */
+  @java.lang.Override
+  public int getBidAmount() {
+    return bidAmount_;
+  }
+
+  public static final int TIMESTAMP_FIELD_NUMBER = 4;
+  private long timestamp_ = 0L;
+  /**
+   * <pre>
+   * Timestamp pour gérer les enchères simultanées
+   * </pre>
+   *
+   * <code>int64 timestamp = 4;</code>
+   * @return The timestamp.
+   */
+  @java.lang.Override
+  public long getTimestamp() {
+    return timestamp_;
   }
 
   private byte memoizedIsInitialized = -1;
@@ -155,17 +166,17 @@ private static final long serialVersionUID = 0L;
   @java.lang.Override
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
-    if (timestamp_ != null) {
-      output.writeMessage(1, getTimestamp());
+    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(carRentalCompanyId_)) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 1, carRentalCompanyId_);
     }
-    if (car_ != null) {
-      output.writeMessage(2, getCar());
+    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(carModelId_)) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 2, carModelId_);
     }
-    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(carRentalCompany_)) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 3, carRentalCompany_);
+    if (bidAmount_ != 0) {
+      output.writeUInt32(3, bidAmount_);
     }
-    if (amount_ != 0) {
-      output.writeUInt32(4, amount_);
+    if (timestamp_ != 0L) {
+      output.writeInt64(4, timestamp_);
     }
     getUnknownFields().writeTo(output);
   }
@@ -176,20 +187,19 @@ private static final long serialVersionUID = 0L;
     if (size != -1) return size;
 
     size = 0;
-    if (timestamp_ != null) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeMessageSize(1, getTimestamp());
+    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(carRentalCompanyId_)) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, carRentalCompanyId_);
     }
-    if (car_ != null) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeMessageSize(2, getCar());
+    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(carModelId_)) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, carModelId_);
     }
-    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(carRentalCompany_)) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, carRentalCompany_);
-    }
-    if (amount_ != 0) {
+    if (bidAmount_ != 0) {
       size += com.google.protobuf.CodedOutputStream
-        .computeUInt32Size(4, amount_);
+        .computeUInt32Size(3, bidAmount_);
+    }
+    if (timestamp_ != 0L) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeInt64Size(4, timestamp_);
     }
     size += getUnknownFields().getSerializedSize();
     memoizedSize = size;
@@ -206,20 +216,14 @@ private static final long serialVersionUID = 0L;
     }
     com.charroux.auction.Bidding other = (com.charroux.auction.Bidding) obj;
 
-    if (hasTimestamp() != other.hasTimestamp()) return false;
-    if (hasTimestamp()) {
-      if (!getTimestamp()
-          .equals(other.getTimestamp())) return false;
-    }
-    if (hasCar() != other.hasCar()) return false;
-    if (hasCar()) {
-      if (!getCar()
-          .equals(other.getCar())) return false;
-    }
-    if (!getCarRentalCompany()
-        .equals(other.getCarRentalCompany())) return false;
-    if (getAmount()
-        != other.getAmount()) return false;
+    if (!getCarRentalCompanyId()
+        .equals(other.getCarRentalCompanyId())) return false;
+    if (!getCarModelId()
+        .equals(other.getCarModelId())) return false;
+    if (getBidAmount()
+        != other.getBidAmount()) return false;
+    if (getTimestamp()
+        != other.getTimestamp()) return false;
     if (!getUnknownFields().equals(other.getUnknownFields())) return false;
     return true;
   }
@@ -231,18 +235,15 @@ private static final long serialVersionUID = 0L;
     }
     int hash = 41;
     hash = (19 * hash) + getDescriptor().hashCode();
-    if (hasTimestamp()) {
-      hash = (37 * hash) + TIMESTAMP_FIELD_NUMBER;
-      hash = (53 * hash) + getTimestamp().hashCode();
-    }
-    if (hasCar()) {
-      hash = (37 * hash) + CAR_FIELD_NUMBER;
-      hash = (53 * hash) + getCar().hashCode();
-    }
-    hash = (37 * hash) + CARRENTALCOMPANY_FIELD_NUMBER;
-    hash = (53 * hash) + getCarRentalCompany().hashCode();
-    hash = (37 * hash) + AMOUNT_FIELD_NUMBER;
-    hash = (53 * hash) + getAmount();
+    hash = (37 * hash) + CARRENTALCOMPANYID_FIELD_NUMBER;
+    hash = (53 * hash) + getCarRentalCompanyId().hashCode();
+    hash = (37 * hash) + CARMODELID_FIELD_NUMBER;
+    hash = (53 * hash) + getCarModelId().hashCode();
+    hash = (37 * hash) + BIDAMOUNT_FIELD_NUMBER;
+    hash = (53 * hash) + getBidAmount();
+    hash = (37 * hash) + TIMESTAMP_FIELD_NUMBER;
+    hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+        getTimestamp());
     hash = (29 * hash) + getUnknownFields().hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -374,18 +375,10 @@ private static final long serialVersionUID = 0L;
     public Builder clear() {
       super.clear();
       bitField0_ = 0;
-      timestamp_ = null;
-      if (timestampBuilder_ != null) {
-        timestampBuilder_.dispose();
-        timestampBuilder_ = null;
-      }
-      car_ = null;
-      if (carBuilder_ != null) {
-        carBuilder_.dispose();
-        carBuilder_ = null;
-      }
-      carRentalCompany_ = "";
-      amount_ = 0;
+      carRentalCompanyId_ = "";
+      carModelId_ = "";
+      bidAmount_ = 0;
+      timestamp_ = 0L;
       return this;
     }
 
@@ -420,20 +413,16 @@ private static final long serialVersionUID = 0L;
     private void buildPartial0(com.charroux.auction.Bidding result) {
       int from_bitField0_ = bitField0_;
       if (((from_bitField0_ & 0x00000001) != 0)) {
-        result.timestamp_ = timestampBuilder_ == null
-            ? timestamp_
-            : timestampBuilder_.build();
+        result.carRentalCompanyId_ = carRentalCompanyId_;
       }
       if (((from_bitField0_ & 0x00000002) != 0)) {
-        result.car_ = carBuilder_ == null
-            ? car_
-            : carBuilder_.build();
+        result.carModelId_ = carModelId_;
       }
       if (((from_bitField0_ & 0x00000004) != 0)) {
-        result.carRentalCompany_ = carRentalCompany_;
+        result.bidAmount_ = bidAmount_;
       }
       if (((from_bitField0_ & 0x00000008) != 0)) {
-        result.amount_ = amount_;
+        result.timestamp_ = timestamp_;
       }
     }
 
@@ -481,19 +470,21 @@ private static final long serialVersionUID = 0L;
 
     public Builder mergeFrom(com.charroux.auction.Bidding other) {
       if (other == com.charroux.auction.Bidding.getDefaultInstance()) return this;
-      if (other.hasTimestamp()) {
-        mergeTimestamp(other.getTimestamp());
-      }
-      if (other.hasCar()) {
-        mergeCar(other.getCar());
-      }
-      if (!other.getCarRentalCompany().isEmpty()) {
-        carRentalCompany_ = other.carRentalCompany_;
-        bitField0_ |= 0x00000004;
+      if (!other.getCarRentalCompanyId().isEmpty()) {
+        carRentalCompanyId_ = other.carRentalCompanyId_;
+        bitField0_ |= 0x00000001;
         onChanged();
       }
-      if (other.getAmount() != 0) {
-        setAmount(other.getAmount());
+      if (!other.getCarModelId().isEmpty()) {
+        carModelId_ = other.carModelId_;
+        bitField0_ |= 0x00000002;
+        onChanged();
+      }
+      if (other.getBidAmount() != 0) {
+        setBidAmount(other.getBidAmount());
+      }
+      if (other.getTimestamp() != 0L) {
+        setTimestamp(other.getTimestamp());
       }
       this.mergeUnknownFields(other.getUnknownFields());
       onChanged();
@@ -522,26 +513,22 @@ private static final long serialVersionUID = 0L;
               done = true;
               break;
             case 10: {
-              input.readMessage(
-                  getTimestampFieldBuilder().getBuilder(),
-                  extensionRegistry);
+              carRentalCompanyId_ = input.readStringRequireUtf8();
               bitField0_ |= 0x00000001;
               break;
             } // case 10
             case 18: {
-              input.readMessage(
-                  getCarFieldBuilder().getBuilder(),
-                  extensionRegistry);
+              carModelId_ = input.readStringRequireUtf8();
               bitField0_ |= 0x00000002;
               break;
             } // case 18
-            case 26: {
-              carRentalCompany_ = input.readStringRequireUtf8();
+            case 24: {
+              bidAmount_ = input.readUInt32();
               bitField0_ |= 0x00000004;
               break;
-            } // case 26
+            } // case 24
             case 32: {
-              amount_ = input.readUInt32();
+              timestamp_ = input.readInt64();
               bitField0_ |= 0x00000008;
               break;
             } // case 32
@@ -562,344 +549,242 @@ private static final long serialVersionUID = 0L;
     }
     private int bitField0_;
 
-    private com.google.protobuf.Timestamp timestamp_;
-    private com.google.protobuf.SingleFieldBuilderV3<
-        com.google.protobuf.Timestamp, com.google.protobuf.Timestamp.Builder, com.google.protobuf.TimestampOrBuilder> timestampBuilder_;
+    private java.lang.Object carRentalCompanyId_ = "";
     /**
-     * <code>.google.protobuf.Timestamp timestamp = 1;</code>
-     * @return Whether the timestamp field is set.
+     * <code>string carRentalCompanyId = 1;</code>
+     * @return The carRentalCompanyId.
      */
-    public boolean hasTimestamp() {
-      return ((bitField0_ & 0x00000001) != 0);
-    }
-    /**
-     * <code>.google.protobuf.Timestamp timestamp = 1;</code>
-     * @return The timestamp.
-     */
-    public com.google.protobuf.Timestamp getTimestamp() {
-      if (timestampBuilder_ == null) {
-        return timestamp_ == null ? com.google.protobuf.Timestamp.getDefaultInstance() : timestamp_;
-      } else {
-        return timestampBuilder_.getMessage();
-      }
-    }
-    /**
-     * <code>.google.protobuf.Timestamp timestamp = 1;</code>
-     */
-    public Builder setTimestamp(com.google.protobuf.Timestamp value) {
-      if (timestampBuilder_ == null) {
-        if (value == null) {
-          throw new NullPointerException();
-        }
-        timestamp_ = value;
-      } else {
-        timestampBuilder_.setMessage(value);
-      }
-      bitField0_ |= 0x00000001;
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>.google.protobuf.Timestamp timestamp = 1;</code>
-     */
-    public Builder setTimestamp(
-        com.google.protobuf.Timestamp.Builder builderForValue) {
-      if (timestampBuilder_ == null) {
-        timestamp_ = builderForValue.build();
-      } else {
-        timestampBuilder_.setMessage(builderForValue.build());
-      }
-      bitField0_ |= 0x00000001;
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>.google.protobuf.Timestamp timestamp = 1;</code>
-     */
-    public Builder mergeTimestamp(com.google.protobuf.Timestamp value) {
-      if (timestampBuilder_ == null) {
-        if (((bitField0_ & 0x00000001) != 0) &&
-          timestamp_ != null &&
-          timestamp_ != com.google.protobuf.Timestamp.getDefaultInstance()) {
-          getTimestampBuilder().mergeFrom(value);
-        } else {
-          timestamp_ = value;
-        }
-      } else {
-        timestampBuilder_.mergeFrom(value);
-      }
-      bitField0_ |= 0x00000001;
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>.google.protobuf.Timestamp timestamp = 1;</code>
-     */
-    public Builder clearTimestamp() {
-      bitField0_ = (bitField0_ & ~0x00000001);
-      timestamp_ = null;
-      if (timestampBuilder_ != null) {
-        timestampBuilder_.dispose();
-        timestampBuilder_ = null;
-      }
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>.google.protobuf.Timestamp timestamp = 1;</code>
-     */
-    public com.google.protobuf.Timestamp.Builder getTimestampBuilder() {
-      bitField0_ |= 0x00000001;
-      onChanged();
-      return getTimestampFieldBuilder().getBuilder();
-    }
-    /**
-     * <code>.google.protobuf.Timestamp timestamp = 1;</code>
-     */
-    public com.google.protobuf.TimestampOrBuilder getTimestampOrBuilder() {
-      if (timestampBuilder_ != null) {
-        return timestampBuilder_.getMessageOrBuilder();
-      } else {
-        return timestamp_ == null ?
-            com.google.protobuf.Timestamp.getDefaultInstance() : timestamp_;
-      }
-    }
-    /**
-     * <code>.google.protobuf.Timestamp timestamp = 1;</code>
-     */
-    private com.google.protobuf.SingleFieldBuilderV3<
-        com.google.protobuf.Timestamp, com.google.protobuf.Timestamp.Builder, com.google.protobuf.TimestampOrBuilder> 
-        getTimestampFieldBuilder() {
-      if (timestampBuilder_ == null) {
-        timestampBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
-            com.google.protobuf.Timestamp, com.google.protobuf.Timestamp.Builder, com.google.protobuf.TimestampOrBuilder>(
-                getTimestamp(),
-                getParentForChildren(),
-                isClean());
-        timestamp_ = null;
-      }
-      return timestampBuilder_;
-    }
-
-    private com.charroux.auction.CarModel car_;
-    private com.google.protobuf.SingleFieldBuilderV3<
-        com.charroux.auction.CarModel, com.charroux.auction.CarModel.Builder, com.charroux.auction.CarModelOrBuilder> carBuilder_;
-    /**
-     * <code>.com.charroux.CarModel car = 2;</code>
-     * @return Whether the car field is set.
-     */
-    public boolean hasCar() {
-      return ((bitField0_ & 0x00000002) != 0);
-    }
-    /**
-     * <code>.com.charroux.CarModel car = 2;</code>
-     * @return The car.
-     */
-    public com.charroux.auction.CarModel getCar() {
-      if (carBuilder_ == null) {
-        return car_ == null ? com.charroux.auction.CarModel.getDefaultInstance() : car_;
-      } else {
-        return carBuilder_.getMessage();
-      }
-    }
-    /**
-     * <code>.com.charroux.CarModel car = 2;</code>
-     */
-    public Builder setCar(com.charroux.auction.CarModel value) {
-      if (carBuilder_ == null) {
-        if (value == null) {
-          throw new NullPointerException();
-        }
-        car_ = value;
-      } else {
-        carBuilder_.setMessage(value);
-      }
-      bitField0_ |= 0x00000002;
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>.com.charroux.CarModel car = 2;</code>
-     */
-    public Builder setCar(
-        com.charroux.auction.CarModel.Builder builderForValue) {
-      if (carBuilder_ == null) {
-        car_ = builderForValue.build();
-      } else {
-        carBuilder_.setMessage(builderForValue.build());
-      }
-      bitField0_ |= 0x00000002;
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>.com.charroux.CarModel car = 2;</code>
-     */
-    public Builder mergeCar(com.charroux.auction.CarModel value) {
-      if (carBuilder_ == null) {
-        if (((bitField0_ & 0x00000002) != 0) &&
-          car_ != null &&
-          car_ != com.charroux.auction.CarModel.getDefaultInstance()) {
-          getCarBuilder().mergeFrom(value);
-        } else {
-          car_ = value;
-        }
-      } else {
-        carBuilder_.mergeFrom(value);
-      }
-      bitField0_ |= 0x00000002;
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>.com.charroux.CarModel car = 2;</code>
-     */
-    public Builder clearCar() {
-      bitField0_ = (bitField0_ & ~0x00000002);
-      car_ = null;
-      if (carBuilder_ != null) {
-        carBuilder_.dispose();
-        carBuilder_ = null;
-      }
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>.com.charroux.CarModel car = 2;</code>
-     */
-    public com.charroux.auction.CarModel.Builder getCarBuilder() {
-      bitField0_ |= 0x00000002;
-      onChanged();
-      return getCarFieldBuilder().getBuilder();
-    }
-    /**
-     * <code>.com.charroux.CarModel car = 2;</code>
-     */
-    public com.charroux.auction.CarModelOrBuilder getCarOrBuilder() {
-      if (carBuilder_ != null) {
-        return carBuilder_.getMessageOrBuilder();
-      } else {
-        return car_ == null ?
-            com.charroux.auction.CarModel.getDefaultInstance() : car_;
-      }
-    }
-    /**
-     * <code>.com.charroux.CarModel car = 2;</code>
-     */
-    private com.google.protobuf.SingleFieldBuilderV3<
-        com.charroux.auction.CarModel, com.charroux.auction.CarModel.Builder, com.charroux.auction.CarModelOrBuilder> 
-        getCarFieldBuilder() {
-      if (carBuilder_ == null) {
-        carBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
-            com.charroux.auction.CarModel, com.charroux.auction.CarModel.Builder, com.charroux.auction.CarModelOrBuilder>(
-                getCar(),
-                getParentForChildren(),
-                isClean());
-        car_ = null;
-      }
-      return carBuilder_;
-    }
-
-    private java.lang.Object carRentalCompany_ = "";
-    /**
-     * <code>string carRentalCompany = 3;</code>
-     * @return The carRentalCompany.
-     */
-    public java.lang.String getCarRentalCompany() {
-      java.lang.Object ref = carRentalCompany_;
+    public java.lang.String getCarRentalCompanyId() {
+      java.lang.Object ref = carRentalCompanyId_;
       if (!(ref instanceof java.lang.String)) {
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        carRentalCompany_ = s;
+        carRentalCompanyId_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
       }
     }
     /**
-     * <code>string carRentalCompany = 3;</code>
-     * @return The bytes for carRentalCompany.
+     * <code>string carRentalCompanyId = 1;</code>
+     * @return The bytes for carRentalCompanyId.
      */
     public com.google.protobuf.ByteString
-        getCarRentalCompanyBytes() {
-      java.lang.Object ref = carRentalCompany_;
+        getCarRentalCompanyIdBytes() {
+      java.lang.Object ref = carRentalCompanyId_;
       if (ref instanceof String) {
         com.google.protobuf.ByteString b = 
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
-        carRentalCompany_ = b;
+        carRentalCompanyId_ = b;
         return b;
       } else {
         return (com.google.protobuf.ByteString) ref;
       }
     }
     /**
-     * <code>string carRentalCompany = 3;</code>
-     * @param value The carRentalCompany to set.
+     * <code>string carRentalCompanyId = 1;</code>
+     * @param value The carRentalCompanyId to set.
      * @return This builder for chaining.
      */
-    public Builder setCarRentalCompany(
+    public Builder setCarRentalCompanyId(
         java.lang.String value) {
       if (value == null) { throw new NullPointerException(); }
-      carRentalCompany_ = value;
-      bitField0_ |= 0x00000004;
+      carRentalCompanyId_ = value;
+      bitField0_ |= 0x00000001;
       onChanged();
       return this;
     }
     /**
-     * <code>string carRentalCompany = 3;</code>
+     * <code>string carRentalCompanyId = 1;</code>
      * @return This builder for chaining.
      */
-    public Builder clearCarRentalCompany() {
-      carRentalCompany_ = getDefaultInstance().getCarRentalCompany();
-      bitField0_ = (bitField0_ & ~0x00000004);
+    public Builder clearCarRentalCompanyId() {
+      carRentalCompanyId_ = getDefaultInstance().getCarRentalCompanyId();
+      bitField0_ = (bitField0_ & ~0x00000001);
       onChanged();
       return this;
     }
     /**
-     * <code>string carRentalCompany = 3;</code>
-     * @param value The bytes for carRentalCompany to set.
+     * <code>string carRentalCompanyId = 1;</code>
+     * @param value The bytes for carRentalCompanyId to set.
      * @return This builder for chaining.
      */
-    public Builder setCarRentalCompanyBytes(
+    public Builder setCarRentalCompanyIdBytes(
         com.google.protobuf.ByteString value) {
       if (value == null) { throw new NullPointerException(); }
       checkByteStringIsUtf8(value);
-      carRentalCompany_ = value;
-      bitField0_ |= 0x00000004;
+      carRentalCompanyId_ = value;
+      bitField0_ |= 0x00000001;
       onChanged();
       return this;
     }
 
-    private int amount_ ;
+    private java.lang.Object carModelId_ = "";
     /**
-     * <code>uint32 amount = 4;</code>
-     * @return The amount.
+     * <pre>
+     * Format: "brand:model" (ex: "Ferrari:F8")
+     * </pre>
+     *
+     * <code>string carModelId = 2;</code>
+     * @return The carModelId.
      */
-    @java.lang.Override
-    public int getAmount() {
-      return amount_;
+    public java.lang.String getCarModelId() {
+      java.lang.Object ref = carModelId_;
+      if (!(ref instanceof java.lang.String)) {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        carModelId_ = s;
+        return s;
+      } else {
+        return (java.lang.String) ref;
+      }
     }
     /**
-     * <code>uint32 amount = 4;</code>
-     * @param value The amount to set.
+     * <pre>
+     * Format: "brand:model" (ex: "Ferrari:F8")
+     * </pre>
+     *
+     * <code>string carModelId = 2;</code>
+     * @return The bytes for carModelId.
+     */
+    public com.google.protobuf.ByteString
+        getCarModelIdBytes() {
+      java.lang.Object ref = carModelId_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        carModelId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    /**
+     * <pre>
+     * Format: "brand:model" (ex: "Ferrari:F8")
+     * </pre>
+     *
+     * <code>string carModelId = 2;</code>
+     * @param value The carModelId to set.
      * @return This builder for chaining.
      */
-    public Builder setAmount(int value) {
+    public Builder setCarModelId(
+        java.lang.String value) {
+      if (value == null) { throw new NullPointerException(); }
+      carModelId_ = value;
+      bitField0_ |= 0x00000002;
+      onChanged();
+      return this;
+    }
+    /**
+     * <pre>
+     * Format: "brand:model" (ex: "Ferrari:F8")
+     * </pre>
+     *
+     * <code>string carModelId = 2;</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearCarModelId() {
+      carModelId_ = getDefaultInstance().getCarModelId();
+      bitField0_ = (bitField0_ & ~0x00000002);
+      onChanged();
+      return this;
+    }
+    /**
+     * <pre>
+     * Format: "brand:model" (ex: "Ferrari:F8")
+     * </pre>
+     *
+     * <code>string carModelId = 2;</code>
+     * @param value The bytes for carModelId to set.
+     * @return This builder for chaining.
+     */
+    public Builder setCarModelIdBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) { throw new NullPointerException(); }
+      checkByteStringIsUtf8(value);
+      carModelId_ = value;
+      bitField0_ |= 0x00000002;
+      onChanged();
+      return this;
+    }
 
-      amount_ = value;
+    private int bidAmount_ ;
+    /**
+     * <code>uint32 bidAmount = 3;</code>
+     * @return The bidAmount.
+     */
+    @java.lang.Override
+    public int getBidAmount() {
+      return bidAmount_;
+    }
+    /**
+     * <code>uint32 bidAmount = 3;</code>
+     * @param value The bidAmount to set.
+     * @return This builder for chaining.
+     */
+    public Builder setBidAmount(int value) {
+
+      bidAmount_ = value;
+      bitField0_ |= 0x00000004;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>uint32 bidAmount = 3;</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearBidAmount() {
+      bitField0_ = (bitField0_ & ~0x00000004);
+      bidAmount_ = 0;
+      onChanged();
+      return this;
+    }
+
+    private long timestamp_ ;
+    /**
+     * <pre>
+     * Timestamp pour gérer les enchères simultanées
+     * </pre>
+     *
+     * <code>int64 timestamp = 4;</code>
+     * @return The timestamp.
+     */
+    @java.lang.Override
+    public long getTimestamp() {
+      return timestamp_;
+    }
+    /**
+     * <pre>
+     * Timestamp pour gérer les enchères simultanées
+     * </pre>
+     *
+     * <code>int64 timestamp = 4;</code>
+     * @param value The timestamp to set.
+     * @return This builder for chaining.
+     */
+    public Builder setTimestamp(long value) {
+
+      timestamp_ = value;
       bitField0_ |= 0x00000008;
       onChanged();
       return this;
     }
     /**
-     * <code>uint32 amount = 4;</code>
+     * <pre>
+     * Timestamp pour gérer les enchères simultanées
+     * </pre>
+     *
+     * <code>int64 timestamp = 4;</code>
      * @return This builder for chaining.
      */
-    public Builder clearAmount() {
+    public Builder clearTimestamp() {
       bitField0_ = (bitField0_ & ~0x00000008);
-      amount_ = 0;
+      timestamp_ = 0L;
       onChanged();
       return this;
     }

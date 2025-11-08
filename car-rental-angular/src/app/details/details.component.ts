@@ -26,8 +26,7 @@ import {FormControl, FormGroup, ReactiveFormsModule} from '@angular/forms';
       <section class="listing-features">
         <h2 class="section-heading">About this car</h2>
         <ul>
-          <li>Horsepower : {{ cardetail?.horsepower }}</li>
-          <li>Price: {{ cardetail?.price }}</li>
+          <li>Rental price: {{ cardetail?.rentalPrice }} €/day</li>
         </ul>
       </section>
       <section class="listing-apply">

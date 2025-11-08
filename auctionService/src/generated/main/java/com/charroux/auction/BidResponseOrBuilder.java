@@ -8,35 +8,89 @@ public interface BidResponseOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>.com.charroux.Bidding bidding = 1;</code>
-   * @return Whether the bidding field is set.
-   */
-  boolean hasBidding();
-  /**
-   * <code>.com.charroux.Bidding bidding = 1;</code>
-   * @return The bidding.
-   */
-  com.charroux.auction.Bidding getBidding();
-  /**
-   * <code>.com.charroux.Bidding bidding = 1;</code>
-   */
-  com.charroux.auction.BiddingOrBuilder getBiddingOrBuilder();
-
-  /**
-   * <code>bool winning = 2;</code>
+   * <code>bool winning = 1;</code>
    * @return The winning.
    */
   boolean getWinning();
 
   /**
-   * <code>string plateNumber = 3;</code>
+   * <code>string plateNumber = 2;</code>
    * @return The plateNumber.
    */
   java.lang.String getPlateNumber();
   /**
-   * <code>string plateNumber = 3;</code>
+   * <code>string plateNumber = 2;</code>
    * @return The bytes for plateNumber.
    */
   com.google.protobuf.ByteString
       getPlateNumberBytes();
+
+  /**
+   * <pre>
+   * Prix final (soit enchère gagnante, soit lowestPrice si aucune enchère)
+   * </pre>
+   *
+   * <code>uint32 finalPrice = 3;</code>
+   * @return The finalPrice.
+   */
+  int getFinalPrice();
+
+  /**
+   * <pre>
+   * Statut de l'enchère
+   * </pre>
+   *
+   * <code>.com.charroux.AuctionStatus status = 4;</code>
+   * @return The enum numeric value on the wire for status.
+   */
+  int getStatusValue();
+  /**
+   * <pre>
+   * Statut de l'enchère
+   * </pre>
+   *
+   * <code>.com.charroux.AuctionStatus status = 4;</code>
+   * @return The status.
+   */
+  com.charroux.auction.AuctionStatus getStatus();
+
+  /**
+   * <pre>
+   * Temps restant (si ACTIVE)
+   * </pre>
+   *
+   * <code>int32 remainingSeconds = 5;</code>
+   * @return The remainingSeconds.
+   */
+  int getRemainingSeconds();
+
+  /**
+   * <pre>
+   * ID de l'enchérisseur actuel
+   * </pre>
+   *
+   * <code>string currentHighestBidder = 6;</code>
+   * @return The currentHighestBidder.
+   */
+  java.lang.String getCurrentHighestBidder();
+  /**
+   * <pre>
+   * ID de l'enchérisseur actuel
+   * </pre>
+   *
+   * <code>string currentHighestBidder = 6;</code>
+   * @return The bytes for currentHighestBidder.
+   */
+  com.google.protobuf.ByteString
+      getCurrentHighestBidderBytes();
+
+  /**
+   * <pre>
+   * Montant de l'enchère actuelle
+   * </pre>
+   *
+   * <code>uint32 currentHighestBid = 7;</code>
+   * @return The currentHighestBid.
+   */
+  int getCurrentHighestBid();
 }
