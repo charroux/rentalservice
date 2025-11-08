@@ -30,24 +30,4 @@ public interface CarModelOrBuilder extends
    */
   com.google.protobuf.ByteString
       getModelBytes();
-
-  /**
-   * <pre>
-   * Added plateNumber to CarModel message
-   * </pre>
-   *
-   * <code>string plateNumber = 3;</code>
-   * @return The plateNumber.
-   */
-  java.lang.String getPlateNumber();
-  /**
-   * <pre>
-   * Added plateNumber to CarModel message
-   * </pre>
-   *
-   * <code>string plateNumber = 3;</code>
-   * @return The bytes for plateNumber.
-   */
-  com.google.protobuf.ByteString
-      getPlateNumberBytes();
 }

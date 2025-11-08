@@ -2,25 +2,51 @@ package com.charroux.carRental.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import java.util.ArrayList;
+import java.util.Collection;
 
 @Entity
 public class Car {
 
-    String plateNumber;
-    String brand;
-    String model;
-    int price;
-    RentalAgreement rentalAgreement;
-    long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private long id;
+    
+    private String plateNumber;
+    private int price;
+    
+    // Relation ManyToOne vers CarModel (un modèle peut avoir plusieurs voitures)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "car_model_id")
+    private CarModelJPA carModel;
 
+    // Relation OneToOne optionnelle vers BiddingJPA (0 ou 1) - Enchère gagnante
+    @OneToOne(mappedBy = "car", fetch = FetchType.LAZY, optional = true)
+    @JsonIgnore // Pour éviter la sérialisation cyclique
+    private BiddingJPA winningBid;
+
+    // Relation OneToMany vers RentalContract
+    // Une voiture peut avoir plusieurs contrats de location (historique)
+    @OneToMany(mappedBy = "car", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore // Pour éviter la sérialisation cyclique
+    private Collection<RentalContract> rentalContracts = new ArrayList<>();
+
+    // Constructeurs
     public Car() {
     }
 
-    public Car(String plateNumber, String brand, String model, int price) {
+    public Car(String plateNumber, int price) {
         this.plateNumber = plateNumber;
-        this.brand = brand;
-        this.model = model;
         this.price = price;
+    }
+
+    // Getters et Setters
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
     }
 
     public String getPlateNumber() {
@@ -31,22 +57,6 @@ public class Car {
         this.plateNumber = plateNumber;
     }
 
-    public String getBrand() {
-        return brand;
-    }
-
-    public void setBrand(String brand) {
-        this.brand = brand;
-    }
-
-    public String getModel() {
-        return model;
-    }
-
-    public void setModel(String model) {
-        this.model = model;
-    }   
-
     public int getPrice() {
         return price;
     }
@@ -55,34 +65,76 @@ public class Car {
         this.price = price;
     }
 
-    @ManyToOne
-    @JsonIgnore
-    public RentalAgreement getRentalAgreement() {
-        return rentalAgreement;
+    public CarModelJPA getCarModel() {
+        return carModel;
     }
 
-    public void setRentalAgreement(RentalAgreement rentalAgreement) {
-        this.rentalAgreement = rentalAgreement;
+    public void setCarModel(CarModelJPA carModel) {
+        this.carModel = carModel;
     }
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    public long getId() {
-        return id;
+    public BiddingJPA getWinningBid() {
+        return winningBid;
     }
 
-    public void setId(long id) {
-        this.id = id;
+    public void setWinningBid(BiddingJPA winningBid) {
+        this.winningBid = winningBid;
+        if (winningBid != null) {
+            winningBid.setCar(this);
+        }
+    }
+
+    public Collection<RentalContract> getRentalContracts() {
+        return rentalContracts;
+    }
+
+    public void setRentalContracts(Collection<RentalContract> rentalContracts) {
+        this.rentalContracts = rentalContracts;
+    }
+
+    // Méthodes utilitaires pour gérer la relation bidirectionnelle
+    public void addRentalContract(RentalContract contract) {
+        rentalContracts.add(contract);
+        contract.setCar(this);
+    }
+
+    public void removeRentalContract(RentalContract contract) {
+        rentalContracts.remove(contract);
+        contract.setCar(null);
+    }
+
+    public RentalContract getCurrentActiveContract() {
+        return rentalContracts.stream()
+                .filter(contract -> "ACTIVE".equals(contract.getStatus()))
+                .findFirst()
+                .orElse(null);
+    }
+
+    public boolean isCurrentlyRented() {
+        return getCurrentActiveContract() != null;
+    }
+
+    // Méthodes utilitaires
+    // Méthodes utilitaires pour la relation bidirectionnelle avec BiddingJPA
+    public boolean hasWinningBid() {
+        return winningBid != null;
+    }
+
+    public void clearWinningBid() {
+        if (winningBid != null) {
+            winningBid.setCar(null);
+            winningBid = null;
+        }
     }
 
     @Override
     public String toString() {
         return "Car{" +
-                "plateNumber='" + plateNumber + '\'' +
-                ", brand='" + brand + '\'' +
-                ", model='" + model + '\'' +
+                "id=" + id +
+                ", plateNumber='" + plateNumber + '\'' +
                 ", price=" + price +
-                ", id=" + id +
+                ", contractsCount=" + rentalContracts.size() +
+                ", hasWinningBid=" + hasWinningBid() +
                 '}';
     }
 }

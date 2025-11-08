@@ -1,7 +1,7 @@
 package com.charroux.carRental.web;
 
 import com.charroux.carRental.entity.Car;
-import com.charroux.carRental.entity.RentalAgreement;
+import com.charroux.carRental.entity.CarModelJPA;
 import com.charroux.carRental.service.RentalService;
 
 import org.slf4j.Logger;
@@ -9,9 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-//import io.grpc.carservice.CarRentalServiceGrpc;
-//import io.grpc.carservice.Invoice;
-//import io.grpc.carservice.Car;
 
 import java.util.Collection;
 import java.util.List;
@@ -29,50 +26,35 @@ public class CarRentalRestService {
     }
 
     @GetMapping("/cars")
-    public List<Car> getListOfCars(){
+    public List<CarModelJPA> getListOfCars(){
         logger.info("Fetching list of cars to be rented");      
         return rentalService.carsToBeRented();
     }
-
-    @GetMapping("/cars/{plateNumber}")
-    public Car getCarByPlateNumber(@PathVariable("plateNumber") String plateNumber) throws CarNotFoundException {
-        return rentalService.getCar(plateNumber);
+    
+    @GetMapping("/debug/reload-cars")
+    public ResponseEntity<String> reloadCarsFromAuctionService(){
+        logger.info("Rechargement manuel des modèles de voitures depuis le service d'enchères");
+        try {
+            List<CarModelJPA> cars = rentalService.carsToBeRented();
+            return ResponseEntity.ok("Nombre de modèles actuellement en base : " + cars.size());
+        } catch (Exception e) {
+            logger.error("Erreur lors de la consultation : {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Erreur : " + e.getMessage());
+        }
     }
 
-    @PostMapping("/carsForAgreement")
-    public Collection<Car> carsForAgreement(@RequestBody RentalAgreement rentalAgreement) {
-        return rentalService.getCars(rentalAgreement);
-    }
-
-   /** @PostMapping("/carsForAgreements")
-    public Map<RentalAgreement, Collection<Car>> carsForAgreements(@RequestBody List<RentalAgreement> agreements) {
-        return agreements.stream()
-                .collect(
-                        Collectors.toMap(
-                                Function.identity(),
-                                rentalAgreement ->
-                                        rentalService.getCars(rentalAgreement)));
-    }*/
-
-   /**  @PostMapping("/cars")
-    public ResponseEntity<RentCarsResponse>  rentCars(@RequestBody RentCarCommand rentCarsRequest) throws Exception{
-        RentalAgreement rentalAgreement = rentalService.rent(
-                rentCarsRequest.getCustomerId(),
-                rentCarsRequest.getNumberOfCars());
-        return new ResponseEntity<>(
-                new RentCarsResponse(
-                        rentalAgreement.getCustomerId(), rentalAgreement.getId(), rentalAgreement.getState().name()),
-                HttpStatus.OK);
-    }*/
-
-    @GetMapping("/agreements")
-    public List<RentalAgreement> getAgreements(){
-        return rentalService.getAgreements();
-    }
-
-    @GetMapping("/agreement")
-    public RentalAgreement getAgreement(@RequestParam(value = "customerId", required = true) int customerId) throws CustomerNotFoundException {
-        return rentalService.getAgreement(customerId);
+    @PostMapping("/debug/force-reload")
+    public ResponseEntity<String> forceReloadFromGrpc(){
+        logger.info("Rechargement forcé depuis le service gRPC");
+        try {
+            // Ici on peut ajouter une méthode publique pour forcer le rechargement
+            return ResponseEntity.ok("Fonction de rechargement forcé - à implémenter si nécessaire");
+        } catch (Exception e) {
+            logger.error("Erreur lors du rechargement forcé : {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Erreur : " + e.getMessage());
+        }
     }
 
     @PostMapping("/cars/{plateNumber}")
@@ -84,29 +66,12 @@ public class CarRentalRestService {
             @RequestParam(value = "beginDate", required = true) String beginDate,
             @RequestParam(value = "endDate", required = true) String endDate) {
 
-        try {
-            // Verify car exists
-            Car car = rentalService.getCar(plateNumber);
-        } catch (CarNotFoundException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-
-        // For now, just log the application details and acknowledge reception.
-        System.out.println("Received rental application for plate=" + plateNumber + ", firstName=" + firstName + ", lastName=" + lastName + ", email=" + email + ", begin=" + beginDate + ", end=" + endDate);
-
+    
         // TODO: map these params to a domain object and create a RentalAgreement or forward to the agreement service.
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    @GetMapping("/ws/broadcast")
-    public ResponseEntity<Void> broadcastAvailablePlates() {
-        try {
-            rentalService.broadcastAvailableCars();
-            return new ResponseEntity<>(HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
+
 
 }
 

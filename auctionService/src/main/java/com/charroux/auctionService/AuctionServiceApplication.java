@@ -1,13 +1,13 @@
-package com.charroux.agreementService;
+package com.charroux.auctionService;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class AgreementServiceApplication {
+public class AuctionServiceApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(AgreementServiceApplication.class, args);
+		SpringApplication.run(AuctionServiceApplication.class, args);
 	}
 
 }

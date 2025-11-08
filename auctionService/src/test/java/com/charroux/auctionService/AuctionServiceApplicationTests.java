@@ -1,10 +1,10 @@
-package com.charroux.agreementService;
+package com.charroux.auctionService;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class AgreementServiceApplicationTests {
+class AuctionServiceApplicationTests {
 
 	@Test
 	void contextLoads() {

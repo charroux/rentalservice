@@ -3,8 +3,8 @@
 
 package com.charroux.auction;
 
-public interface CarToBeRentedOrBuilder extends
-    // @@protoc_insertion_point(interface_extends:com.charroux.CarToBeRented)
+public interface CarModelsToBeRentedOrBuilder extends
+    // @@protoc_insertion_point(interface_extends:com.charroux.CarModelsToBeRented)
     com.google.protobuf.MessageOrBuilder {
 
   /**

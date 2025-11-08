@@ -8,37 +8,49 @@ public interface BiddingOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>.com.charroux.CarModel car = 1;</code>
+   * <code>.google.protobuf.Timestamp timestamp = 1;</code>
+   * @return Whether the timestamp field is set.
+   */
+  boolean hasTimestamp();
+  /**
+   * <code>.google.protobuf.Timestamp timestamp = 1;</code>
+   * @return The timestamp.
+   */
+  com.google.protobuf.Timestamp getTimestamp();
+  /**
+   * <code>.google.protobuf.Timestamp timestamp = 1;</code>
+   */
+  com.google.protobuf.TimestampOrBuilder getTimestampOrBuilder();
+
+  /**
+   * <code>.com.charroux.CarModel car = 2;</code>
    * @return Whether the car field is set.
    */
   boolean hasCar();
   /**
-   * <code>.com.charroux.CarModel car = 1;</code>
+   * <code>.com.charroux.CarModel car = 2;</code>
    * @return The car.
    */
   com.charroux.auction.CarModel getCar();
   /**
-   * <code>.com.charroux.CarModel car = 1;</code>
+   * <code>.com.charroux.CarModel car = 2;</code>
    */
   com.charroux.auction.CarModelOrBuilder getCarOrBuilder();
 
   /**
-   * <code>.com.charroux.Bidder bidder = 2;</code>
-   * @return Whether the bidder field is set.
+   * <code>string carRentalCompany = 3;</code>
+   * @return The carRentalCompany.
    */
-  boolean hasBidder();
+  java.lang.String getCarRentalCompany();
   /**
-   * <code>.com.charroux.Bidder bidder = 2;</code>
-   * @return The bidder.
+   * <code>string carRentalCompany = 3;</code>
+   * @return The bytes for carRentalCompany.
    */
-  com.charroux.auction.Bidder getBidder();
-  /**
-   * <code>.com.charroux.Bidder bidder = 2;</code>
-   */
-  com.charroux.auction.BidderOrBuilder getBidderOrBuilder();
+  com.google.protobuf.ByteString
+      getCarRentalCompanyBytes();
 
   /**
-   * <code>uint32 amount = 3;</code>
+   * <code>uint32 amount = 4;</code>
    * @return The amount.
    */
   int getAmount();

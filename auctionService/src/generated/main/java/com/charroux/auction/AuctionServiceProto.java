@@ -15,16 +15,6 @@ public final class AuctionServiceProto {
         (com.google.protobuf.ExtensionRegistryLite) registry);
   }
   static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_com_charroux_CreditApplication_descriptor;
-  static final 
-    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_com_charroux_CreditApplication_fieldAccessorTable;
-  static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_com_charroux_Auction_descriptor;
-  static final 
-    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_com_charroux_Auction_fieldAccessorTable;
-  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_com_charroux_Bidding_descriptor;
   static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
@@ -40,15 +30,10 @@ public final class AuctionServiceProto {
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_com_charroux_CarModel_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_com_charroux_Bidder_descriptor;
+    internal_static_com_charroux_CarModelsToBeRented_descriptor;
   static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_com_charroux_Bidder_fieldAccessorTable;
-  static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_com_charroux_CarToBeRented_descriptor;
-  static final 
-    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_com_charroux_CarToBeRented_fieldAccessorTable;
+      internal_static_com_charroux_CarModelsToBeRented_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -59,74 +44,55 @@ public final class AuctionServiceProto {
   static {
     java.lang.String[] descriptorData = {
       "\n\024auctionService.proto\022\014com.charroux\032\033go" +
-      "ogle/protobuf/empty.proto\"V\n\021CreditAppli" +
-      "cation\022\021\n\tfirstName\030\001 \001(\t\022\020\n\010lastName\030\002 " +
-      "\001(\t\022\r\n\005email\030\003 \001(\t\022\r\n\005price\030\004 \001(\r\"&\n\007Auc" +
-      "tion\022\033\n\023creditReservedEvent\030\001 \001(\t\"d\n\007Bid" +
-      "ding\022#\n\003car\030\001 \001(\0132\026.com.charroux.CarMode" +
-      "l\022$\n\006bidder\030\002 \001(\0132\024.com.charroux.Bidder\022" +
-      "\016\n\006amount\030\003 \001(\r\"J\n\013BidResponse\022\017\n\007awarde" +
-      "d\030\001 \001(\010\022\023\n\013plateNumber\030\002 \001(\t\022\025\n\rlatestBi" +
-      "dding\030\003 \001(\r\"=\n\010CarModel\022\r\n\005brand\030\001 \001(\t\022\r" +
-      "\n\005model\030\002 \001(\t\022\023\n\013plateNumber\030\003 \001(\t\"\024\n\006Bi" +
-      "dder\022\n\n\002id\030\001 \001(\r\"5\n\rCarToBeRented\022$\n\004car" +
-      "s\030\001 \003(\0132\026.com.charroux.CarModel2\343\001\n\016Auct" +
-      "ionService\022F\n\010RentCars\022\037.com.charroux.Cr" +
-      "editApplication\032\025.com.charroux.Auction(\001" +
-      "0\001\022B\n\nCarAuction\022\025.com.charroux.Bidding\032" +
-      "\031.com.charroux.BidResponse(\0010\001\022E\n\016CarsTo" +
-      "BeRented\022\026.google.protobuf.Empty\032\033.com.c" +
-      "harroux.CarToBeRentedB-\n\024com.charroux.au" +
-      "ctionB\023AuctionServiceProtoP\001b\006proto3"
+      "ogle/protobuf/empty.proto\032\037google/protob" +
+      "uf/timestamp.proto\"\207\001\n\007Bidding\022-\n\ttimest" +
+      "amp\030\001 \001(\0132\032.google.protobuf.Timestamp\022#\n" +
+      "\003car\030\002 \001(\0132\026.com.charroux.CarModel\022\030\n\020ca" +
+      "rRentalCompany\030\003 \001(\t\022\016\n\006amount\030\004 \001(\r\"[\n\013" +
+      "BidResponse\022&\n\007bidding\030\001 \001(\0132\025.com.charr" +
+      "oux.Bidding\022\017\n\007winning\030\002 \001(\010\022\023\n\013plateNum" +
+      "ber\030\003 \001(\t\"(\n\010CarModel\022\r\n\005brand\030\001 \001(\t\022\r\n\005" +
+      "model\030\002 \001(\t\";\n\023CarModelsToBeRented\022$\n\004ca" +
+      "rs\030\001 \003(\0132\026.com.charroux.CarModel2\234\001\n\016Auc" +
+      "tionService\022B\n\nCarAuction\022\025.com.charroux" +
+      ".Bidding\032\031.com.charroux.BidResponse(\0010\001\022" +
+      "F\n\tCarModels\022\026.google.protobuf.Empty\032!.c" +
+      "om.charroux.CarModelsToBeRentedB-\n\024com.c" +
+      "harroux.auctionB\023AuctionServiceProtoP\001b\006" +
+      "proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
         new com.google.protobuf.Descriptors.FileDescriptor[] {
           com.google.protobuf.EmptyProto.getDescriptor(),
+          com.google.protobuf.TimestampProto.getDescriptor(),
         });
-    internal_static_com_charroux_CreditApplication_descriptor =
-      getDescriptor().getMessageTypes().get(0);
-    internal_static_com_charroux_CreditApplication_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_com_charroux_CreditApplication_descriptor,
-        new java.lang.String[] { "FirstName", "LastName", "Email", "Price", });
-    internal_static_com_charroux_Auction_descriptor =
-      getDescriptor().getMessageTypes().get(1);
-    internal_static_com_charroux_Auction_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_com_charroux_Auction_descriptor,
-        new java.lang.String[] { "CreditReservedEvent", });
     internal_static_com_charroux_Bidding_descriptor =
-      getDescriptor().getMessageTypes().get(2);
+      getDescriptor().getMessageTypes().get(0);
     internal_static_com_charroux_Bidding_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_com_charroux_Bidding_descriptor,
-        new java.lang.String[] { "Car", "Bidder", "Amount", });
+        new java.lang.String[] { "Timestamp", "Car", "CarRentalCompany", "Amount", });
     internal_static_com_charroux_BidResponse_descriptor =
-      getDescriptor().getMessageTypes().get(3);
+      getDescriptor().getMessageTypes().get(1);
     internal_static_com_charroux_BidResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_com_charroux_BidResponse_descriptor,
-        new java.lang.String[] { "Awarded", "PlateNumber", "LatestBidding", });
+        new java.lang.String[] { "Bidding", "Winning", "PlateNumber", });
     internal_static_com_charroux_CarModel_descriptor =
-      getDescriptor().getMessageTypes().get(4);
+      getDescriptor().getMessageTypes().get(2);
     internal_static_com_charroux_CarModel_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_com_charroux_CarModel_descriptor,
-        new java.lang.String[] { "Brand", "Model", "PlateNumber", });
-    internal_static_com_charroux_Bidder_descriptor =
-      getDescriptor().getMessageTypes().get(5);
-    internal_static_com_charroux_Bidder_fieldAccessorTable = new
+        new java.lang.String[] { "Brand", "Model", });
+    internal_static_com_charroux_CarModelsToBeRented_descriptor =
+      getDescriptor().getMessageTypes().get(3);
+    internal_static_com_charroux_CarModelsToBeRented_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_com_charroux_Bidder_descriptor,
-        new java.lang.String[] { "Id", });
-    internal_static_com_charroux_CarToBeRented_descriptor =
-      getDescriptor().getMessageTypes().get(6);
-    internal_static_com_charroux_CarToBeRented_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_com_charroux_CarToBeRented_descriptor,
+        internal_static_com_charroux_CarModelsToBeRented_descriptor,
         new java.lang.String[] { "Cars", });
     com.google.protobuf.EmptyProto.getDescriptor();
+    com.google.protobuf.TimestampProto.getDescriptor();
   }
 
   // @@protoc_insertion_point(outer_class_scope)

@@ -4,18 +4,18 @@
 package com.charroux.auction;
 
 /**
- * Protobuf type {@code com.charroux.CarToBeRented}
+ * Protobuf type {@code com.charroux.CarModelsToBeRented}
  */
-public final class CarToBeRented extends
+public final class CarModelsToBeRented extends
     com.google.protobuf.GeneratedMessageV3 implements
-    // @@protoc_insertion_point(message_implements:com.charroux.CarToBeRented)
-    CarToBeRentedOrBuilder {
+    // @@protoc_insertion_point(message_implements:com.charroux.CarModelsToBeRented)
+    CarModelsToBeRentedOrBuilder {
 private static final long serialVersionUID = 0L;
-  // Use CarToBeRented.newBuilder() to construct.
-  private CarToBeRented(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+  // Use CarModelsToBeRented.newBuilder() to construct.
+  private CarModelsToBeRented(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
     super(builder);
   }
-  private CarToBeRented() {
+  private CarModelsToBeRented() {
     cars_ = java.util.Collections.emptyList();
   }
 
@@ -23,20 +23,20 @@ private static final long serialVersionUID = 0L;
   @SuppressWarnings({"unused"})
   protected java.lang.Object newInstance(
       UnusedPrivateParameter unused) {
-    return new CarToBeRented();
+    return new CarModelsToBeRented();
   }
 
   public static final com.google.protobuf.Descriptors.Descriptor
       getDescriptor() {
-    return com.charroux.auction.AuctionServiceProto.internal_static_com_charroux_CarToBeRented_descriptor;
+    return com.charroux.auction.AuctionServiceProto.internal_static_com_charroux_CarModelsToBeRented_descriptor;
   }
 
   @java.lang.Override
   protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internalGetFieldAccessorTable() {
-    return com.charroux.auction.AuctionServiceProto.internal_static_com_charroux_CarToBeRented_fieldAccessorTable
+    return com.charroux.auction.AuctionServiceProto.internal_static_com_charroux_CarModelsToBeRented_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
-            com.charroux.auction.CarToBeRented.class, com.charroux.auction.CarToBeRented.Builder.class);
+            com.charroux.auction.CarModelsToBeRented.class, com.charroux.auction.CarModelsToBeRented.Builder.class);
   }
 
   public static final int CARS_FIELD_NUMBER = 1;
@@ -120,10 +120,10 @@ private static final long serialVersionUID = 0L;
     if (obj == this) {
      return true;
     }
-    if (!(obj instanceof com.charroux.auction.CarToBeRented)) {
+    if (!(obj instanceof com.charroux.auction.CarModelsToBeRented)) {
       return super.equals(obj);
     }
-    com.charroux.auction.CarToBeRented other = (com.charroux.auction.CarToBeRented) obj;
+    com.charroux.auction.CarModelsToBeRented other = (com.charroux.auction.CarModelsToBeRented) obj;
 
     if (!getCarsList()
         .equals(other.getCarsList())) return false;
@@ -147,44 +147,44 @@ private static final long serialVersionUID = 0L;
     return hash;
   }
 
-  public static com.charroux.auction.CarToBeRented parseFrom(
+  public static com.charroux.auction.CarModelsToBeRented parseFrom(
       java.nio.ByteBuffer data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static com.charroux.auction.CarToBeRented parseFrom(
+  public static com.charroux.auction.CarModelsToBeRented parseFrom(
       java.nio.ByteBuffer data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static com.charroux.auction.CarToBeRented parseFrom(
+  public static com.charroux.auction.CarModelsToBeRented parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static com.charroux.auction.CarToBeRented parseFrom(
+  public static com.charroux.auction.CarModelsToBeRented parseFrom(
       com.google.protobuf.ByteString data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static com.charroux.auction.CarToBeRented parseFrom(byte[] data)
+  public static com.charroux.auction.CarModelsToBeRented parseFrom(byte[] data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static com.charroux.auction.CarToBeRented parseFrom(
+  public static com.charroux.auction.CarModelsToBeRented parseFrom(
       byte[] data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static com.charroux.auction.CarToBeRented parseFrom(java.io.InputStream input)
+  public static com.charroux.auction.CarModelsToBeRented parseFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
-  public static com.charroux.auction.CarToBeRented parseFrom(
+  public static com.charroux.auction.CarModelsToBeRented parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
@@ -192,26 +192,26 @@ private static final long serialVersionUID = 0L;
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
-  public static com.charroux.auction.CarToBeRented parseDelimitedFrom(java.io.InputStream input)
+  public static com.charroux.auction.CarModelsToBeRented parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input);
   }
 
-  public static com.charroux.auction.CarToBeRented parseDelimitedFrom(
+  public static com.charroux.auction.CarModelsToBeRented parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
-  public static com.charroux.auction.CarToBeRented parseFrom(
+  public static com.charroux.auction.CarModelsToBeRented parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
-  public static com.charroux.auction.CarToBeRented parseFrom(
+  public static com.charroux.auction.CarModelsToBeRented parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
@@ -224,7 +224,7 @@ private static final long serialVersionUID = 0L;
   public static Builder newBuilder() {
     return DEFAULT_INSTANCE.toBuilder();
   }
-  public static Builder newBuilder(com.charroux.auction.CarToBeRented prototype) {
+  public static Builder newBuilder(com.charroux.auction.CarModelsToBeRented prototype) {
     return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
   }
   @java.lang.Override
@@ -240,26 +240,26 @@ private static final long serialVersionUID = 0L;
     return builder;
   }
   /**
-   * Protobuf type {@code com.charroux.CarToBeRented}
+   * Protobuf type {@code com.charroux.CarModelsToBeRented}
    */
   public static final class Builder extends
       com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
-      // @@protoc_insertion_point(builder_implements:com.charroux.CarToBeRented)
-      com.charroux.auction.CarToBeRentedOrBuilder {
+      // @@protoc_insertion_point(builder_implements:com.charroux.CarModelsToBeRented)
+      com.charroux.auction.CarModelsToBeRentedOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return com.charroux.auction.AuctionServiceProto.internal_static_com_charroux_CarToBeRented_descriptor;
+      return com.charroux.auction.AuctionServiceProto.internal_static_com_charroux_CarModelsToBeRented_descriptor;
     }
 
     @java.lang.Override
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return com.charroux.auction.AuctionServiceProto.internal_static_com_charroux_CarToBeRented_fieldAccessorTable
+      return com.charroux.auction.AuctionServiceProto.internal_static_com_charroux_CarModelsToBeRented_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              com.charroux.auction.CarToBeRented.class, com.charroux.auction.CarToBeRented.Builder.class);
+              com.charroux.auction.CarModelsToBeRented.class, com.charroux.auction.CarModelsToBeRented.Builder.class);
     }
 
-    // Construct using com.charroux.auction.CarToBeRented.newBuilder()
+    // Construct using com.charroux.auction.CarModelsToBeRented.newBuilder()
     private Builder() {
 
     }
@@ -286,17 +286,17 @@ private static final long serialVersionUID = 0L;
     @java.lang.Override
     public com.google.protobuf.Descriptors.Descriptor
         getDescriptorForType() {
-      return com.charroux.auction.AuctionServiceProto.internal_static_com_charroux_CarToBeRented_descriptor;
+      return com.charroux.auction.AuctionServiceProto.internal_static_com_charroux_CarModelsToBeRented_descriptor;
     }
 
     @java.lang.Override
-    public com.charroux.auction.CarToBeRented getDefaultInstanceForType() {
-      return com.charroux.auction.CarToBeRented.getDefaultInstance();
+    public com.charroux.auction.CarModelsToBeRented getDefaultInstanceForType() {
+      return com.charroux.auction.CarModelsToBeRented.getDefaultInstance();
     }
 
     @java.lang.Override
-    public com.charroux.auction.CarToBeRented build() {
-      com.charroux.auction.CarToBeRented result = buildPartial();
+    public com.charroux.auction.CarModelsToBeRented build() {
+      com.charroux.auction.CarModelsToBeRented result = buildPartial();
       if (!result.isInitialized()) {
         throw newUninitializedMessageException(result);
       }
@@ -304,15 +304,15 @@ private static final long serialVersionUID = 0L;
     }
 
     @java.lang.Override
-    public com.charroux.auction.CarToBeRented buildPartial() {
-      com.charroux.auction.CarToBeRented result = new com.charroux.auction.CarToBeRented(this);
+    public com.charroux.auction.CarModelsToBeRented buildPartial() {
+      com.charroux.auction.CarModelsToBeRented result = new com.charroux.auction.CarModelsToBeRented(this);
       buildPartialRepeatedFields(result);
       if (bitField0_ != 0) { buildPartial0(result); }
       onBuilt();
       return result;
     }
 
-    private void buildPartialRepeatedFields(com.charroux.auction.CarToBeRented result) {
+    private void buildPartialRepeatedFields(com.charroux.auction.CarModelsToBeRented result) {
       if (carsBuilder_ == null) {
         if (((bitField0_ & 0x00000001) != 0)) {
           cars_ = java.util.Collections.unmodifiableList(cars_);
@@ -324,7 +324,7 @@ private static final long serialVersionUID = 0L;
       }
     }
 
-    private void buildPartial0(com.charroux.auction.CarToBeRented result) {
+    private void buildPartial0(com.charroux.auction.CarModelsToBeRented result) {
       int from_bitField0_ = bitField0_;
     }
 
@@ -362,16 +362,16 @@ private static final long serialVersionUID = 0L;
     }
     @java.lang.Override
     public Builder mergeFrom(com.google.protobuf.Message other) {
-      if (other instanceof com.charroux.auction.CarToBeRented) {
-        return mergeFrom((com.charroux.auction.CarToBeRented)other);
+      if (other instanceof com.charroux.auction.CarModelsToBeRented) {
+        return mergeFrom((com.charroux.auction.CarModelsToBeRented)other);
       } else {
         super.mergeFrom(other);
         return this;
       }
     }
 
-    public Builder mergeFrom(com.charroux.auction.CarToBeRented other) {
-      if (other == com.charroux.auction.CarToBeRented.getDefaultInstance()) return this;
+    public Builder mergeFrom(com.charroux.auction.CarModelsToBeRented other) {
+      if (other == com.charroux.auction.CarModelsToBeRented.getDefaultInstance()) return this;
       if (carsBuilder_ == null) {
         if (!other.cars_.isEmpty()) {
           if (cars_.isEmpty()) {
@@ -706,23 +706,23 @@ private static final long serialVersionUID = 0L;
     }
 
 
-    // @@protoc_insertion_point(builder_scope:com.charroux.CarToBeRented)
+    // @@protoc_insertion_point(builder_scope:com.charroux.CarModelsToBeRented)
   }
 
-  // @@protoc_insertion_point(class_scope:com.charroux.CarToBeRented)
-  private static final com.charroux.auction.CarToBeRented DEFAULT_INSTANCE;
+  // @@protoc_insertion_point(class_scope:com.charroux.CarModelsToBeRented)
+  private static final com.charroux.auction.CarModelsToBeRented DEFAULT_INSTANCE;
   static {
-    DEFAULT_INSTANCE = new com.charroux.auction.CarToBeRented();
+    DEFAULT_INSTANCE = new com.charroux.auction.CarModelsToBeRented();
   }
 
-  public static com.charroux.auction.CarToBeRented getDefaultInstance() {
+  public static com.charroux.auction.CarModelsToBeRented getDefaultInstance() {
     return DEFAULT_INSTANCE;
   }
 
-  private static final com.google.protobuf.Parser<CarToBeRented>
-      PARSER = new com.google.protobuf.AbstractParser<CarToBeRented>() {
+  private static final com.google.protobuf.Parser<CarModelsToBeRented>
+      PARSER = new com.google.protobuf.AbstractParser<CarModelsToBeRented>() {
     @java.lang.Override
-    public CarToBeRented parsePartialFrom(
+    public CarModelsToBeRented parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -741,17 +741,17 @@ private static final long serialVersionUID = 0L;
     }
   };
 
-  public static com.google.protobuf.Parser<CarToBeRented> parser() {
+  public static com.google.protobuf.Parser<CarModelsToBeRented> parser() {
     return PARSER;
   }
 
   @java.lang.Override
-  public com.google.protobuf.Parser<CarToBeRented> getParserForType() {
+  public com.google.protobuf.Parser<CarModelsToBeRented> getParserForType() {
     return PARSER;
   }
 
   @java.lang.Override
-  public com.charroux.auction.CarToBeRented getDefaultInstanceForType() {
+  public com.charroux.auction.CarModelsToBeRented getDefaultInstanceForType() {
     return DEFAULT_INSTANCE;
   }
 

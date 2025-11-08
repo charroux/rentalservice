@@ -36,8 +36,8 @@ services:
       SPRING_DATASOURCE_USERNAME: "${POSTGRES_USER}"
       SPRING_DATASOURCE_PASSWORD: "${POSTGRES_PASSWORD}"
       # gRPC service configuration
-      CUSTOMER_SERVICE_HOST: "auction-service"
-      CUSTOMER_SERVICE_PORT: "9090"
+      AUCTION_SERVICE_HOST: "auction-service"
+      AUCTION_SERVICE_PORT: "9090"
     depends_on:
       postgres:
         condition: service_healthy

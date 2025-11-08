@@ -18,7 +18,6 @@ private static final long serialVersionUID = 0L;
   private CarModel() {
     brand_ = "";
     model_ = "";
-    plateNumber_ = "";
   }
 
   @java.lang.Override
@@ -119,53 +118,6 @@ private static final long serialVersionUID = 0L;
     }
   }
 
-  public static final int PLATENUMBER_FIELD_NUMBER = 3;
-  @SuppressWarnings("serial")
-  private volatile java.lang.Object plateNumber_ = "";
-  /**
-   * <pre>
-   * Added plateNumber to CarModel message
-   * </pre>
-   *
-   * <code>string plateNumber = 3;</code>
-   * @return The plateNumber.
-   */
-  @java.lang.Override
-  public java.lang.String getPlateNumber() {
-    java.lang.Object ref = plateNumber_;
-    if (ref instanceof java.lang.String) {
-      return (java.lang.String) ref;
-    } else {
-      com.google.protobuf.ByteString bs = 
-          (com.google.protobuf.ByteString) ref;
-      java.lang.String s = bs.toStringUtf8();
-      plateNumber_ = s;
-      return s;
-    }
-  }
-  /**
-   * <pre>
-   * Added plateNumber to CarModel message
-   * </pre>
-   *
-   * <code>string plateNumber = 3;</code>
-   * @return The bytes for plateNumber.
-   */
-  @java.lang.Override
-  public com.google.protobuf.ByteString
-      getPlateNumberBytes() {
-    java.lang.Object ref = plateNumber_;
-    if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
-          com.google.protobuf.ByteString.copyFromUtf8(
-              (java.lang.String) ref);
-      plateNumber_ = b;
-      return b;
-    } else {
-      return (com.google.protobuf.ByteString) ref;
-    }
-  }
-
   private byte memoizedIsInitialized = -1;
   @java.lang.Override
   public final boolean isInitialized() {
@@ -186,9 +138,6 @@ private static final long serialVersionUID = 0L;
     if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(model_)) {
       com.google.protobuf.GeneratedMessageV3.writeString(output, 2, model_);
     }
-    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(plateNumber_)) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 3, plateNumber_);
-    }
     getUnknownFields().writeTo(output);
   }
 
@@ -203,9 +152,6 @@ private static final long serialVersionUID = 0L;
     }
     if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(model_)) {
       size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, model_);
-    }
-    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(plateNumber_)) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, plateNumber_);
     }
     size += getUnknownFields().getSerializedSize();
     memoizedSize = size;
@@ -226,8 +172,6 @@ private static final long serialVersionUID = 0L;
         .equals(other.getBrand())) return false;
     if (!getModel()
         .equals(other.getModel())) return false;
-    if (!getPlateNumber()
-        .equals(other.getPlateNumber())) return false;
     if (!getUnknownFields().equals(other.getUnknownFields())) return false;
     return true;
   }
@@ -243,8 +187,6 @@ private static final long serialVersionUID = 0L;
     hash = (53 * hash) + getBrand().hashCode();
     hash = (37 * hash) + MODEL_FIELD_NUMBER;
     hash = (53 * hash) + getModel().hashCode();
-    hash = (37 * hash) + PLATENUMBER_FIELD_NUMBER;
-    hash = (53 * hash) + getPlateNumber().hashCode();
     hash = (29 * hash) + getUnknownFields().hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -378,7 +320,6 @@ private static final long serialVersionUID = 0L;
       bitField0_ = 0;
       brand_ = "";
       model_ = "";
-      plateNumber_ = "";
       return this;
     }
 
@@ -417,9 +358,6 @@ private static final long serialVersionUID = 0L;
       }
       if (((from_bitField0_ & 0x00000002) != 0)) {
         result.model_ = model_;
-      }
-      if (((from_bitField0_ & 0x00000004) != 0)) {
-        result.plateNumber_ = plateNumber_;
       }
     }
 
@@ -477,11 +415,6 @@ private static final long serialVersionUID = 0L;
         bitField0_ |= 0x00000002;
         onChanged();
       }
-      if (!other.getPlateNumber().isEmpty()) {
-        plateNumber_ = other.plateNumber_;
-        bitField0_ |= 0x00000004;
-        onChanged();
-      }
       this.mergeUnknownFields(other.getUnknownFields());
       onChanged();
       return this;
@@ -518,11 +451,6 @@ private static final long serialVersionUID = 0L;
               bitField0_ |= 0x00000002;
               break;
             } // case 18
-            case 26: {
-              plateNumber_ = input.readStringRequireUtf8();
-              bitField0_ |= 0x00000004;
-              break;
-            } // case 26
             default: {
               if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                 done = true; // was an endgroup tag
@@ -680,98 +608,6 @@ private static final long serialVersionUID = 0L;
       checkByteStringIsUtf8(value);
       model_ = value;
       bitField0_ |= 0x00000002;
-      onChanged();
-      return this;
-    }
-
-    private java.lang.Object plateNumber_ = "";
-    /**
-     * <pre>
-     * Added plateNumber to CarModel message
-     * </pre>
-     *
-     * <code>string plateNumber = 3;</code>
-     * @return The plateNumber.
-     */
-    public java.lang.String getPlateNumber() {
-      java.lang.Object ref = plateNumber_;
-      if (!(ref instanceof java.lang.String)) {
-        com.google.protobuf.ByteString bs =
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        plateNumber_ = s;
-        return s;
-      } else {
-        return (java.lang.String) ref;
-      }
-    }
-    /**
-     * <pre>
-     * Added plateNumber to CarModel message
-     * </pre>
-     *
-     * <code>string plateNumber = 3;</code>
-     * @return The bytes for plateNumber.
-     */
-    public com.google.protobuf.ByteString
-        getPlateNumberBytes() {
-      java.lang.Object ref = plateNumber_;
-      if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        plateNumber_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
-    }
-    /**
-     * <pre>
-     * Added plateNumber to CarModel message
-     * </pre>
-     *
-     * <code>string plateNumber = 3;</code>
-     * @param value The plateNumber to set.
-     * @return This builder for chaining.
-     */
-    public Builder setPlateNumber(
-        java.lang.String value) {
-      if (value == null) { throw new NullPointerException(); }
-      plateNumber_ = value;
-      bitField0_ |= 0x00000004;
-      onChanged();
-      return this;
-    }
-    /**
-     * <pre>
-     * Added plateNumber to CarModel message
-     * </pre>
-     *
-     * <code>string plateNumber = 3;</code>
-     * @return This builder for chaining.
-     */
-    public Builder clearPlateNumber() {
-      plateNumber_ = getDefaultInstance().getPlateNumber();
-      bitField0_ = (bitField0_ & ~0x00000004);
-      onChanged();
-      return this;
-    }
-    /**
-     * <pre>
-     * Added plateNumber to CarModel message
-     * </pre>
-     *
-     * <code>string plateNumber = 3;</code>
-     * @param value The bytes for plateNumber to set.
-     * @return This builder for chaining.
-     */
-    public Builder setPlateNumberBytes(
-        com.google.protobuf.ByteString value) {
-      if (value == null) { throw new NullPointerException(); }
-      checkByteStringIsUtf8(value);
-      plateNumber_ = value;
-      bitField0_ |= 0x00000004;
       onChanged();
       return this;
     }

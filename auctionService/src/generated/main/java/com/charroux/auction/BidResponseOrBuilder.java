@@ -8,26 +8,35 @@ public interface BidResponseOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>bool awarded = 1;</code>
-   * @return The awarded.
+   * <code>.com.charroux.Bidding bidding = 1;</code>
+   * @return Whether the bidding field is set.
    */
-  boolean getAwarded();
+  boolean hasBidding();
+  /**
+   * <code>.com.charroux.Bidding bidding = 1;</code>
+   * @return The bidding.
+   */
+  com.charroux.auction.Bidding getBidding();
+  /**
+   * <code>.com.charroux.Bidding bidding = 1;</code>
+   */
+  com.charroux.auction.BiddingOrBuilder getBiddingOrBuilder();
 
   /**
-   * <code>string plateNumber = 2;</code>
+   * <code>bool winning = 2;</code>
+   * @return The winning.
+   */
+  boolean getWinning();
+
+  /**
+   * <code>string plateNumber = 3;</code>
    * @return The plateNumber.
    */
   java.lang.String getPlateNumber();
   /**
-   * <code>string plateNumber = 2;</code>
+   * <code>string plateNumber = 3;</code>
    * @return The bytes for plateNumber.
    */
   com.google.protobuf.ByteString
       getPlateNumberBytes();
-
-  /**
-   * <code>uint32 latestBidding = 3;</code>
-   * @return The latestBidding.
-   */
-  int getLatestBidding();
 }

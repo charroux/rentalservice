@@ -15,37 +15,6 @@ public final class AuctionServiceGrpc {
   public static final java.lang.String SERVICE_NAME = "com.charroux.AuctionService";
 
   // Static method descriptors that strictly reflect the proto.
-  private static volatile io.grpc.MethodDescriptor<com.charroux.auction.CreditApplication,
-      com.charroux.auction.Auction> getRentCarsMethod;
-
-  @io.grpc.stub.annotations.RpcMethod(
-      fullMethodName = SERVICE_NAME + '/' + "RentCars",
-      requestType = com.charroux.auction.CreditApplication.class,
-      responseType = com.charroux.auction.Auction.class,
-      methodType = io.grpc.MethodDescriptor.MethodType.BIDI_STREAMING)
-  public static io.grpc.MethodDescriptor<com.charroux.auction.CreditApplication,
-      com.charroux.auction.Auction> getRentCarsMethod() {
-    io.grpc.MethodDescriptor<com.charroux.auction.CreditApplication, com.charroux.auction.Auction> getRentCarsMethod;
-    if ((getRentCarsMethod = AuctionServiceGrpc.getRentCarsMethod) == null) {
-      synchronized (AuctionServiceGrpc.class) {
-        if ((getRentCarsMethod = AuctionServiceGrpc.getRentCarsMethod) == null) {
-          AuctionServiceGrpc.getRentCarsMethod = getRentCarsMethod =
-              io.grpc.MethodDescriptor.<com.charroux.auction.CreditApplication, com.charroux.auction.Auction>newBuilder()
-              .setType(io.grpc.MethodDescriptor.MethodType.BIDI_STREAMING)
-              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "RentCars"))
-              .setSampledToLocalTracing(true)
-              .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
-                  com.charroux.auction.CreditApplication.getDefaultInstance()))
-              .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
-                  com.charroux.auction.Auction.getDefaultInstance()))
-              .setSchemaDescriptor(new AuctionServiceMethodDescriptorSupplier("RentCars"))
-              .build();
-        }
-      }
-    }
-    return getRentCarsMethod;
-  }
-
   private static volatile io.grpc.MethodDescriptor<com.charroux.auction.Bidding,
       com.charroux.auction.BidResponse> getCarAuctionMethod;
 
@@ -78,34 +47,34 @@ public final class AuctionServiceGrpc {
   }
 
   private static volatile io.grpc.MethodDescriptor<com.google.protobuf.Empty,
-      com.charroux.auction.CarToBeRented> getCarsToBeRentedMethod;
+      com.charroux.auction.CarModelsToBeRented> getCarModelsMethod;
 
   @io.grpc.stub.annotations.RpcMethod(
-      fullMethodName = SERVICE_NAME + '/' + "CarsToBeRented",
+      fullMethodName = SERVICE_NAME + '/' + "CarModels",
       requestType = com.google.protobuf.Empty.class,
-      responseType = com.charroux.auction.CarToBeRented.class,
+      responseType = com.charroux.auction.CarModelsToBeRented.class,
       methodType = io.grpc.MethodDescriptor.MethodType.UNARY)
   public static io.grpc.MethodDescriptor<com.google.protobuf.Empty,
-      com.charroux.auction.CarToBeRented> getCarsToBeRentedMethod() {
-    io.grpc.MethodDescriptor<com.google.protobuf.Empty, com.charroux.auction.CarToBeRented> getCarsToBeRentedMethod;
-    if ((getCarsToBeRentedMethod = AuctionServiceGrpc.getCarsToBeRentedMethod) == null) {
+      com.charroux.auction.CarModelsToBeRented> getCarModelsMethod() {
+    io.grpc.MethodDescriptor<com.google.protobuf.Empty, com.charroux.auction.CarModelsToBeRented> getCarModelsMethod;
+    if ((getCarModelsMethod = AuctionServiceGrpc.getCarModelsMethod) == null) {
       synchronized (AuctionServiceGrpc.class) {
-        if ((getCarsToBeRentedMethod = AuctionServiceGrpc.getCarsToBeRentedMethod) == null) {
-          AuctionServiceGrpc.getCarsToBeRentedMethod = getCarsToBeRentedMethod =
-              io.grpc.MethodDescriptor.<com.google.protobuf.Empty, com.charroux.auction.CarToBeRented>newBuilder()
+        if ((getCarModelsMethod = AuctionServiceGrpc.getCarModelsMethod) == null) {
+          AuctionServiceGrpc.getCarModelsMethod = getCarModelsMethod =
+              io.grpc.MethodDescriptor.<com.google.protobuf.Empty, com.charroux.auction.CarModelsToBeRented>newBuilder()
               .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
-              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "CarsToBeRented"))
+              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "CarModels"))
               .setSampledToLocalTracing(true)
               .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
                   com.google.protobuf.Empty.getDefaultInstance()))
               .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
-                  com.charroux.auction.CarToBeRented.getDefaultInstance()))
-              .setSchemaDescriptor(new AuctionServiceMethodDescriptorSupplier("CarsToBeRented"))
+                  com.charroux.auction.CarModelsToBeRented.getDefaultInstance()))
+              .setSchemaDescriptor(new AuctionServiceMethodDescriptorSupplier("CarModels"))
               .build();
         }
       }
     }
-    return getCarsToBeRentedMethod;
+    return getCarModelsMethod;
   }
 
   /**
@@ -158,13 +127,6 @@ public final class AuctionServiceGrpc {
 
     /**
      */
-    default io.grpc.stub.StreamObserver<com.charroux.auction.CreditApplication> rentCars(
-        io.grpc.stub.StreamObserver<com.charroux.auction.Auction> responseObserver) {
-      return io.grpc.stub.ServerCalls.asyncUnimplementedStreamingCall(getRentCarsMethod(), responseObserver);
-    }
-
-    /**
-     */
     default io.grpc.stub.StreamObserver<com.charroux.auction.Bidding> carAuction(
         io.grpc.stub.StreamObserver<com.charroux.auction.BidResponse> responseObserver) {
       return io.grpc.stub.ServerCalls.asyncUnimplementedStreamingCall(getCarAuctionMethod(), responseObserver);
@@ -172,9 +134,9 @@ public final class AuctionServiceGrpc {
 
     /**
      */
-    default void carsToBeRented(com.google.protobuf.Empty request,
-        io.grpc.stub.StreamObserver<com.charroux.auction.CarToBeRented> responseObserver) {
-      io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall(getCarsToBeRentedMethod(), responseObserver);
+    default void carModels(com.google.protobuf.Empty request,
+        io.grpc.stub.StreamObserver<com.charroux.auction.CarModelsToBeRented> responseObserver) {
+      io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall(getCarModelsMethod(), responseObserver);
     }
   }
 
@@ -207,14 +169,6 @@ public final class AuctionServiceGrpc {
 
     /**
      */
-    public io.grpc.stub.StreamObserver<com.charroux.auction.CreditApplication> rentCars(
-        io.grpc.stub.StreamObserver<com.charroux.auction.Auction> responseObserver) {
-      return io.grpc.stub.ClientCalls.asyncBidiStreamingCall(
-          getChannel().newCall(getRentCarsMethod(), getCallOptions()), responseObserver);
-    }
-
-    /**
-     */
     public io.grpc.stub.StreamObserver<com.charroux.auction.Bidding> carAuction(
         io.grpc.stub.StreamObserver<com.charroux.auction.BidResponse> responseObserver) {
       return io.grpc.stub.ClientCalls.asyncBidiStreamingCall(
@@ -223,10 +177,10 @@ public final class AuctionServiceGrpc {
 
     /**
      */
-    public void carsToBeRented(com.google.protobuf.Empty request,
-        io.grpc.stub.StreamObserver<com.charroux.auction.CarToBeRented> responseObserver) {
+    public void carModels(com.google.protobuf.Empty request,
+        io.grpc.stub.StreamObserver<com.charroux.auction.CarModelsToBeRented> responseObserver) {
       io.grpc.stub.ClientCalls.asyncUnaryCall(
-          getChannel().newCall(getCarsToBeRentedMethod(), getCallOptions()), request, responseObserver);
+          getChannel().newCall(getCarModelsMethod(), getCallOptions()), request, responseObserver);
     }
   }
 
@@ -248,9 +202,9 @@ public final class AuctionServiceGrpc {
 
     /**
      */
-    public com.charroux.auction.CarToBeRented carsToBeRented(com.google.protobuf.Empty request) {
+    public com.charroux.auction.CarModelsToBeRented carModels(com.google.protobuf.Empty request) {
       return io.grpc.stub.ClientCalls.blockingUnaryCall(
-          getChannel(), getCarsToBeRentedMethod(), getCallOptions(), request);
+          getChannel(), getCarModelsMethod(), getCallOptions(), request);
     }
   }
 
@@ -272,16 +226,15 @@ public final class AuctionServiceGrpc {
 
     /**
      */
-    public com.google.common.util.concurrent.ListenableFuture<com.charroux.auction.CarToBeRented> carsToBeRented(
+    public com.google.common.util.concurrent.ListenableFuture<com.charroux.auction.CarModelsToBeRented> carModels(
         com.google.protobuf.Empty request) {
       return io.grpc.stub.ClientCalls.futureUnaryCall(
-          getChannel().newCall(getCarsToBeRentedMethod(), getCallOptions()), request);
+          getChannel().newCall(getCarModelsMethod(), getCallOptions()), request);
     }
   }
 
-  private static final int METHODID_CARS_TO_BE_RENTED = 0;
-  private static final int METHODID_RENT_CARS = 1;
-  private static final int METHODID_CAR_AUCTION = 2;
+  private static final int METHODID_CAR_MODELS = 0;
+  private static final int METHODID_CAR_AUCTION = 1;
 
   private static final class MethodHandlers<Req, Resp> implements
       io.grpc.stub.ServerCalls.UnaryMethod<Req, Resp>,
@@ -300,9 +253,9 @@ public final class AuctionServiceGrpc {
     @java.lang.SuppressWarnings("unchecked")
     public void invoke(Req request, io.grpc.stub.StreamObserver<Resp> responseObserver) {
       switch (methodId) {
-        case METHODID_CARS_TO_BE_RENTED:
-          serviceImpl.carsToBeRented((com.google.protobuf.Empty) request,
-              (io.grpc.stub.StreamObserver<com.charroux.auction.CarToBeRented>) responseObserver);
+        case METHODID_CAR_MODELS:
+          serviceImpl.carModels((com.google.protobuf.Empty) request,
+              (io.grpc.stub.StreamObserver<com.charroux.auction.CarModelsToBeRented>) responseObserver);
           break;
         default:
           throw new AssertionError();
@@ -314,9 +267,6 @@ public final class AuctionServiceGrpc {
     public io.grpc.stub.StreamObserver<Req> invoke(
         io.grpc.stub.StreamObserver<Resp> responseObserver) {
       switch (methodId) {
-        case METHODID_RENT_CARS:
-          return (io.grpc.stub.StreamObserver<Req>) serviceImpl.rentCars(
-              (io.grpc.stub.StreamObserver<com.charroux.auction.Auction>) responseObserver);
         case METHODID_CAR_AUCTION:
           return (io.grpc.stub.StreamObserver<Req>) serviceImpl.carAuction(
               (io.grpc.stub.StreamObserver<com.charroux.auction.BidResponse>) responseObserver);
@@ -329,13 +279,6 @@ public final class AuctionServiceGrpc {
   public static final io.grpc.ServerServiceDefinition bindService(AsyncService service) {
     return io.grpc.ServerServiceDefinition.builder(getServiceDescriptor())
         .addMethod(
-          getRentCarsMethod(),
-          io.grpc.stub.ServerCalls.asyncBidiStreamingCall(
-            new MethodHandlers<
-              com.charroux.auction.CreditApplication,
-              com.charroux.auction.Auction>(
-                service, METHODID_RENT_CARS)))
-        .addMethod(
           getCarAuctionMethod(),
           io.grpc.stub.ServerCalls.asyncBidiStreamingCall(
             new MethodHandlers<
@@ -343,12 +286,12 @@ public final class AuctionServiceGrpc {
               com.charroux.auction.BidResponse>(
                 service, METHODID_CAR_AUCTION)))
         .addMethod(
-          getCarsToBeRentedMethod(),
+          getCarModelsMethod(),
           io.grpc.stub.ServerCalls.asyncUnaryCall(
             new MethodHandlers<
               com.google.protobuf.Empty,
-              com.charroux.auction.CarToBeRented>(
-                service, METHODID_CARS_TO_BE_RENTED)))
+              com.charroux.auction.CarModelsToBeRented>(
+                service, METHODID_CAR_MODELS)))
         .build();
   }
 
@@ -397,9 +340,8 @@ public final class AuctionServiceGrpc {
         if (result == null) {
           serviceDescriptor = result = io.grpc.ServiceDescriptor.newBuilder(SERVICE_NAME)
               .setSchemaDescriptor(new AuctionServiceFileDescriptorSupplier())
-              .addMethod(getRentCarsMethod())
               .addMethod(getCarAuctionMethod())
-              .addMethod(getCarsToBeRentedMethod())
+              .addMethod(getCarModelsMethod())
               .build();
         }
       }

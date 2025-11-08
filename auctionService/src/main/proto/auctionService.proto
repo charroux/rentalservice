@@ -3,30 +3,19 @@ syntax = "proto3";
 package com.charroux;
 
 import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
 
 option java_multiple_files = true;
 option java_package = "com.charroux.auction";
 option java_outer_classname = "AuctionServiceProto";
 
 service AuctionService {
-  rpc RentCars(stream CreditApplication) returns (stream Auction);
   rpc CarAuction(stream Bidding) returns (stream BidResponse);
-  rpc CarsToBeRented(google.protobuf.Empty) returns (CarToBeRented);
-}
-
-message CreditApplication {
-  string firstName = 1;
-  string lastName = 2;
-  string email = 3;
-  uint32 price = 4;
-}
-
-message Auction {
-  string creditReservedEvent = 1;
+  rpc CarModels(google.protobuf.Empty) returns (CarModelsToBeRented);
 }
 
 message Bidding {
-  TimeStamp timestamp = 1;
+  google.protobuf.Timestamp timestamp = 1;
   CarModel car = 2;
   string carRentalCompany = 3;
   uint32 amount = 4;
@@ -41,9 +30,8 @@ message BidResponse {
 message CarModel {
   string brand = 1;
   string model = 2;
-  string plateNumber = 3; // Added plateNumber to CarModel message
 }
 
-message CarToBeRented {
+message CarModelsToBeRented {
   repeated CarModel cars = 1;
 }
