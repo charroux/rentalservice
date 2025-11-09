@@ -2,14 +2,14 @@ import {Component, OnInit, OnDestroy, inject} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {RentalService} from '../rental.service';
 import { Subscription } from 'rxjs';
-import {CarDetailComponent} from '../car-detail/car-detail.component';
-import {Cardetail} from '../cardetail';
+import {CarModelComponent} from '../car-model/car-model.component';
+import {Cardetail, Offer} from '../cardetail';
 import {WebSocketService} from '../websocket.service';
 
 @Component({
-  selector: 'app-car',
+  selector: 'app-cars-list',
   standalone: true,
-  imports: [CommonModule, CarDetailComponent],
+  imports: [CommonModule, CarModelComponent],
   template: `
     <section>
           <form>
@@ -18,13 +18,16 @@ import {WebSocketService} from '../websocket.service';
           </form>
         </section>
         <section class="results">
-        <app-car-detail *ngFor="let cardetail of filteredCarList" [cardetail]="cardetail"></app-car-detail>
+        <app-car-model *ngFor="let offer of filteredOfferList" [offer]="offer"></app-car-model>
     </section>
       `,
-      styleUrls: ['./car.component.css'],
+      styleUrls: ['./cars-list.component.css'],
 })
-export class CarComponent implements OnInit {
+export class CarsListComponent implements OnInit {
   readonly baseUrl = 'https://angular.dev/assets/images/tutorials/common';
+  offerList: Offer[] = [];
+  filteredOfferList: Offer[] = [];
+  // Conservé pour compatibilité WebSocket
   cardetailList: Cardetail[] = [];
   filteredCarList: Cardetail[] = [];
   rentalService: RentalService = inject(RentalService);
@@ -33,9 +36,11 @@ export class CarComponent implements OnInit {
   private wsSubscription!: Subscription;
 
   ngOnInit() {
-    this.subscription = this.rentalService.getAllCars().subscribe(cars => { 
-      this.cardetailList = cars; 
-      this.filteredCarList = cars; 
+    // Charger les offres avec prix pour l'affichage
+    this.subscription = this.rentalService.getOffers().subscribe(offers => { 
+      console.log('Offers received:', offers);
+      this.offerList = offers; 
+      this.filteredOfferList = offers; 
     });
 
     // Connect to WebSocket
@@ -67,11 +72,11 @@ export class CarComponent implements OnInit {
   filterResults(text: string) {
     console.log(text);
     if (!text) {
-      this.filteredCarList = this.cardetailList;
+      this.filteredOfferList = this.offerList;
       return;
     }
-    this.filteredCarList = this.cardetailList.filter(
-      cardetail => cardetail?.brand.toLowerCase().includes(text.toLowerCase())
+    this.filteredOfferList = this.offerList.filter(
+      offer => offer?.brand.toLowerCase().includes(text.toLowerCase())
     );
   }
 

@@ -2,6 +2,10 @@
  *  Protractor support is deprecated in Angular.
  *  Protractor is used in this example for compatibility with Angular documentation tools.
  */
+
+// Fix pour l'erreur "global is not defined" avec Vite
+(globalThis as any).global = globalThis;
+
 import {bootstrapApplication, provideProtractorTestingSupport} from '@angular/platform-browser';
 import {AppComponent} from './app/app.component';
 import {provideRouter} from '@angular/router';

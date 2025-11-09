@@ -18,16 +18,16 @@ repositories {
 }
 
 dependencies {
-	implementation project(':auctionService')
+	// implementation project(':auctionService') // Commented out - running as separate service
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	// WebSocket support for pushing updates to Angular front-end
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
 	implementation 'com.h2database:h2'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	implementation 'net.devh:grpc-client-spring-boot-starter:3.1.0.RELEASE'
-	implementation 'io.grpc:grpc-stub:1.58.0'
-	implementation 'io.grpc:grpc-protobuf:1.58.0'
+	// implementation 'net.devh:grpc-client-spring-boot-starter:3.1.0.RELEASE' // Temporarily disabled for testing
+	// implementation 'io.grpc:grpc-stub:1.58.0' // Temporarily disabled for testing
+	// implementation 'io.grpc:grpc-protobuf:1.58.0' // Temporarily disabled for testing
 	// PostgreSQL JDBC driver for production
 	implementation 'org.postgresql:postgresql:42.6.0'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
@@ -45,7 +45,7 @@ tasks.named('test') {
 
 configurations.all {
     resolutionStrategy {
-        force "io.grpc:grpc-stub:${grpcVersion}"
-        force "io.grpc:grpc-protobuf:${grpcVersion}"
+        force "io.grpc:grpc-stub:1.58.0"
+        force "io.grpc:grpc-protobuf:1.58.0"
     }
 }

@@ -17,7 +17,9 @@ public class Car {
     @JsonIgnore // Masquer le prix d'acquisition côté frontend pour confidentialité
     private int finalPrice;    // Prix d'acquisition après enchère (coût pour la carRentalCompany)
     
-    private int rentalPrice;   // Prix facturé à l'utilisateur final (toujours highestPrice)
+    private int rentalPrice;   // Prix de base facturé à l'utilisateur final (toujours highestPrice)
+    
+    private int finalCustomerPrice;  // Prix final après remise éventuelle
     
     // Relation ManyToOne vers CarModel (un modèle peut avoir plusieurs voitures)
     @ManyToOne(fetch = FetchType.LAZY)
@@ -43,6 +45,7 @@ public class Car {
         this.plateNumber = plateNumber;
         this.finalPrice = finalPrice;
         this.rentalPrice = rentalPrice;
+        this.finalCustomerPrice = rentalPrice; // Par défaut, pas de remise
     }
     
     // Constructeur pour compatibilité (utilise rentalPrice comme finalPrice)
@@ -83,6 +86,14 @@ public class Car {
 
     public void setRentalPrice(int rentalPrice) {
         this.rentalPrice = rentalPrice;
+    }
+
+    public int getFinalCustomerPrice() {
+        return finalCustomerPrice;
+    }
+
+    public void setFinalCustomerPrice(int finalCustomerPrice) {
+        this.finalCustomerPrice = finalCustomerPrice;
     }
 
     public CarModelJPA getCarModel() {

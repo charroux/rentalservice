@@ -1,5 +1,5 @@
 import { Injectable, inject, signal } from '@angular/core';
-import {Cardetail} from './cardetail';
+import {Cardetail, Offer, AuctionResult} from './cardetail';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, tap, catchError, of } from 'rxjs';
 import { environment } from '../environments/environment';
@@ -25,6 +25,61 @@ export class RentalService {
         return of([]);
       })
     );
+  }
+
+  // Nouvelle méthode utilisant l'endpoint /offers
+  getOffers(): Observable<Offer[]> {
+    const offersUrl = `${environment.apiUrl}/offers`;
+    return this.http.get<Offer[]>(offersUrl).pipe(
+      tap(offers => {
+        console.log('Offers fetched:', offers);
+        offers.forEach(offer => {
+          console.log(`Offer ${offer.brand} ${offer.model} - Price: ${offer.rentalPrice}€/day`);
+        });
+      }),
+      catchError(error => {
+        console.error('Error fetching offers:', error);
+        return of([]);
+      })
+    );
+  }
+
+  // Ancienne méthode - conservée pour compatibilité
+  getAllCarModels(): Observable<Cardetail[]> {
+    const carModelsUrl = `${environment.apiUrl}/car-models`;
+    return this.http.get<Cardetail[]>(carModelsUrl).pipe(
+      tap(carModels => {
+        console.log('Car models fetched:', carModels);
+        carModels.forEach(car => {
+          console.log(`Car ${car.brand} ${car.model} - Price: ${car.rentalPrice}€/day`);
+        });
+      }),
+      catchError(error => {
+        console.error('Error fetching car models:', error);
+        return of([]);
+      })
+    );
+  }
+
+  async getCardetailById(id: number): Promise<Cardetail> {
+    const carModels = await this.getAllCarModels().toPromise();
+    const cardetail = carModels?.find(car => car.id === id);
+    if (!cardetail) {
+      throw new Error(`Car model with id ${id} not found`);
+    }
+    return cardetail;
+  }
+
+  getCarMargin(carModelId: number, auctionFinalPrice: number): Observable<{hasMargin: boolean, margin: number}> {
+    const marginUrl = `${environment.apiUrl}/car-margin/${carModelId}`;
+    return this.http.get<{hasMargin: boolean, margin: number}>(marginUrl, {
+      params: { auctionPrice: auctionFinalPrice.toString() }
+    }).pipe(
+      catchError(error => {
+        console.error('Error fetching car margin:', error);
+        return of({hasMargin: false, margin: 0});
+      })
+    );
   }  
 
   getAllCarsByPlateNumber(plateNumber: string): Observable<Cardetail> {
@@ -36,11 +91,17 @@ export class RentalService {
     );
   }
 
-  participateInAuction(brand: string, model: string, companyId: string = 'DEFAULT_COMPANY'): Observable<Cardetail> {
-    const auctionUrl = `${environment.apiUrl}/auction/${brand}/${model}`;
-    return this.http.post<Cardetail>(auctionUrl, null, {
-      params: { companyId: companyId }
-    }).pipe(
+  participateInAuction(carModelId: number): Observable<AuctionResult> {
+    const auctionUrl = `${environment.apiUrl}/auction/participate`;
+    const body = { carModelId: carModelId };
+    
+    console.log('Participating in auction:', body);
+    
+    return this.http.post<AuctionResult>(auctionUrl, body).pipe(
+      tap(response => {
+        console.log('Auction response:', response);
+        console.log(`Final price: ${response.finalCustomerPrice}€ (Original: ${response.originalPrice}€, Discount: ${response.discountAmount}€)`);
+      }),
       catchError(error => {
         console.error('Error participating in auction:', error);
         throw error;

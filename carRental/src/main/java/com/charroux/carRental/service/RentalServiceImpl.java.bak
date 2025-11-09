@@ -2,6 +2,7 @@ package com.charroux.carRental.service;
 
 import com.charroux.carRental.entity.CarModelJPA;
 import com.charroux.carRental.entity.CarModelJPARepository;
+import com.charroux.carRental.entity.CarRepository;
 import com.charroux.auction.*;
 import com.google.protobuf.Empty;
 import net.devh.boot.grpc.client.inject.GrpcClient;
@@ -15,10 +16,11 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.Objects;
 
-@Service
+// @Service // Temporairement désactivé pour les tests
 public class RentalServiceImpl implements RentalService {
 
     CarModelJPARepository carModelJPARepository;
+    CarRepository carRepository;
 
     @GrpcClient("auctionService")
     private AuctionServiceGrpc.AuctionServiceBlockingStub auctionServiceStub;
@@ -29,9 +31,10 @@ public class RentalServiceImpl implements RentalService {
     Logger logger = org.slf4j.LoggerFactory.getLogger(RentalServiceImpl.class);
 
     @Autowired
-    public RentalServiceImpl(CarModelJPARepository carModelJPARepository) {
+    public RentalServiceImpl(CarModelJPARepository carModelJPARepository, CarRepository carRepository) {
         super();
         this.carModelJPARepository = carModelJPARepository;
+        this.carRepository = carRepository;
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -200,13 +203,39 @@ public class RentalServiceImpl implements RentalService {
                         com.charroux.carRental.entity.Car resultCar = new com.charroux.carRental.entity.Car(
                             response.getPlateNumber(), 
                             (int) response.getFinalPrice(),    // Prix d'acquisition (coût pour carRentalCompany)
-                            carModel.getHighestPrice()        // Prix facturé à l'utilisateur final
+                            carModel.getHighestPrice()        // Prix de base facturé à l'utilisateur final
                         );
                         resultCar.setCarModel(carModel);
                         
-                        logger.info("Voiture créée - Plaque: {}, Prix d'acquisition: {}€, Prix de location: {}€, Marge: {}€", 
+                        // Calculer la remise de 5% si possible (Variant 1)
+                        int auctionPrice = (int) response.getFinalPrice();
+                        int baseRentalPrice = carModel.getHighestPrice();
+                        int margin = baseRentalPrice - auctionPrice;
+                        
+                        int finalCustomerPrice = baseRentalPrice; // Par défaut, pas de remise
+                        
+                        if (margin > 0) {
+                            // Calculer la remise de 5% du prix de base
+                            int discountAmount = (int) Math.round(baseRentalPrice * 0.05);
+                            
+                            // S'assurer que la remise ne dépasse pas la marge disponible
+                            discountAmount = Math.min(discountAmount, margin);
+                            
+                            if (discountAmount > 0) {
+                                finalCustomerPrice = baseRentalPrice - discountAmount;
+                                logger.info("Remise appliquée: {}€ sur {}€ (marge disponible: {}€)", 
+                                           discountAmount, baseRentalPrice, margin);
+                            }
+                        }
+                        
+                        resultCar.setFinalCustomerPrice(finalCustomerPrice);
+                        
+                        // Sauvegarder l'entité Car en base
+                        resultCar = carRepository.save(resultCar);
+                        
+                        logger.info("Voiture sauvegardée - Plaque: {}, Prix d'acquisition: {}€, Prix de base: {}€, Prix final client: {}€, Marge: {}€", 
                                    resultCar.getPlateNumber(), resultCar.getFinalPrice(), 
-                                   resultCar.getRentalPrice(), resultCar.getMargin());
+                                   resultCar.getRentalPrice(), resultCar.getFinalCustomerPrice(), resultCar.getMargin());
                         
                         future.complete(resultCar);
                     }

@@ -1,0 +1,170 @@
+.listing-photo {
+  width: 100%;
+  max-width: 400px;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.listing-description h2 {
+  color: #2c3e50;
+  margin-bottom: 0.5rem;
+}
+
+.plate-number {
+  background-color: #e8f5e8;
+  color: #2d5a2d;
+  padding: 0.5rem;
+  border-radius: 4px;
+  font-weight: bold;
+  margin: 1rem 0;
+}
+
+.pricing-details {
+  background-color: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin: 1rem 0;
+}
+
+.section-heading {
+  color: #2c3e50;
+  border-bottom: 2px solid #3498db;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.price-breakdown {
+  margin-bottom: 1.5rem;
+}
+
+.price-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.price-row.margin-info {
+  background-color: #e8f4f8;
+  padding: 0.5rem;
+  border-radius: 4px;
+  margin: 0.5rem 0;
+}
+
+.price {
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+.price.original {
+  text-decoration: line-through;
+  color: #6c757d;
+}
+
+.discount-offer {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin: 1rem 0;
+  text-align: center;
+}
+
+.discount-offer h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.discount-price {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 1rem 0;
+}
+
+.original-price {
+  text-decoration: line-through;
+  color: #ffcccb;
+  font-size: 0.9rem;
+}
+
+.discounted-price {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #90EE90;
+  margin: 0.5rem 0;
+}
+
+.savings {
+  background-color: #ff6b6b;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
+.action-buttons button {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.primary {
+  background-color: #28a745;
+  color: white;
+}
+
+.primary:hover {
+  background-color: #218838;
+  transform: translateY(-2px);
+}
+
+.secondary {
+  background-color: transparent;
+  color: white;
+  border: 2px solid white;
+}
+
+.secondary:hover {
+  background-color: white;
+  color: #667eea;
+}
+
+.no-discount {
+  text-align: center;
+  padding: 1.5rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.no-discount h3 {
+  color: #2c3e50;
+  margin-bottom: 1rem;
+}
+
+.no-margin-message {
+  color: #6c757d;
+  font-style: italic;
+  margin-bottom: 1.5rem;
+}
+
+.no-discount .primary {
+  background-color: #3498db;
+  color: white;
+  padding: 0.75rem 1.5rem;
+}
+
+.no-discount .primary:hover {
+  background-color: #2980b9;
+}
