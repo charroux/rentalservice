@@ -9,8 +9,9 @@ import java.util.Collection;
 public class Car {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "car_seq")
+    @SequenceGenerator(name = "car_seq", sequenceName = "car_id_seq", allocationSize = 1)
+    private Long id;
     
     private String plateNumber;
     
@@ -56,11 +57,11 @@ public class Car {
     }
 
     // Getters et Setters
-    public long getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(long id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
