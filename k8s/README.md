@@ -184,14 +184,24 @@ curl -H "Host: car-rental.local" http://localhost:80/direct-api/actuator/health
 
 #### Via Port Forward (Debugging)
 ```bash
-# Port forward services directly
-kubectl port-forward service/carrental-service 8080:8080 -n rental-service
-kubectl port-forward service/frontend-service 3000:80 -n rental-service
-kubectl port-forward service/postgres 5432:5432 -n rental-service
+# Port forward services directly (using different local ports to avoid conflicts)
+kubectl port-forward service/carrental-service 8081:8080 -n rental-service  # Local 8081 → Service 8080
+kubectl port-forward service/frontend-service 3000:80 -n rental-service     # Local 3000 → Service 80
+kubectl port-forward service/postgres 5433:5432 -n rental-service           # Local 5433 → Service 5432
 
-# Internal cluster testing
+# Test the forwarded services
+curl http://localhost:8081/actuator/health    # carRental API
+curl http://localhost:3000/                   # Frontend
+psql -h localhost -p 5433 -U dbuser -d dbcar  # Database
+
+# Internal cluster testing (no port conflicts)
 kubectl run test-pod --rm -it --image=curlimages/curl --restart=Never -n rental-service -- curl carrental-service:8080/actuator/health
 ```
+
+**💡 Port Forward Tips:**
+- Use different local ports to avoid conflicts (8081, 8082, etc.)
+- Check what's using port 8080: `lsof -i :8080` or `netstat -an | grep 8080`
+- Kill conflicting process: `sudo lsof -ti:8080 | xargs kill -9` (if safe to do)
 
 ### Cleanup
 ```bash
