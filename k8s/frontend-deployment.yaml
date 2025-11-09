@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-angular
+  namespace: rental-service
+  labels:
+    app: frontend-angular
+    component: frontend
+    purpose: web-ui
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: frontend-angular
+  template:
+    metadata:
+      labels:
+        app: frontend-angular
+        component: frontend
+    spec:
+      containers:
+      - name: frontend-angular
+        image: car-rental-angular:latest
+        imagePullPolicy: Never  # For local Kind images
+        ports:
+        - containerPort: 80
+          name: http
+          protocol: TCP
+        resources:
+          requests:
+            memory: "32Mi"
+            cpu: "10m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+  namespace: rental-service
+  labels:
+    app: frontend-angular
+    component: frontend
+spec:
+  selector:
+    app: frontend-angular
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+    name: http
+  type: ClusterIP

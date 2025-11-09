@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auction-service-server
+  namespace: rental-service
+  labels:
+    app: auction-service-server
+    component: backend
+    purpose: grpc-auction-server
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: auction-service-server
+  template:
+    metadata:
+      labels:
+        app: auction-service-server
+        component: backend
+    spec:
+      containers:
+      - name: auction-service-server
+        image: auction-service-server:latest
+        imagePullPolicy: Never  # For local Kind images
+        ports:
+        - containerPort: 9090
+          name: grpc
+          protocol: TCP
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "50m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        # gRPC healthcheck using grpc_health_probe (if available) or TCP probe
+        livenessProbe:
+          tcpSocket:
+            port: 9090
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          tcpSocket:
+            port: 9090
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        # gRPC specific JVM options already in JAVA_OPTS in Dockerfile
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auction-service
+  namespace: rental-service
+  labels:
+    app: auction-service-server
+    component: backend
+spec:
+  selector:
+    app: auction-service-server
+  ports:
+  - port: 9090
+    targetPort: 9090
+    protocol: TCP
+    name: grpc
+  type: ClusterIP
