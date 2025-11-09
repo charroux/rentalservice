@@ -43,3 +43,7 @@ yarn-error.log*
 *.tmp
 *.temp
 *~
+# Gradle build artifacts
+.gradle/
+build/
+*.jar
