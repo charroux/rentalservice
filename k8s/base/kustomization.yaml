@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: rental-service
+
+resources:
+  - namespace.yaml
+  - postgres-secret.yaml
+  - postgres-statefulset.yaml
+  - carrental-deployment.yaml
+  - frontend-deployment.yaml
+  - auction-deployment.yaml
+  - istio-internal-gateway.yaml
+
+commonLabels:
+  app: rental-service
