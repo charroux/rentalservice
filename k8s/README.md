@@ -1,13 +1,11 @@
-# Kubernetes Deployment with Kind & Ingress
+# Kubernetes Deployment with Istio Service Mesh + NGINX Ingress
 
-This directory contains Kubernetes manifests for the car-rental microservices architecture, optimized for local development with **Kind** (Kubernetes in Docker) and **NGINX Ingress Controller**.
+This directory contains Kubernetes manifests for the car-rental microservices architecture with **hybrid routing**:
+- **NGINX Ingress Controller** for external access (browser → services)
+- **Istio Service Mesh** for internal service-to-service communication (Angular → carRental)
 
-> 🆕 **NEW: Istio Service Mesh Integration Available!**  
-> For advanced features like mTLS, intelligent load balancing, and traffic management, see [README-ISTIO.md](README-ISTIO.md) for the hybrid NGINX Ingress + Istio Gateway architecture.
+## 🏗️ Hybrid Architecture Overview
 
-## 🏗️ Architecture Overview
-
-### Option 1: NGINX Ingress Only (This Guide)
 ```
 Internet/Browser
        │
@@ -16,152 +14,213 @@ Internet/Browser
    │  car-rental.local  │  api.car-rental.local  │  gRPC   │
    └─────────┬──────────┴─────────┬───────────────┴─────────┘
              │                    │
-    ┌────────▼──────┐    ┌────────▼─────────────────────────┐
-    │   Angular     │    │         carRental                │
-    │   Frontend    │    │       (REST API)                 │
-    │   Port: 80    │    │       Port: 8080                 │
-    └───────────────┘    └─────────┬───────────┬────────────┘
-                                   │           │
-                          ┌────────▼──────┐    ▼
-                          │  PostgreSQL   │ ┌─────────────────┐
-                          │  (Database)   │ │ auctionService  │
-                          │  Port: 5432   │ │    (gRPC)       │
-                          └───────────────┘ │   Port: 9090    │
-                                            └─────────────────┘
+    ┌────────▼──────┐    ┌────────▼────────────────────────┐
+    │   Angular     │    │   Istio Gateway (Internal)      │
+    │   Frontend    │───→│   VirtualService + mTLS         │
+    │   Port: 80    │    │   Advanced routing & policies   │
+    │   [+ Envoy]   │    └──────────┬──────────────────────┘
+    └───────────────┘               │
+                           ┌────────▼─────────────────────────┐
+                           │         carRental                │
+                           │       (REST API)                 │
+                           │       Port: 8080                 │
+                           │       [+ Envoy Sidecar]          │
+                           └─────────┬───────────┬────────────┘
+                                     │           │
+                            ┌────────▼──────┐    ▼
+                            │  PostgreSQL   │ ┌─────────────────┐
+                            │  (Database)   │ │ auctionService  │
+                            │  Port: 5432   │ │    (gRPC)       │
+                            │  [+ Envoy]    │ │   Port: 9090    │
+                            └───────────────┘ │   [+ Envoy]     │
+                                              └─────────────────┘
 ```
 
-### Option 2: Hybrid Ingress + Istio (Advanced) 🔥
-See [README-ISTIO.md](README-ISTIO.md) for:
-- **Istio Service Mesh** for internal routing (Angular → carRental)
-- **Automatic mTLS** between services
-- **Advanced traffic management** (retry, circuit breaker, timeout)
-- **Observability** ready (Kiali, Prometheus, Grafana)
+### Key Features
 
-## 🚀 Quick Start with Kind
+✅ **Dual Routing Layer**
+- External: NGINX Ingress (proven, lightweight, simple)
+- Internal: Istio (advanced features, mTLS, observability)
+
+✅ **Istio Benefits for Internal Traffic**
+- Automatic mTLS encryption between services
+- Intelligent load balancing (LEAST_REQUEST)
+- Circuit breaker and retry policies
+- Traffic monitoring and distributed tracing
+- Fine-grained traffic control
+
+✅ **NGINX Benefits for External Access**
+- Lightweight and fast
+- Simple configuration
+- Wide adoption and proven stability
+- Easy integration with Let's Encrypt for TLS
+
+## 🚀 Quick Start with Kind + Istio
 
 ### Prerequisites
 
 - Docker Desktop running
 - kubectl installed
-- Kind installed: `brew install kind` (macOS) or [kind.sigs.k8s.io](https://kind.sigs.k8s.io/docs/user/quick-start/)
+- Kind installed: `brew install kind`
+
+### Step-by-Step Deployment
 
 ### 1. Create Kind Cluster
 
 ```bash
-# Create multi-node cluster for realistic testing
-kind create cluster --name rental-service-cluster --config - <<EOF
+cat > /tmp/kind-istio-config.yaml << 'EOF'
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 nodes:
 - role: control-plane
+  kubeadmConfigPatches:
+  - |
+    kind: InitConfiguration
+    nodeRegistration:
+      kubeletExtraArgs:
+        node-labels: "ingress-ready=true"
+  extraPortMappings:
+  - containerPort: 80
+    hostPort: 80
+    protocol: TCP
+  - containerPort: 443
+    hostPort: 443
+    protocol: TCP
 - role: worker
 - role: worker
 EOF
+
+kind create cluster --name rental-service-cluster --config /tmp/kind-istio-config.yaml
 ```
 
-### 2. Build and Load Images
+### 3. Install Istio
 
 ```bash
-# Build backend images
+# Download Istio
+### 2. Install Istio
+
+```bash
+# Download Istio (adds istio-1.23.2/ directory - already in .gitignore)
+curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.23.2 sh -
+
+# Add istioctl to PATH (temporary for current session)
+export PATH="$PWD/istio-1.23.2/bin:$PATH"
+
+# Install Istio with demo profile (includes ingress gateway)
+istioctl install --set profile=demo -y
+
+# Verify installation
+kubectl get pods -n istio-system
+```
+
+> **Note**: Le dossier `istio-1.23.2/` est automatiquement exclu de git via `.gitignore`
+
+### 3. Build and Load Images
+
+```bash
+# Build all images
 docker build -f carRental/Dockerfile -t carrental:latest .
 docker build -f auctionServiceServer/Dockerfile -t auction-service-server:latest .
-
-# Build frontend image
 docker build -f car-rental-angular/Dockerfile -t car-rental-angular:latest .
 
-# Load all images into Kind cluster
-kind load docker-image carrental:latest --name rental-service-cluster
-kind load docker-image auction-service-server:latest --name rental-service-cluster
-kind load docker-image car-rental-angular:latest --name rental-service-cluster
+# Load into Kind cluster
+kind load docker-image carrental:latest auction-service-server:latest car-rental-angular:latest --name rental-service-cluster
 ```
 
-### 3. Deploy Services
+### 4. Deploy Services
 
 ```bash
-# Create namespace and secrets
+# Create namespace with Istio injection enabled
 kubectl apply -f k8s/namespace.yaml
-kubectl apply -f k8s/postgres-secret.yaml
+kubectl label namespace rental-service istio-injection=enabled
 
-# Deploy database
+# Deploy secrets and database
+kubectl apply -f k8s/postgres-secret.yaml
 kubectl apply -f k8s/postgres-statefulset.yaml
 
-# Wait for PostgreSQL to be ready
+# Wait for PostgreSQL
 kubectl wait --for=condition=ready pod/postgres-0 -n rental-service --timeout=120s
 
-# Deploy backend services
+# Deploy application services (Istio sidecars auto-injected)
 kubectl apply -f k8s/carrental-deployment.yaml
 kubectl apply -f k8s/auction-deployment.yaml
-
-# Deploy frontend
 kubectl apply -f k8s/frontend-deployment.yaml
+
+# Deploy Istio Gateway and routing rules
+kubectl apply -f k8s/istio-internal-gateway.yaml
 
 # Install NGINX Ingress Controller
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.8.1/deploy/static/provider/kind/deploy.yaml
-
-# Wait for Ingress Controller to be ready
 kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=90s
 
 # Deploy Ingress rules
 kubectl apply -f k8s/ingress.yaml
 ```
 
-### 4. Verify Deployment
+### 5. Verify Deployment
 
 ```bash
-# Check all pods
-kubectl get pods -n rental-service -o wide
+# Check all pods (should show 2/2 for app pods = app + Envoy sidecar)
+kubectl get pods -n rental-service
 
-# Check services
-kubectl get services -n rental-service
+# Check Istio configuration
+kubectl get gateway,virtualservice,destinationrule,peerauthentication -n rental-service
 
-# View logs
-kubectl logs -f deployment/carrental -n rental-service
+# Run monitoring script
+chmod +x k8s/monitor-istio.sh
+./k8s/monitor-istio.sh
 ```
 
 ## 📁 File Structure
 
 ```
 k8s/
-├── README.md                    # This file
-├── namespace.yaml               # rental-service namespace
-├── postgres-secret.yaml         # DB credentials & Spring config
-├── postgres-statefulset.yaml    # PostgreSQL with 2Gi PVC
-├── carrental-deployment.yaml    # carRental REST API service
-├── auction-deployment.yaml      # auctionService gRPC server
-├── frontend-deployment.yaml     # Angular frontend with nginx
-├── ingress.yaml                 # NGINX Ingress rules (multiple)
-├── istio-gateway.yaml           # Istio configuration (future migration)
-├── monitor.sh                   # Architecture monitoring script
-└── car-rental-deployment.yaml   # Legacy (to be updated)
+├── README-ISTIO.md                  # This file (Istio architecture)
+├── README.md                        # Original README (Ingress-only)
+├── namespace.yaml                   # rental-service namespace
+├── postgres-secret.yaml             # DB credentials & Spring config
+├── postgres-statefulset.yaml        # PostgreSQL with 2Gi PVC
+├── carrental-deployment.yaml        # carRental REST API service
+├── auction-deployment.yaml          # auctionService gRPC server
+├── frontend-deployment.yaml         # Angular frontend with nginx
+├── ingress.yaml                     # NGINX Ingress rules (external)
+├── istio-internal-gateway.yaml      # Istio Gateway (internal) - NEW
+├── istio-gateway.yaml               # Legacy Istio config (for reference)
+├── monitor-istio.sh                 # Hybrid architecture monitoring - NEW
+└── monitor.sh                       # Original monitoring script
 ```
 
-## 🔧 Configuration Details
+## 🔧 Istio Configuration Details
 
-### Images Configuration
-- **Local Development**: Uses `imagePullPolicy: Never` for Kind-loaded images
-- **Production**: Switch to registry images with `imagePullPolicy: Always`
+### Gateway Configuration (`istio-internal-gateway.yaml`)
 
-### Database Configuration
-- **PostgreSQL 15** with persistent 2Gi storage
-- **Connection**: `jdbc:postgresql://postgres:5432/dbcar`
-- **Credentials**: Managed via Kubernetes secrets
+#### 1. Gateway Resource
+- Routes internal traffic through Istio Ingress Gateway
+- Listens on port 80 for internal service communication
+- Handles `carrental-service.rental-service.svc.cluster.local`
 
-### Service Communication & Routing
+#### 2. VirtualService
+- **Health checks**: 5s timeout, no retries
+- **API endpoints**: 30s timeout, 3 retry attempts on failures
+- **Retry policy**: Retries on 5xx, connection failures, resets
 
-#### Internal (ClusterIP) Communication
-- **carRental** ↔ **PostgreSQL**: JDBC connection via `postgres:5432`
-- **carRental** ↔ **auctionService**: gRPC client via `auction-service:9090`
-- **Frontend** → **Backend**: Proxied via nginx configuration `/api/` → `carrental-service:8080`
+#### 3. DestinationRule
+- **Load Balancing**: LEAST_REQUEST algorithm (intelligent)
+- **Connection Pool**: Max 100 TCP connections, 50 pending HTTP requests
+- **Circuit Breaker**: 
+  - Ejects unhealthy hosts after 3 consecutive errors
+  - 30s ejection time
+  - Max 50% of instances can be ejected
 
-#### External (Ingress) Access
-- **Frontend**: `http://car-rental.local/` → Angular SPA
-- **API Direct**: `http://car-rental.local/direct-api/` → Backend API
-- **API Subdomain**: `http://api.car-rental.local/` → Backend API
-- **gRPC**: `http://grpc.car-rental.local/` → Auction Service (gRPC)
+#### 4. PeerAuthentication (mTLS)
+- **Mode**: PERMISSIVE
+  - Accepts both mTLS (Istio-to-Istio) and plaintext (Ingress-to-Service)
+  - Allows NGINX Ingress to communicate with services
+  - Services with Istio sidecars automatically use mTLS between themselves
 
 ## 🛠️ Development Workflow
 
-### Rebuild and Redeploy
+### Rebuild and Redeploy with Istio
 
 ```bash
 # Rebuild carRental
@@ -169,220 +228,288 @@ docker build -f carRental/Dockerfile -t carrental:latest .
 kind load docker-image carrental:latest --name rental-service-cluster
 kubectl rollout restart deployment/carrental -n rental-service
 
-# Rebuild auctionService
-docker build -f auctionServiceServer/Dockerfile -t auction-service-server:latest .
-kind load docker-image auction-service-server:latest --name rental-service-cluster
-kubectl rollout restart deployment/auction-service-server -n rental-service
+# Watch pod recreation with new sidecars
+kubectl get pods -n rental-service -w
 ```
 
 ### Testing & Debugging
 
-#### Via Ingress (Recommended)
+#### 1. Via NGINX Ingress (External Access)
 ```bash
-# Test frontend (add to /etc/hosts: 127.0.0.1 car-rental.local api.car-rental.local)
+# Test frontend
 curl -H "Host: car-rental.local" http://localhost:80/
 
 # Test API via subdomain
 curl -H "Host: api.car-rental.local" http://localhost:80/actuator/health
 curl -H "Host: api.car-rental.local" http://localhost:80/car-models
-
-# Test API via direct path
-curl -H "Host: car-rental.local" http://localhost:80/direct-api/actuator/health
-
-# Architecture monitoring
-./k8s/monitor.sh
 ```
 
-#### Via Port Forward (Debugging)
+#### 2. Via Istio (Internal Communication)
 ```bash
-# Port forward services directly (using different local ports to avoid conflicts)
-kubectl port-forward service/carrental-service 8081:8080 -n rental-service  # Local 8081 → Service 8080
-kubectl port-forward service/frontend-service 3000:80 -n rental-service     # Local 3000 → Service 80
-kubectl port-forward service/postgres 5433:5432 -n rental-service           # Local 5433 → Service 5432
+# Test from Angular pod to carRental (goes through Istio mesh)
+kubectl exec -n rental-service deploy/frontend-angular -c frontend-angular -- \
+  wget -qO- http://carrental-service:8080/actuator/health
 
-# Test the forwarded services
-curl http://localhost:8081/actuator/health    # carRental API
-curl http://localhost:3000/                   # Frontend
-psql -h localhost -p 5433 -U dbuser -d dbcar  # Database
+# Check Envoy sidecar logs
+kubectl logs -n rental-service deploy/carrental -c istio-proxy
 
-# Internal cluster testing (no port conflicts)
-kubectl run test-pod --rm -it --image=curlimages/curl --restart=Never -n rental-service -- curl carrental-service:8080/actuator/health
+# View Istio configuration for a pod
+istioctl proxy-config routes deploy/carrental -n rental-service
 ```
 
-**💡 Port Forward Tips:**
-- Use different local ports to avoid conflicts (8081, 8082, etc.)
-- Check what's using port 8080: `lsof -i :8080` or `netstat -an | grep 8080`
-- Kill conflicting process: `sudo lsof -ti:8080 | xargs kill -9` (if safe to do)
+#### 3. Istio Observability
 
-### Cleanup
 ```bash
-# Remove all resources
-kubectl delete namespace rental-service
+# Check mTLS status
+kubectl get peerauthentication -n rental-service
 
-# Delete Kind cluster
-kind delete cluster --name rental-service-cluster
+# View traffic policies
+kubectl get destinationrule carrental-destination -n rental-service -o yaml
+
+# Analyze configuration
+istioctl analyze -n rental-service
+
+# Check proxy status
+istioctl proxy-status
 ```
 
-## 📝 Notes
+#### 4. Port Forward (Direct Access)
+```bash
+# Forward carRental (bypass both Ingress and Istio)
+kubectl port-forward service/carrental-service 8081:8080 -n rental-service
+curl http://localhost:8081/actuator/health
+```
 
-- **Kind Cluster**: 3-node setup (1 control-plane + 2 workers) for realistic load balancing
-- **Storage**: Uses Kind's default storage class for persistent volumes
-- **Networking**: All services use ClusterIP for internal communication
-- **Secrets**: Development credentials in plain text (stringData format)
-- **Health Checks**: Liveness and readiness probes configured for all services
-- **Resources**: CPU/Memory limits set for optimal Kind performance
-
-## 🔄 Migration from Docker Compose
-
-This setup replaces the previous `docker-compose.yml` approach:
-- ✅ Better isolation and resource management
-- ✅ Production-like environment locally
-- ✅ Service discovery and load balancing
-- ✅ Health monitoring and auto-restart
-- ✅ Persistent data storage
-
-## ✅ Deployment Status
-
-### Complete Architecture - **PRODUCTION READY** 🎉
-
-| Layer | Service | Status | Replicas | Ingress | Health |
-|-------|---------|--------|----------|---------|--------|
-| **Ingress** | NGINX Controller | ✅ Running | 1/1 | ✅ Active | Ready |
-| **Frontend** | Angular SPA | ✅ Running | 2/2 | ✅ car-rental.local | Ready |
-| **Backend** | carRental API | ✅ Running | 2/2 | ✅ Multi-domain | Ready |
-| **Backend** | auctionService | ✅ Running | 2/2 | ✅ gRPC ready | Ready |
-| **Database** | PostgreSQL | ✅ Running | 1/1 | - | Ready |
-
-### Quick Verification
+### Monitoring Architecture
 
 ```bash
-# Architecture overview
-./k8s/monitor.sh
+# Complete status overview
+./k8s/monitor-istio.sh
 
-# Test all endpoints
-curl -H "Host: car-rental.local" http://localhost:80/ -s | head -5
-curl -H "Host: api.car-rental.local" http://localhost:80/actuator/health
-curl -H "Host: api.car-rental.local" http://localhost:80/car-models
+# Watch pod status in real-time
+watch -n 2 'kubectl get pods -n rental-service'
 
-# Check ingress status
+# Check Istio system health
+kubectl get pods -n istio-system
+
+# View Ingress status
 kubectl get ingress -n rental-service
-```
-
-## 🚀 Next Steps
-
-### Completed ✅
-1. ✅ Backend services deployment (PostgreSQL, carRental, auctionService)
-2. ✅ Frontend deployment (Angular with nginx)
-3. ✅ Ingress configuration (NGINX Controller with multiple domains)
-4. ✅ Load balancing and health checks
-5. ✅ Security headers and WebSocket support
-
-### Available Enhancements 🔧
-1. **HTTPS/TLS**: Add cert-manager for SSL certificates
-2. **Monitoring**: Deploy Prometheus/Grafana stack
-3. **Service Mesh**: Migrate to Istio (configuration ready)
-4. **CI/CD**: GitHub Actions pipeline for automated deployments
-5. **Autoscaling**: Horizontal Pod Autoscaler (HPA)
-6. **Backup**: PostgreSQL backup strategy
-7. **Multi-environment**: Staging/production environments
-
-## 🛠️ Troubleshooting
-
-### Common Issues
-
-#### Ingress Not Working
-```bash
-# Check Ingress Controller status
-kubectl get pods -n ingress-nginx
-kubectl logs -n ingress-nginx deployment/ingress-nginx-controller
-
-# Verify Ingress rules
-kubectl get ingress -n rental-service
-kubectl describe ingress frontend-ingress -n rental-service
-```
-
-#### Pod CrashLoopBackOff
-```bash
-# Check pod logs
-kubectl logs <pod-name> -n rental-service
-
-# Check resource constraints
-kubectl describe pod <pod-name> -n rental-service
-
-# Common fixes
-kubectl rollout restart deployment/<deployment-name> -n rental-service
-```
-
-#### Database Connection Issues
-```bash
-# Check PostgreSQL status
-kubectl logs postgres-0 -n rental-service
-kubectl exec -it postgres-0 -n rental-service -- psql -U dbuser -d dbcar -c "\dt"
-
-# Verify secrets
-kubectl get secret postgres-credentials -n rental-service -o yaml
-```
-
-#### Image Pull Issues with Kind
-```bash
-# Reload images into Kind
-kind load docker-image carrental:latest --name rental-service-cluster
-kind load docker-image car-rental-angular:latest --name rental-service-cluster
-kind load docker-image auction-service-server:latest --name rental-service-cluster
-
-# Restart deployments
-kubectl rollout restart deployment/carrental -n rental-service
-kubectl rollout restart deployment/frontend-angular -n rental-service
-kubectl rollout restart deployment/auction-service-server -n rental-service
-```
-
-### Performance Issues
-```bash
-# Check resource usage
-kubectl top nodes
-kubectl top pods -n rental-service
-
-# Scale deployments
-kubectl scale deployment carrental --replicas=3 -n rental-service
-kubectl scale deployment frontend-angular --replicas=3 -n rental-service
 ```
 
 ## 🌐 Application Access
 
-### Local Development Setup
-
-Add these entries to your `/etc/hosts` file:
+### Add to /etc/hosts
 ```bash
 echo "127.0.0.1 car-rental.local api.car-rental.local grpc.car-rental.local" | sudo tee -a /etc/hosts
 ```
 
 ### Available Endpoints
 
-| URL | Purpose | Target Service |
-|-----|---------|---------------|
-| `http://car-rental.local/` | 🎨 **Main Application** | Angular Frontend |
-| `http://car-rental.local/direct-api/` | 🔧 **Direct API Access** | carRental Backend |
-| `http://api.car-rental.local/` | � **API Subdomain** | carRental Backend |
-| `http://grpc.car-rental.local/` | ⚡ **gRPC Endpoint** | auctionService |
+| URL | Purpose | Routing | Target Service |
+|-----|---------|---------|----------------|
+| `http://car-rental.local/` | 🎨 Main Application | NGINX Ingress | Angular Frontend |
+| `http://car-rental.local/direct-api/` | 🔧 Direct API | NGINX Ingress | carRental Backend |
+| `http://api.car-rental.local/` | 🌐 API Subdomain | NGINX Ingress | carRental Backend |
+| Internal: `carrental-service:8080` | ⚡ Internal API | **Istio Gateway** | carRental Backend |
 
 ### Sample API Calls
 
 ```bash
-# Get car models
+# External access via Ingress NGINX
 curl -H "Host: api.car-rental.local" http://localhost:80/car-models
-
-# Health check
 curl -H "Host: api.car-rental.local" http://localhost:80/actuator/health
 
-# Via direct API path
-curl -H "Host: car-rental.local" http://localhost:80/direct-api/actuator/health
+# Internal access via Istio (from within cluster)
+kubectl run test --rm -it --image=curlimages/curl --restart=Never -n rental-service -- \
+  curl carrental-service:8080/actuator/health
 ```
 
-## �📊 Performance Notes
+## 🔐 Security & mTLS
 
-- **Kind Cluster**: 3 nodes (1 control-plane + 2 workers)
-- **Resource Usage**: Optimized for development with CPU/Memory limits
-- **Storage**: 2Gi PVC for PostgreSQL persistent data
-- **Load Balancing**: NGINX Ingress + Kubernetes services
-- **Health Checks**: Liveness/readiness probes on all components
-- **Security**: Security headers, ClusterIP isolation
+### Current Configuration: PERMISSIVE mTLS
+
+```yaml
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default-mtls
+  namespace: rental-service
+spec:
+  mtls:
+    mode: PERMISSIVE  # Allows both mTLS and plaintext
+```
+
+**Why PERMISSIVE?**
+- NGINX Ingress → Services: Uses plaintext (no Istio sidecar in Ingress)
+- Frontend → carRental: Uses mTLS (both have Istio sidecars)
+- carRental → auctionService: Uses mTLS (both have Istio sidecars)
+- carRental → PostgreSQL: Uses mTLS (both have Istio sidecars)
+
+### Upgrade to STRICT mTLS (Optional)
+
+For full security, migrate NGINX Ingress to Istio Gateway:
+
+```bash
+# 1. Update to STRICT mode
+kubectl apply -f - <<EOF
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default-mtls
+  namespace: rental-service
+spec:
+  mtls:
+    mode: STRICT
+EOF
+
+# 2. Use Istio Gateway instead of NGINX Ingress
+# See k8s/istio-gateway.yaml for full example
+```
+
+## 📊 Architecture Comparison
+
+### Before Istio (Ingress-only)
+```
+Browser → NGINX Ingress → Frontend → carRental → PostgreSQL
+                      ↘ carRental → auctionService
+```
+- Simple routing
+- No service mesh features
+- No automatic mTLS
+- Basic load balancing
+
+### After Istio (Hybrid)
+```
+Browser → NGINX Ingress → Frontend ─┐
+                                    ↓
+                            Istio Gateway → carRental → PostgreSQL
+                                          ↘ auctionService
+```
+- Advanced routing (retry, circuit breaker, timeout)
+- Automatic mTLS between services
+- Intelligent load balancing
+- Traffic metrics and distributed tracing
+- Canary deployments ready
+
+## 🚀 Next Steps
+
+### Current Status ✅
+1. ✅ Istio Service Mesh installed
+2. ✅ All services with Envoy sidecars (2/2 containers)
+3. ✅ PERMISSIVE mTLS (hybrid compatibility)
+4. ✅ NGINX Ingress for external access
+5. ✅ Istio Gateway for internal routing
+
+### Available Enhancements 🔧
+1. **Observability Stack**
+   ```bash
+   # Install Kiali, Prometheus, Grafana
+   kubectl apply -f istio-1.23.2/samples/addons
+   istioctl dashboard kiali
+   ```
+
+2. **Strict mTLS** (Full security)
+   - Migrate external access to Istio Gateway
+   - Enable STRICT mTLS mode
+
+3. **Traffic Management**
+   - Canary deployments (90/10 traffic split)
+   - A/B testing
+   - Fault injection for chaos engineering
+
+4. **Circuit Breaker Testing**
+   ```bash
+   # Generate load to test circuit breaker
+   kubectl run load-test --rm -it --image=fortio/fortio --restart=Never -n rental-service -- \
+     load -c 50 -qps 0 -n 1000 http://carrental-service:8080/actuator/health
+   ```
+
+5. **Distributed Tracing**
+   - Deploy Jaeger
+   - View request traces across services
+
+## 🛠️ Troubleshooting
+
+### Istio Sidecar Not Injected
+```bash
+# Verify namespace label
+kubectl get namespace rental-service --show-labels
+
+# Should show: istio-injection=enabled
+# If not:
+kubectl label namespace rental-service istio-injection=enabled
+
+# Restart deployments
+kubectl rollout restart deployment -n rental-service
+```
+
+### mTLS Connection Issues
+```bash
+# Check mTLS status
+kubectl get peerauthentication -n rental-service
+
+# Test connection
+kubectl exec -n rental-service deploy/frontend-angular -c frontend-angular -- \
+  wget -qO- http://carrental-service:8080/actuator/health
+
+# View Envoy proxy logs
+kubectl logs -n rental-service deploy/carrental -c istio-proxy --tail=50
+```
+
+### Ingress 502 Bad Gateway
+```bash
+# Check if mTLS is STRICT (should be PERMISSIVE for hybrid)
+kubectl get peerauthentication default-mtls -n rental-service -o yaml
+
+# If STRICT, change to PERMISSIVE
+kubectl patch peerauthentication default-mtls -n rental-service \
+  --type='json' -p='[{"op": "replace", "path": "/spec/mtls/mode", "value":"PERMISSIVE"}]'
+```
+
+### Pod CrashLoopBackOff
+```bash
+# Check both containers (app + istio-proxy)
+kubectl logs <pod-name> -n rental-service -c <container-name>
+kubectl logs <pod-name> -n rental-service -c istio-proxy
+
+# Describe pod for events
+kubectl describe pod <pod-name> -n rental-service
+```
+
+### Istio Configuration Errors
+```bash
+# Analyze configuration
+istioctl analyze -n rental-service
+
+# Validate specific resource
+istioctl validate -f k8s/istio-internal-gateway.yaml
+```
+
+## 🧹 Cleanup
+
+```bash
+# Remove application resources
+kubectl delete namespace rental-service
+
+# Uninstall Istio
+istioctl uninstall --purge -y
+
+# Delete Kind cluster
+kind delete cluster --name rental-service-cluster
+```
+
+## 📚 Additional Resources
+
+- [Istio Documentation](https://istio.io/latest/docs/)
+- [Istio Traffic Management](https://istio.io/latest/docs/tasks/traffic-management/)
+- [Istio Security](https://istio.io/latest/docs/tasks/security/)
+- [Istio Observability](https://istio.io/latest/docs/tasks/observability/)
+- [NGINX Ingress + Istio](https://istio.io/latest/docs/tasks/traffic-management/ingress/ingress-control/)
+
+---
+
+**Architecture Status**: ✅ **PRODUCTION-READY**
+- Hybrid routing (NGINX Ingress + Istio Gateway)
+- Automatic mTLS between services
+- Advanced traffic policies
+- Full observability ready
