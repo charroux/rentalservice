@@ -95,12 +95,23 @@ minikube addons enable metrics-server
 istioctl install --set profile=demo -y
 ```
 
-4. Start tunnel (in separate terminal):
+4. **Build Docker images in Minikube's Docker daemon:**
+```bash
+# Configure your shell to use Minikube's Docker
+eval $(minikube docker-env)
+
+# Build all images
+docker build -f carRental/Dockerfile -t carrental:latest .
+docker build -f auctionServiceServer/Dockerfile -t auction-service-server:latest .
+docker build -f car-rental-angular/Dockerfile -t car-rental-angular:latest .
+```
+
+5. Start tunnel (in separate terminal):
 ```bash
 minikube tunnel
 ```
 
-5. Add to `/etc/hosts`:
+6. Add to `/etc/hosts`:
 ```
 <minikube-ip> car-rental.local
 ```
@@ -116,11 +127,13 @@ minikube ip
 - Uses extraPortMappings to expose ports 80/443 to localhost
 - NGINX Ingress installed manually
 - Access via `localhost` with host header
+- **Images:** `imagePullPolicy: Never` - images must be loaded into Kind with `kind load docker-image`
 
 ### Minikube
 - Uses `minikube tunnel` for LoadBalancer services
 - NGINX Ingress via addon
 - Access via `minikube ip`
+- **Images:** `imagePullPolicy: IfNotPresent` - images must be built in Minikube's Docker daemon with `eval $(minikube docker-env)`
 
 ## Istio Configuration
 

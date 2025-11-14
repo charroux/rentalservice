@@ -78,6 +78,13 @@ cd k8s
 ```bash
 cd k8s
 ./setup-minikube-cluster.sh  # Crée cluster + Istio + addons
+
+# Build des images dans le Docker de Minikube
+eval $(minikube docker-env)
+docker build -f carRental/Dockerfile -t carrental:latest .
+docker build -f auctionServiceServer/Dockerfile -t auction-service-server:latest .
+docker build -f car-rental-angular/Dockerfile -t car-rental-angular:latest .
+
 minikube tunnel              # Dans un autre terminal
 ./deploy.sh                  # Déploie l'application
 ```
@@ -107,6 +114,8 @@ kubectl kustomize overlays/minikube
 | **Accès** | localhost:80 via port mapping | minikube ip via tunnel |
 | **NGINX** | Installation manuelle | Addon intégré |
 | **Hosts** | 127.0.0.1 car-rental.local | $(minikube ip) car-rental.local |
+| **Images** | imagePullPolicy: Never | imagePullPolicy: IfNotPresent |
+| **Build** | kind load docker-image | eval $(minikube docker-env) |
 
 ## ✅ Validation
 
