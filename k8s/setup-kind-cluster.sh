@@ -90,20 +90,34 @@ kubectl wait --namespace ingress-nginx \
   --selector=app.kubernetes.io/component=controller \
   --timeout=90s
 
-# 8. Création des namespaces
-echo "📂 Création des namespaces..."
-kubectl create namespace rental-service --dry-run=client -o yaml | kubectl apply -f -
-kubectl create namespace istio-system --dry-run=client -o yaml | kubectl apply -f -
+# 8. Installer Istio
+echo "🔷 Installation Istio..."
+if [ ! -d "../istio-1.23.2" ]; then
+    echo "⚠️ Istio non trouvé. Téléchargement..."
+    cd ..
+    curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.23.2 sh -
+    cd k8s
+fi
 
-echo "✅ Cluster Kind prêt!"
+../istio-1.23.2/bin/istioctl install --set profile=demo -y
+
+echo "✅ Cluster Kind avec Istio prêt!"
+echo ""
 echo "📋 Informations utiles:"
 echo "   - Cluster name: ${CLUSTER_NAME}"
 echo "   - Registry: localhost:${REGISTRY_PORT}"
 echo "   - Context: kind-${CLUSTER_NAME}"
+echo "   - Istio: version 1.23.2 (profile demo)"
+echo ""
+echo "🚀 Déployer l'application:"
+echo "   cd k8s && ./deploy.sh"
 echo ""
 echo "🔧 Commandes utiles:"
 echo "   kubectl cluster-info --context kind-${CLUSTER_NAME}"
+echo "   kubectl get pods -n istio-system"
 echo "   kubectl get nodes"
+echo ""
+echo "🐳 Build & Push images vers le registry local:"
 echo "   docker build -t localhost:${REGISTRY_PORT}/rental-service:latest ."
 echo "   docker push localhost:${REGISTRY_PORT}/rental-service:latest"
 echo ""

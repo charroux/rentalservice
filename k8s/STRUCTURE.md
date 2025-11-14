@@ -26,6 +26,8 @@ k8s/
 │       └── kustomization.yaml           # Kustomize overlay Minikube
 │
 ├── 📄 deploy.sh                          # Script déploiement auto-détection Kind/Minikube
+├── 📄 setup-kind-cluster.sh              # Script setup complet cluster Kind
+├── 📄 setup-minikube-cluster.sh          # Script setup complet cluster Minikube
 ├── 📄 monitor.sh                         # Script monitoring (sans Istio)
 ├── 📄 monitor-istio.sh                   # Script monitoring avec Istio
 │
@@ -63,7 +65,24 @@ k8s/
   - backend-api-ingress (/api/*)
   - backend-direct-api-ingress (/direct-api/*)
 
-## 🚀 Commandes de déploiement
+## 🚀 Setup complet (depuis zéro)
+
+### Option 1: Setup automatique Kind
+```bash
+cd k8s
+./setup-kind-cluster.sh    # Crée cluster + Istio + NGINX + MetalLB
+./deploy.sh                 # Déploie l'application
+```
+
+### Option 2: Setup automatique Minikube
+```bash
+cd k8s
+./setup-minikube-cluster.sh  # Crée cluster + Istio + addons
+minikube tunnel              # Dans un autre terminal
+./deploy.sh                  # Déploie l'application
+```
+
+## 🚀 Commandes de déploiement (cluster déjà existant)
 
 ```bash
 # Déploiement automatique (détecte l'environnement)
