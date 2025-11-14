@@ -34,6 +34,37 @@ spec:
               number: 80
 
 ---
+# Backend API ingress for Angular app (/api path)
+# This handles API calls from the browser (external) to backend
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: backend-api-ingress
+  namespace: rental-service
+  labels:
+    app: rental-service
+    component: backend
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "30"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "30"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "30"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: car-rental.local
+    http:
+      paths:
+      # API path used by Angular frontend from browser (strips /api prefix)
+      - path: /api(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: carrental-service
+            port:
+              number: 8080
+
+---
 # Backend API ingress with path rewriting
 apiVersion: networking.k8s.io/v1
 kind: Ingress
