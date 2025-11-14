@@ -2,8 +2,12 @@
 
 This directory contains Kubernetes manifests for the car-rental microservices architecture, optimized for local development with **Kind** (Kubernetes in Docker) and **NGINX Ingress Controller**.
 
+> 🆕 **NEW: Istio Service Mesh Integration Available!**  
+> For advanced features like mTLS, intelligent load balancing, and traffic management, see [README-ISTIO.md](README-ISTIO.md) for the hybrid NGINX Ingress + Istio Gateway architecture.
+
 ## 🏗️ Architecture Overview
 
+### Option 1: NGINX Ingress Only (This Guide)
 ```
 Internet/Browser
        │
@@ -25,6 +29,13 @@ Internet/Browser
                           └───────────────┘ │   Port: 9090    │
                                             └─────────────────┘
 ```
+
+### Option 2: Hybrid Ingress + Istio (Advanced) 🔥
+See [README-ISTIO.md](README-ISTIO.md) for:
+- **Istio Service Mesh** for internal routing (Angular → carRental)
+- **Automatic mTLS** between services
+- **Advanced traffic management** (retry, circuit breaker, timeout)
+- **Observability** ready (Kiali, Prometheus, Grafana)
 
 ## 🚀 Quick Start with Kind
 
