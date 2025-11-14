@@ -42,14 +42,19 @@ minikube addons enable registry -p "${CLUSTER_NAME}"
 
 # 5. Installer Istio
 echo "🔷 Installation Istio..."
-if [ ! -d "../istio-1.23.2" ]; then
+ISTIO_DIR="../istio-1.23.2"
+if [ ! -d "${ISTIO_DIR}" ]; then
     echo "⚠️ Istio non trouvé. Téléchargement..."
     cd ..
     curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.23.2 sh -
     cd k8s
+    ISTIO_DIR="../istio-1.23.2"
 fi
 
-../istio-1.23.2/bin/istioctl install --set profile=demo -y
+echo "Installation d'Istio avec istioctl..."
+"${ISTIO_DIR}/bin/istioctl" install --set profile=demo -y
+
+echo "✅ Istio installé"
 
 # 6. Récupérer l'IP Minikube
 MINIKUBE_IP=$(minikube ip -p "${CLUSTER_NAME}")
