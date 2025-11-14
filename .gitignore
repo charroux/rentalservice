@@ -47,3 +47,6 @@ yarn-error.log*
 .gradle/
 build/
 *.jar
+
+# Istio installation directory (downloaded locally)
+istio-*/

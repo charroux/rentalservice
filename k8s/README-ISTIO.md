@@ -62,22 +62,10 @@ Internet/Browser
 - Docker Desktop running
 - kubectl installed
 - Kind installed: `brew install kind`
-- **No need to install istioctl manually** (script downloads it)
 
-### 1. Complete Deployment Script
+### Step-by-Step Deployment
 
-```bash
-# Download this deployment script
-curl -O https://raw.githubusercontent.com/charroux/rentalservice/gateway/k8s/deploy-istio.sh
-chmod +x deploy-istio.sh
-
-# Run complete deployment (creates cluster, installs Istio, deploys apps)
-./deploy-istio.sh
-```
-
-**Or step-by-step:**
-
-### 2. Create Kind Cluster
+### 1. Create Kind Cluster
 
 ```bash
 cat > /tmp/kind-istio-config.yaml << 'EOF'
@@ -109,9 +97,14 @@ kind create cluster --name rental-service-cluster --config /tmp/kind-istio-confi
 
 ```bash
 # Download Istio
+### 2. Install Istio
+
+```bash
+# Download Istio (adds istio-1.23.2/ directory - already in .gitignore)
 curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.23.2 sh -
-cd istio-1.23.2
-export PATH=$PWD/bin:$PATH
+
+# Add istioctl to PATH (temporary for current session)
+export PATH="$PWD/istio-1.23.2/bin:$PATH"
 
 # Install Istio with demo profile (includes ingress gateway)
 istioctl install --set profile=demo -y
@@ -120,7 +113,9 @@ istioctl install --set profile=demo -y
 kubectl get pods -n istio-system
 ```
 
-### 4. Build and Load Images
+> **Note**: Le dossier `istio-1.23.2/` est automatiquement exclu de git via `.gitignore`
+
+### 3. Build and Load Images
 
 ```bash
 # Build all images
@@ -132,7 +127,7 @@ docker build -f car-rental-angular/Dockerfile -t car-rental-angular:latest .
 kind load docker-image carrental:latest auction-service-server:latest car-rental-angular:latest --name rental-service-cluster
 ```
 
-### 5. Deploy Services
+### 4. Deploy Services
 
 ```bash
 # Create namespace with Istio injection enabled
@@ -162,7 +157,7 @@ kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.
 kubectl apply -f k8s/ingress.yaml
 ```
 
-### 6. Verify Deployment
+### 5. Verify Deployment
 
 ```bash
 # Check all pods (should show 2/2 for app pods = app + Envoy sidecar)
