@@ -67,7 +67,12 @@ kind create cluster --config kind-config.yaml --name rental-service-cluster
 istioctl install --set profile=demo -y
 ```
 
-3. Install NGINX Ingress:
+3. **Enable Istio sidecar injection:**
+```bash
+kubectl label namespace rental-service istio-injection=enabled
+```
+
+4. Install NGINX Ingress:
 ```bash
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
 ```
@@ -95,7 +100,12 @@ minikube addons enable metrics-server
 istioctl install --set profile=demo -y
 ```
 
-4. **Build Docker images in Minikube's Docker daemon:**
+4. **Enable Istio sidecar injection:**
+```bash
+kubectl label namespace rental-service istio-injection=enabled
+```
+
+5. **Build Docker images in Minikube's Docker daemon:**
 ```bash
 # Configure your shell to use Minikube's Docker
 eval $(minikube docker-env)
@@ -106,12 +116,12 @@ docker build -f auctionServiceServer/Dockerfile -t auction-service-server:latest
 docker build -f car-rental-angular/Dockerfile -t car-rental-angular:latest .
 ```
 
-5. Start tunnel (in separate terminal):
+6. Start tunnel (in separate terminal):
 ```bash
 minikube tunnel
 ```
 
-6. Add to `/etc/hosts`:
+7. Add to `/etc/hosts`:
 ```
 <minikube-ip> car-rental.local
 ```
@@ -128,12 +138,14 @@ minikube ip
 - NGINX Ingress installed manually
 - Access via `localhost` with host header
 - **Images:** `imagePullPolicy: Never` - images must be loaded into Kind with `kind load docker-image`
+- **Replicas:** 1 per deployment (suitable for local development)
 
 ### Minikube
 - Uses `minikube tunnel` for LoadBalancer services
 - NGINX Ingress via addon
 - Access via `minikube ip`
 - **Images:** `imagePullPolicy: IfNotPresent` - images must be built in Minikube's Docker daemon with `eval $(minikube docker-env)`
+- **Replicas:** 1 per deployment (optimized for limited Minikube resources)
 
 ## Istio Configuration
 
@@ -142,6 +154,11 @@ Both environments share the same Istio configuration:
 - VirtualService with retry and timeout policies
 - DestinationRule with load balancing and circuit breaker
 - PeerAuthentication with PERMISSIVE mTLS
+- **Automatic sidecar injection** enabled via namespace label `istio-injection=enabled`
+
+All application pods run with 2 containers:
+- Main application container
+- Istio Envoy sidecar proxy
 
 ## Access URLs
 
@@ -165,3 +182,75 @@ kubectl get pods -n rental-service -o jsonpath='{range .items[*]}{.metadata.name
 ```
 
 You should see 2 containers per pod: `<app-name>` and `istio-proxy`.
+
+Expected output:
+```
+auction-service-server-xxx    auction-service-server istio-proxy
+carrental-xxx                 carrental istio-proxy
+frontend-angular-xxx          frontend-angular istio-proxy
+postgres-0                    postgres
+```
+
+## Troubleshooting
+
+### Pods not ready (0/2 or 1/2)
+
+If pods show READY 1/2, the Istio sidecar might not be injected:
+
+1. Check namespace label:
+```bash
+kubectl get namespace rental-service --show-labels
+```
+
+2. Add label if missing:
+```bash
+kubectl label namespace rental-service istio-injection=enabled --overwrite
+```
+
+3. Restart deployments:
+```bash
+kubectl rollout restart deployment -n rental-service
+```
+
+### Java apps take long to start
+
+The deployment probes are configured with extended delays for Java applications with Istio:
+- Liveness probe: 120s initial delay
+- Readiness probe: 90s initial delay
+- Failure threshold: 6 attempts
+
+This is normal for Spring Boot applications with Istio sidecars and PostgreSQL initialization.
+
+## Cluster Management
+
+### Stop Minikube
+
+To stop the Minikube cluster without deleting it:
+```bash
+minikube stop
+```
+
+To start it again later:
+```bash
+minikube start
+```
+
+### Delete Minikube
+
+To completely delete the Minikube cluster:
+```bash
+minikube delete
+```
+
+### Stop Kind
+
+To stop the Kind cluster, you need to delete it (Kind doesn't have a stop/start mechanism):
+```bash
+kind delete cluster --name rental-service-cluster
+```
+
+To recreate it, use the setup script:
+```bash
+cd k8s
+./setup-kind-cluster.sh
+```

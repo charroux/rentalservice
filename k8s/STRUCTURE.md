@@ -45,7 +45,7 @@ k8s/
 - ✅ 1 Secret (postgres-credentials)
 - ✅ 4 Services (postgres, carrental-service, auction-service, frontend-service)
 - ✅ 1 StatefulSet (postgres)
-- ✅ 3 Deployments (carrental, frontend-angular, auction-service-server)
+- ✅ 3 Deployments (carrental, frontend-angular, auction-service-server) - **1 replica each**
 - ✅ 1 Gateway Istio (rental-internal-gateway)
 - ✅ 1 VirtualService Istio (carrental-internal-vs)
 - ✅ 1 DestinationRule Istio (carrental-destination)
@@ -116,10 +116,23 @@ kubectl kustomize overlays/minikube
 | **Hosts** | 127.0.0.1 car-rental.local | $(minikube ip) car-rental.local |
 | **Images** | imagePullPolicy: Never | imagePullPolicy: IfNotPresent |
 | **Build** | kind load docker-image | eval $(minikube docker-env) |
+| **Replicas** | 1 per deployment | 1 per deployment |
+| **Probes** | initialDelaySeconds: 120s (liveness), 90s (readiness) | Same |
+
+## 🔧 Configuration Istio
+
+Tous les pods d'application (sauf postgres) exécutent **2 containers** :
+- Container principal de l'application
+- Sidecar Istio Envoy (istio-proxy)
+
+Configuration partagée :
+- ✅ Gateway Istio pour le routage interne
+- ✅ VirtualService avec retry (3 tentatives, 10s) et timeout (30s API, 5s health)
+- ✅ DestinationRule avec LEAST_REQUEST load balancing et circuit breaker
+- ✅ PeerAuthentication en mode PERMISSIVE (mTLS optionnel)
+- ✅ Label `istio-injection=enabled` sur namespace rental-service
 
 ## ✅ Validation
-
-Structure validée avec succès :
 - ✅ Kustomize base contient 8 ressources
 - ✅ Overlay Kind génère 19 ressources totales
 - ✅ Overlay Minikube génère 17 ressources totales

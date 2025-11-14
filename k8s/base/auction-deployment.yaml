@@ -8,7 +8,7 @@ metadata:
     component: backend
     purpose: grpc-auction-server
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: auction-service-server
@@ -37,17 +37,17 @@ spec:
         livenessProbe:
           tcpSocket:
             port: 9090
-          initialDelaySeconds: 30
+          initialDelaySeconds: 90
           periodSeconds: 10
           timeoutSeconds: 5
-          failureThreshold: 3
+          failureThreshold: 6
         readinessProbe:
           tcpSocket:
             port: 9090
-          initialDelaySeconds: 10
-          periodSeconds: 5
-          timeoutSeconds: 3
-          failureThreshold: 3
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 6
         # gRPC specific JVM options already in JAVA_OPTS in Dockerfile
 ---
 apiVersion: v1
