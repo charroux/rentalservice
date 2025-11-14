@@ -1,0 +1,92 @@
+# Istio Gateway for internal Angular → carRental communication
+# Ingress NGINX remains for external access
+---
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: rental-internal-gateway
+  namespace: rental-service
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http-internal
+      protocol: HTTP
+    hosts:
+    - "carrental-service.rental-service.svc.cluster.local"
+
+---
+# VirtualService for Angular → carRental routing with advanced features
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: carrental-internal-vs
+  namespace: rental-service
+spec:
+  hosts:
+  - "carrental-service.rental-service.svc.cluster.local"
+  http:
+  # Health check endpoint (no retry on health checks)
+  - match:
+    - uri:
+        prefix: /actuator/health
+    route:
+    - destination:
+        host: carrental-service
+        port:
+          number: 8080
+    timeout: 5s
+
+  # API endpoints with retry and timeout policies
+  - match:
+    - uri:
+        prefix: /
+    route:
+    - destination:
+        host: carrental-service
+        port:
+          number: 8080
+    timeout: 30s
+    retries:
+      attempts: 3
+      perTryTimeout: 10s
+      retryOn: 5xx,reset,connect-failure,refused-stream
+
+---
+# DestinationRule for traffic policies and load balancing
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: carrental-destination
+  namespace: rental-service
+spec:
+  host: carrental-service
+  trafficPolicy:
+    loadBalancer:
+      simple: LEAST_REQUEST  # Intelligent load balancing
+    connectionPool:
+      tcp:
+        maxConnections: 100
+      http:
+        http1MaxPendingRequests: 50
+        maxRequestsPerConnection: 10
+    outlierDetection:
+      consecutiveErrors: 3
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+      minHealthPercent: 50
+
+---
+# Strict mTLS for service-to-service communication only
+# PERMISSIVE mode allows both mTLS (Istio-to-Istio) and plaintext (Ingress-to-Service)
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default-mtls
+  namespace: rental-service
+spec:
+  mtls:
+    mode: PERMISSIVE  # Allow both mTLS and plaintext
