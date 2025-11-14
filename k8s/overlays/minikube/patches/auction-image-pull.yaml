@@ -1,0 +1,11 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auction-service-server
+  namespace: rental-service
+spec:
+  template:
+    spec:
+      containers:
+      - name: auction-service-server
+        imagePullPolicy: IfNotPresent

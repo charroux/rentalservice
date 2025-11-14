@@ -6,3 +6,8 @@ namespace: rental-service
 resources:
   - ../../base
   - ingress-minikube.yaml
+
+patchesStrategicMerge:
+  - patches/carrental-image-pull.yaml
+  - patches/frontend-image-pull.yaml
+  - patches/auction-image-pull.yaml
