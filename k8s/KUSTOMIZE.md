@@ -67,8 +67,9 @@ kind create cluster --config kind-config.yaml --name rental-service-cluster
 istioctl install --set profile=demo -y
 ```
 
-3. **Enable Istio sidecar injection:**
+3. **Create namespace and enable Istio sidecar injection:**
 ```bash
+kubectl create namespace rental-service
 kubectl label namespace rental-service istio-injection=enabled
 ```
 
@@ -77,7 +78,7 @@ kubectl label namespace rental-service istio-injection=enabled
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
 ```
 
-4. Add to `/etc/hosts`:
+5. Add to `/etc/hosts`:
 ```
 127.0.0.1 car-rental.local
 ```
@@ -100,8 +101,9 @@ minikube addons enable metrics-server
 istioctl install --set profile=demo -y
 ```
 
-4. **Enable Istio sidecar injection:**
+4. **Create namespace and enable Istio sidecar injection:**
 ```bash
+kubectl create namespace rental-service
 kubectl label namespace rental-service istio-injection=enabled
 ```
 
