@@ -133,6 +133,48 @@ Get Minikube IP with:
 minikube ip
 ```
 
+### Alternative: NodePort Access (No Tunnel, No /etc/hosts)
+
+If you don't want to use `minikube tunnel` or modify `/etc/hosts`, you can access services via NodePort:
+
+```bash
+# Get the NodePort for Ingress
+kubectl get svc -n ingress-nginx ingress-nginx-controller
+
+# Access with Minikube IP and NodePort (example: port 31076)
+MINIKUBE_IP=$(minikube ip)
+NODE_PORT=$(kubectl get svc -n ingress-nginx ingress-nginx-controller -o jsonpath='{.spec.ports[0].nodePort}')
+
+# Test API
+curl -H "Host: car-rental.local" http://${MINIKUBE_IP}:${NODE_PORT}/api/offers
+
+# Access frontend in browser
+echo "Open: http://${MINIKUBE_IP}:${NODE_PORT}/ (with Host header extension or configure app)"
+```
+
+**Note:** For browser access, you'll need to either:
+- Use a browser extension to set the `Host: car-rental.local` header
+- Or modify the Angular app to work without virtual host
+
+### Alternative: Port Forwarding (Simplest for Development)
+
+Access services directly without Ingress:
+
+```bash
+# Forward carrental service
+kubectl port-forward -n rental-service svc/carrental-service 8080:8080
+
+# Forward frontend service
+kubectl port-forward -n rental-service svc/frontend-service 4200:80
+
+# Access in browser
+# API: http://localhost:8080/offers
+# Frontend: http://localhost:4200
+```
+
+**Pros:** No tunnel, no /etc/hosts, simple
+**Cons:** Bypasses Ingress and Istio Gateway (but services still communicate via Istio internally)
+
 ## Differences Between Environments
 
 ### Kind
