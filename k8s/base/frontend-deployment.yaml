@@ -8,7 +8,7 @@ metadata:
     component: frontend
     purpose: web-ui
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: frontend-angular

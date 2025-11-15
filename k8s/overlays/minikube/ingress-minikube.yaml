@@ -1,0 +1,91 @@
+# Main frontend ingress for Minikube
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: frontend-ingress
+  namespace: rental-service
+  labels:
+    app: rental-service
+    component: frontend
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "30"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "30"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "30"
+    nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
+    
+    # Note: server-snippet disabled in Minikube ingress addon for security
+    # Security headers would require enabling allow-snippet-annotations
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: car-rental.local
+    http:
+      paths:
+      # Frontend Angular App (default path)
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend-service
+            port:
+              number: 80
+
+---
+# Backend API ingress for Angular app (/api path)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: backend-api-ingress
+  namespace: rental-service
+  labels:
+    app: rental-service
+    component: backend
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "30"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "30"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "30"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: car-rental.local
+    http:
+      paths:
+      # API path used by Angular frontend from browser (strips /api prefix)
+      - path: /api(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: carrental-service
+            port:
+              number: 8080
+
+---
+# Backend API ingress with path rewriting
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: backend-direct-api-ingress
+  namespace: rental-service
+  labels:
+    app: rental-service
+    component: backend
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "30"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "30"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "30"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: car-rental.local
+    http:
+      paths:
+      # Direct API access with rewrite
+      - path: /direct-api(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: carrental-service
+            port:
+              number: 8080

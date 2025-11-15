@@ -487,14 +487,43 @@ istioctl validate -f k8s/istio-internal-gateway.yaml
 
 ## 🧹 Cleanup
 
+### Stop Clusters (without deleting)
+
+**Minikube:**
 ```bash
-# Remove application resources
+# Stop the cluster (can be restarted later)
+minikube stop
+
+# Restart the cluster
+minikube start
+```
+
+**Kind:**
+Kind doesn't support stop/start - you must delete and recreate:
+```bash
+kind delete cluster --name rental-service-cluster
+# Recreate with: cd k8s && ./setup-kind-cluster.sh
+```
+
+### Complete Cleanup
+
+**Remove application resources:**
+```bash
 kubectl delete namespace rental-service
+```
 
-# Uninstall Istio
+**Uninstall Istio:**
+```bash
 istioctl uninstall --purge -y
+```
 
-# Delete Kind cluster
+**Delete Minikube cluster:**
+```bash
+minikube delete
+```
+
+**Delete Kind cluster:**
+```bash
 kind delete cluster --name rental-service-cluster
 ```
 

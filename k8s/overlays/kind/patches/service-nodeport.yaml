@@ -1,0 +1,2 @@
+# No specific service patches needed for Kind with Istio
+# Services remain ClusterIP as Istio handles the mesh
