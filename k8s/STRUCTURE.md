@@ -85,6 +85,9 @@ docker build -f carRental/Dockerfile -t carrental:latest .
 docker build -f auctionServiceServer/Dockerfile -t auction-service-server:latest .
 docker build -f car-rental-angular/Dockerfile -t car-rental-angular:latest .
 
+# Patcher Ingress en LoadBalancer pour le tunnel
+kubectl patch svc ingress-nginx-controller -n ingress-nginx -p '{"spec":{"type":"LoadBalancer"}}'
+
 minikube tunnel              # Dans un autre terminal
 ./deploy.sh                  # Déploie l'application
 ```
@@ -111,13 +114,14 @@ kubectl kustomize overlays/minikube
 | Aspect | Kind | Minikube |
 |--------|------|----------|
 | **Ingress** | 5 Ingress (tous les chemins) | 3 Ingress (essentiels) |
-| **Accès** | localhost:80 via port mapping | minikube ip via tunnel |
-| **NGINX** | Installation manuelle | Addon intégré |
-| **Hosts** | 127.0.0.1 car-rental.local | $(minikube ip) car-rental.local |
+| **Accès** | localhost:80 via port mapping | 127.0.0.1:80 via tunnel + LoadBalancer |
+| **NGINX** | Installation manuelle | Addon intégré (NodePort par défaut) |
+| **Hosts** | 127.0.0.1 car-rental.local | 127.0.0.1 car-rental.local |
 | **Images** | imagePullPolicy: Never | imagePullPolicy: IfNotPresent |
 | **Build** | kind load docker-image | eval $(minikube docker-env) |
 | **Replicas** | 1 per deployment | 1 per deployment |
 | **Probes** | initialDelaySeconds: 120s (liveness), 90s (readiness) | Same |
+| **LoadBalancer** | Not needed (port mapping) | Required patch for Ingress controller |
 
 ## 🔧 Configuration Istio
 

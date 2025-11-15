@@ -53,7 +53,7 @@ spec:
       paths:
       # API path used by Angular frontend from browser (strips /api prefix)
       - path: /api(/|$)(.*)
-        pathType: Prefix
+        pathType: ImplementationSpecific
         backend:
           service:
             name: carrental-service
@@ -83,7 +83,7 @@ spec:
       paths:
       # Direct API access with rewrite
       - path: /direct-api(/|$)(.*)
-        pathType: Prefix
+        pathType: ImplementationSpecific
         backend:
           service:
             name: carrental-service

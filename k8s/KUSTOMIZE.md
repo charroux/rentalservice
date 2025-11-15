@@ -118,20 +118,23 @@ docker build -f auctionServiceServer/Dockerfile -t auction-service-server:latest
 docker build -f car-rental-angular/Dockerfile -t car-rental-angular:latest .
 ```
 
-6. Start tunnel (in separate terminal):
+6. **Configure Ingress as LoadBalancer for tunnel:**
+```bash
+# Patch the Ingress controller to use LoadBalancer type (required for minikube tunnel)
+kubectl patch svc ingress-nginx-controller -n ingress-nginx -p '{"spec":{"type":"LoadBalancer"}}'
+```
+
+7. Start tunnel (in separate terminal):
 ```bash
 minikube tunnel
 ```
 
-7. Add to `/etc/hosts`:
+8. Add to `/etc/hosts`:
 ```
-<minikube-ip> car-rental.local
+127.0.0.1 car-rental.local
 ```
 
-Get Minikube IP with:
-```bash
-minikube ip
-```
+**Note:** With `minikube tunnel` and LoadBalancer type, the Ingress gets `127.0.0.1` as EXTERNAL-IP, making it accessible via localhost.
 
 ### Alternative: NodePort Access (No Tunnel, No /etc/hosts)
 
@@ -186,10 +189,11 @@ kubectl port-forward -n rental-service svc/frontend-service 4200:80
 
 ### Minikube
 - Uses `minikube tunnel` for LoadBalancer services
-- NGINX Ingress via addon
-- Access via `minikube ip`
+- NGINX Ingress via addon (default: NodePort, must be patched to LoadBalancer)
+- Access via `127.0.0.1` (with tunnel and LoadBalancer patch)
 - **Images:** `imagePullPolicy: IfNotPresent` - images must be built in Minikube's Docker daemon with `eval $(minikube docker-env)`
 - **Replicas:** 1 per deployment (optimized for limited Minikube resources)
+- **Important:** Ingress controller must be changed to LoadBalancer type for tunnel to work
 
 ## Istio Configuration
 
@@ -255,6 +259,58 @@ kubectl label namespace rental-service istio-injection=enabled --overwrite
 ```bash
 kubectl rollout restart deployment -n rental-service
 ```
+
+### Pods have wrong labels (app=rental-service instead of specific app names)
+
+If services don't route correctly, pods might have generic labels instead of specific ones:
+
+1. Check pod labels:
+```bash
+kubectl get pods -n rental-service --show-labels
+```
+
+2. If pods have `app=rental-service` instead of `app=carrental`, `app=frontend-angular`, etc., delete and recreate:
+```bash
+# Delete deployments with wrong labels
+kubectl delete deployment carrental auction-service-server frontend-angular -n rental-service
+
+# Recreate with correct labels from base manifests
+kubectl apply -f k8s/base/carrental-deployment.yaml
+kubectl apply -f k8s/base/auction-deployment.yaml
+kubectl apply -f k8s/base/frontend-deployment.yaml
+```
+
+### Ingress controller not accessible with minikube tunnel
+
+If you can't access services via `127.0.0.1` even with tunnel running:
+
+1. Check Ingress controller type:
+```bash
+kubectl get svc -n ingress-nginx ingress-nginx-controller
+```
+
+2. If TYPE is NodePort instead of LoadBalancer, patch it:
+```bash
+kubectl patch svc ingress-nginx-controller -n ingress-nginx -p '{"spec":{"type":"LoadBalancer"}}'
+```
+
+3. Restart tunnel:
+```bash
+pkill -f "minikube tunnel"
+sudo minikube tunnel
+```
+
+4. Verify EXTERNAL-IP is `127.0.0.1`:
+```bash
+kubectl get svc -n ingress-nginx ingress-nginx-controller
+```
+
+### Ingress paths with regex not working
+
+If you get errors like "path /api(/|$)(.*) cannot be used with pathType Prefix":
+
+- Change `pathType: Prefix` to `pathType: ImplementationSpecific` for paths with regex patterns
+- This is required for paths like `/api(/|$)(.*)` with rewrite-target annotation
 
 ### Java apps take long to start
 
