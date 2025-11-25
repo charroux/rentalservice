@@ -9,7 +9,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
-CLUSTER_NAME="rental-service-cluster"
+CLUSTER_NAME="kind"
 REGISTRY_NAME="kind-registry"
 REGISTRY_PORT="5001"
 
