@@ -5,9 +5,14 @@
 
 set -e
 
+# Déterminer le répertoire racine du projet
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
 CLUSTER_NAME="rental-service"
 
 echo "🚀 Setup Minikube cluster pour rentalService..."
+echo "📁 Project root: ${PROJECT_ROOT}"
 
 # 1. Vérifier si Minikube est installé
 if ! command -v minikube &> /dev/null; then
@@ -42,13 +47,12 @@ minikube addons enable registry -p "${CLUSTER_NAME}"
 
 # 5. Installer Istio
 echo "🔷 Installation Istio..."
-ISTIO_DIR="../istio-1.23.2"
+ISTIO_DIR="${PROJECT_ROOT}/istio-1.23.2"
 if [ ! -d "${ISTIO_DIR}" ]; then
     echo "⚠️ Istio non trouvé. Téléchargement..."
-    cd ..
+    cd "${PROJECT_ROOT}"
     curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.23.2 sh -
-    cd k8s
-    ISTIO_DIR="../istio-1.23.2"
+    ISTIO_DIR="${PROJECT_ROOT}/istio-1.23.2"
 fi
 
 echo "Installation d'Istio avec istioctl..."
