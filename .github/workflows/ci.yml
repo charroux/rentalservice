@@ -115,25 +115,28 @@ jobs:
           echo "=== Istio VirtualService ==="
           kubectl get virtualservice -n rental-service
 
-      - name: Show logs on failure
-        if: failure()
-        run: |
-          echo "=== CarRental logs ==="
-          kubectl logs -n rental-service -l app=carrental --tail=100 --all-containers=true || true
-          echo ""
-          echo "=== Frontend logs ==="
-          kubectl logs -n rental-service -l app=frontend-angular --tail=100 --all-containers=true || true
-          echo ""
-          echo "=== Auction Service logs ==="
-          kubectl logs -n rental-service -l app=auction-service-server --tail=100 --all-containers=true || true
-          echo ""
-          echo "=== PostgreSQL logs ==="
-          kubectl logs -n rental-service -l app=postgres --tail=100 || true
-          echo ""
-          echo "=== Istio Ingress Gateway logs ==="
-          kubectl logs -n istio-system -l app=istio-ingressgateway --tail=50 || true
-
       - name: Cleanup
         if: always()
         run: |
+          # Capture logs before deleting the cluster
+          if [ "${{ job.status }}" == "failure" ]; then
+            echo "=== Capturing logs before cleanup ==="
+            echo "=== CarRental logs ==="
+            kubectl logs -n rental-service -l app=carrental --tail=100 --all-containers=true 2>/dev/null || echo "Failed to get carrental logs"
+            echo ""
+            echo "=== Frontend logs ==="
+            kubectl logs -n rental-service -l app=frontend-angular --tail=100 --all-containers=true 2>/dev/null || echo "Failed to get frontend logs"
+            echo ""
+            echo "=== Auction Service logs ==="
+            kubectl logs -n rental-service -l app=auction-service-server --tail=100 --all-containers=true 2>/dev/null || echo "Failed to get auction logs"
+            echo ""
+            echo "=== PostgreSQL logs ==="
+            kubectl logs -n rental-service -l app=postgres --tail=100 2>/dev/null || echo "Failed to get postgres logs"
+            echo ""
+            echo "=== Istio Ingress Gateway logs ==="
+            kubectl logs -n istio-system -l app=istio-ingressgateway --tail=50 2>/dev/null || echo "Failed to get istio logs"
+            echo ""
+          fi
+          
+          echo "=== Deleting Kind cluster ==="
           kind delete cluster --name kind || true
