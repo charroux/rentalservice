@@ -2,7 +2,6 @@
 
 
 Projet microservives composé de :
-
 - **car-rental-angular** : Frontend Angular (build séparé avec npm/ng)
 - **carRental** : Service principal avec API REST, JPA, et client gRPC
 - **auctionServiceServer** : Implémente le serveur gRPC à partir des définitions protobuf
