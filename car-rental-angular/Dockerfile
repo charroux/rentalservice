@@ -5,13 +5,13 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Copy package files first for better caching
-COPY car-rental-angular/package*.json ./
+COPY package*.json ./
 
 # Install dependencies (clean install for Linux)
 RUN npm ci --no-optional
 
 # Copy source code
-COPY car-rental-angular/ .
+COPY . .
 
 # Clean any existing node_modules and reinstall for the correct platform
 RUN rm -rf node_modules && npm ci
