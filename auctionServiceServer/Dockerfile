@@ -25,7 +25,7 @@ FROM eclipse-temurin:21-jre-jammy
 RUN addgroup --system spring && adduser --system spring --ingroup spring
 
 # Installer les outils nécessaires (netcat pour healthcheck + curl)
-RUN apt-get update && \
+RUN apt-get update --allow-releaseinfo-change || apt-get update && \
     apt-get install -y --no-install-recommends netcat-traditional curl && \
     rm -rf /var/lib/apt/lists/*
 

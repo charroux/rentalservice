@@ -24,7 +24,7 @@ FROM eclipse-temurin:21-jre-jammy
 RUN addgroup --system spring && adduser --system spring --ingroup spring
 
 # Installer seulement les outils nécessaires
-RUN apt-get update && \
+RUN apt-get update --allow-releaseinfo-change || apt-get update && \
     apt-get install -y --no-install-recommends curl && \
     rm -rf /var/lib/apt/lists/*
 
