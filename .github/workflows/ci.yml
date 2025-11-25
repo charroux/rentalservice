@@ -43,8 +43,8 @@ jobs:
 
       - name: Build Docker images
         run: |
-          docker build -t carrental:latest ./carRental
-          docker build -t auction-service-server:latest ./auctionServiceServer
+          docker build -t carrental:latest -f carRental/Dockerfile .
+          docker build -t auction-service-server:latest -f auctionServiceServer/Dockerfile .
           docker build -t car-rental-angular:latest ./car-rental-angular
 
       - name: Setup Kind cluster with Istio
