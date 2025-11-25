@@ -65,13 +65,27 @@ jobs:
 
       - name: Wait for PostgreSQL to be ready
         run: |
-          kubectl wait --for=condition=ready pod -l app=postgres -n rental-service --timeout=180s
+          echo "Waiting for PostgreSQL..."
+          kubectl wait --for=condition=ready pod -l app=postgres -n rental-service --timeout=300s
 
       - name: Wait for application pods to be ready
         run: |
-          kubectl wait --for=condition=ready pod -l app=carrental -n rental-service --timeout=300s
-          kubectl wait --for=condition=ready pod -l app=frontend-angular -n rental-service --timeout=300s
+          echo "Waiting for auction-service-server..."
           kubectl wait --for=condition=ready pod -l app=auction-service-server -n rental-service --timeout=300s
+          
+          echo "Waiting for carrental (may take up to 5 minutes)..."
+          kubectl wait --for=condition=ready pod -l app=carrental -n rental-service --timeout=600s
+          
+          echo "Waiting for frontend-angular..."
+          kubectl wait --for=condition=ready pod -l app=frontend-angular -n rental-service --timeout=300s
+
+      - name: Check pod status
+        run: |
+          echo "=== Pod Status ==="
+          kubectl get pods -n rental-service
+          echo ""
+          echo "=== Pod Details ==="
+          kubectl describe pods -n rental-service | grep -A 5 "Conditions:"
 
       - name: Verify Istio sidecar injection
         run: |
