@@ -5,6 +5,9 @@
 
 set -e
 
+# Déterminer le répertoire du script et la racine du projet
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # Colors for output
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
@@ -14,6 +17,7 @@ NC='\033[0m' # No Color
 
 echo -e "${BLUE}🚀 Rental Service Deployment Script${NC}"
 echo "===================================="
+echo -e "${BLUE}Script directory:${NC} $SCRIPT_DIR"
 
 # Detect current Kubernetes context
 CURRENT_CONTEXT=$(kubectl config current-context)
@@ -22,17 +26,17 @@ echo -e "${BLUE}Current context:${NC} $CURRENT_CONTEXT"
 # Determine environment
 if [[ "$CURRENT_CONTEXT" == *"kind"* ]]; then
     ENV="kind"
-    OVERLAY="overlays/kind"
+    OVERLAY="${SCRIPT_DIR}/overlays/kind"
     echo -e "${GREEN}✓ Detected Kind cluster${NC}"
 elif [[ "$CURRENT_CONTEXT" == *"minikube"* ]]; then
     ENV="minikube"
-    OVERLAY="overlays/minikube"
+    OVERLAY="${SCRIPT_DIR}/overlays/minikube"
     echo -e "${GREEN}✓ Detected Minikube cluster${NC}"
 else
     echo -e "${YELLOW}⚠ Unknown context: $CURRENT_CONTEXT${NC}"
     echo "Please specify environment: kind or minikube"
     read -p "Enter environment (kind/minikube): " ENV
-    OVERLAY="overlays/$ENV"
+    OVERLAY="${SCRIPT_DIR}/overlays/$ENV"
 fi
 
 echo ""
