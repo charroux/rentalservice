@@ -1,8 +1,15 @@
 # Cloud native app
 
-```
-Voilà la logique du projet : le fichier aunctionService.proto définit un CarModel comme ayant un lowestPrice et un highestPrice. La classe JPA CarModelJPA (projet carRental) reflète bien cela. Cependant, ce n'est pas un CarModelJPA que les utilisateurs finaux vont louer mais un Car (voir la classe Car du projet carRental). Car correspond à une instance réel d'un CarModel ayant une plaque d'immatriculation et un prix de location qui peut être différent des lowestPrice et highestPrice. Pour éviter toute confusion je suggère de renommer price de la classe Car en rentalPrice. Côté front angular, l'utilisateur ne doit voir que ce rentalPrice. Je suggère donc de supprimer côté front les champs lowestPrice et highestPrice au profit du seul champ rentalPrice. Mais attention ! Au démarrage du projet seuls les CarModel sont initialisés (voir le constructeur de la classe RentalServiceImpl), et donc seuls les lowestPrice et highestPrice sont connus. Ainsi le champs rentalPrice côté front ne peut être initialisé qu'avec un de ces deux champs. Je propose que ce soit avec highestPrice. Nous réaliseront ensemle mais plus tard la logique de sélection d'une Car particulière via une vente aux enchères parmi un ensemble de voitures issues du même CzrModel, et finalement c'est cette voiture qui sera proposées à la location. Peux-tu me dire si c'est bien clair pour toi avant de procéder aux changements ?
-```
+
+Projet microservives composé de :
+
+- **car-rental-angular** : Frontend Angular (build séparé avec npm/ng)
+- **carRental** : Service principal avec API REST, JPA, et client gRPC
+- **auctionServiceServer** : Implémente le serveur gRPC à partir des définitions protobuf
+- **auctionService** : Contient les définitions protobuf (`.proto`)
+
+Au démarrage, le front angular sollicite le service REST qui demande au serveur gRPC des modèles de voitures (créés à la volée) dont il dispose. Le service REST stocke les modèles de voiture dans une base postgres et les renvoie au front. Quand l'utilisateur choisit un modèle, une requête est envoyée au service REST qui déclenche des enchères pour récupérer une voiture particulière d'un modèle particulier. Le serveur gRPC est unique. C'est lui qui reçoit les enchères venant potentiellement de plusieurs service REST (chaque service REST est censé être la propriété d'un loueur de voiture). Le service REST qui remporte l'enchère fait une réduction à l'utilisateur final sur le prix de la location de la voiture. La durée de l'enchère est fixée à quelques secondes (mode test).
+
 
 ## Build Instructions avec Gradle
 
@@ -64,15 +71,6 @@ Après modification des fichiers `.proto`, régénérer les classes Java :
 # Vérifier les dépendances
 ./gradlew dependencies
 ```
-
-### Structure des modules
-
-- **auctionService** : Contient les définitions protobuf (`.proto`) et génère les classes Java client
-- **auctionServiceServer** : Implémente le serveur gRPC à partir des définitions protobuf
-- **carRental** : Service principal avec API REST, JPA, et client gRPC
-- **car-rental-angular** : Frontend Angular (build séparé avec npm/ng)
-
-⚠️ **Important** : Après modification d'un fichier `.proto`, vous devez rebuilder TOUS les modules qui l'utilisent pour éviter les erreurs de compilation.
 
 ## Test des Enchères de Voitures
 
@@ -162,35 +160,6 @@ curl -X GET http://localhost:8080/cars/FE-001-F8/margin
 #### Informations sur la marge :
 ```
 Voiture FE-001-F8 - Prix d'acquisition: 800€, Prix de location: 1200€, Marge: 400€ (50.0%)
-```
-
-### Logique d'enchères
-
-- **Durée** : 5 secondes (configuré pour les tests, 30s en production)
-- **Prix initial** : `lowestPrice` du modèle (ex: 800€ pour Ferrari F8)
-- **Prix utilisateur final** : Toujours `highestPrice` (ex: 1200€ pour Ferrari F8)
-- **Marge carRentalCompany** : Différence entre `rentalPrice` et `finalPrice`
-- **Incrément minimal** : 10€ entre les enchères
-- **Limitation** : Une participation par entreprise et par modèle
-
-### Cas d'usage typique
-
-1. **Utilisateur frontend** sélectionne "Ferrari F8"
-2. **carRentalCompany** participe automatiquement à l'enchère (800€)
-3. **Enchère de 5s** - autres entreprises peuvent surenchérir
-4. **Résultat** : Voiture attribuée avec plaque d'immatriculation
-5. **Utilisateur final** voit le prix fixe de 1200€/jour
-6. **carRentalCompany** connaît sa marge (ex: 400€ de bénéfice)
-
-### Debug et logs
-
-Pour voir les logs détaillés des enchères :
-```bash
-# Logs du service principal
-docker compose -f docker-compose.dev.yml logs -f car-rental
-
-# Logs du serveur d'enchères
-docker compose -f docker-compose.dev.yml logs -f auction-service
 ```
 
 ### Générer le code protobuf / gRPC
@@ -299,89 +268,16 @@ docker build -f Dockerfile.multi --target postgres -t charroux/postgres:15 .
 docker push charroux/postgres:15
 ```
 
-Quick dev using Docker Compose
----------------------------------
-A ready-to-use Docker Compose file for development has been added: `docker-compose.dev.yml` and an environment file `.env.dev`.
+## Quick dev using Docker Compose
 
-Basic workflow
-1. Copy or edit the example environment file (optional):
+See [DOCKER_COMPOSE.md](DOCKER_COMPOSE.md) for detailed instructions on using Docker Compose for local development.
 
-```bash
-cp .env.dev .env
-# edit .env to change POSTGRES_USER/POSTGRES_PASSWORD/POSTGRES_DB if needed
-```
-
-2. Start the stack (build images and run all services):
-
+Quick start:
 ```bash
 docker compose -f docker-compose.dev.yml --env-file .env.dev up
 ```
 
-This command:
-- Uses development environment variables from `.env.dev`
-- Starts PostgreSQL database
-- Starts car-rental service (REST API)
-- Starts agreement-service (gRPC)
-
-This will:
-- Build and start the Postgres database
-- Build and start the car-rental service on port 8080
-- Build and start the agreement-service (gRPC) on port 9090
-
-3. Run in detached mode:
-
-```bash
-docker compose -f docker-compose.dev.yml --env-file .env.dev up -d
-```
-4. View logs:
-
-```bash
-docker compose -f docker-compose.dev.yml logs -f car-rental
-```
-
-5. Stop and remove containers:
-
-```bash
-docker compose -f docker-compose.dev.yml --env-file .env.dev down
-```
-
-Note: Add `-v` flag to also remove volumes (this will delete persistent data):
-```bash
-docker compose -f docker-compose.dev.yml --env-file .env.dev down -v
-```
-
-Rebuild specific services:
-
-```bash
-# Rebuild single service
-docker compose -f docker-compose.dev.yml --env-file .env.dev build car-rental
-docker compose -f docker-compose.dev.yml --env-file .env.dev up -d
-
-# Rebuild all services
-docker compose -f docker-compose.dev.yml --env-file .env.dev build
-docker compose -f docker-compose.dev.yml --env-file .env.dev up -d
-```
-
-What this compose file does
-- Starts a Postgres container (`postgres:15`) with a persistent volume `postgres-data`.
-- Builds the `car-rental` image from `carRental/Dockerfile` and runs it with `SPRING_PROFILES_ACTIVE=prod` so the app will read Postgres connection settings from the `SPRING_DATASOURCE_*` env vars provided by compose.
-- Builds and starts the `agreement-service` gRPC server from `agreementServiceServer/Dockerfile`.
-- Exposes the following ports on the host:
-  - `8080`: car-rental REST API
-  - `9090`: agreement-service gRPC endpoint
-
-Healthchecks and caveats
-- The `docker-compose.dev.yml` includes healthchecks for Postgres and the `car-rental` service. The car-rental healthcheck calls the actuator `/actuator/health` endpoint. If your runtime image does not include `curl`, the healthcheck may fail — in that case either:
-    - install `curl` in the runtime image, or
-    - change the healthcheck to use a simple TCP check (nc) or remove it for local development, or
-    - run the app with a mounted development image that includes curl.
-
-Environment overrides
-- You can override any Spring property by passing environment variables in the compose file (already wired for the datasource). For production, prefer using a secret manager or Kubernetes Secrets instead of plain env files.
-
-Docker Compose is suitable for quick local development. For CI and production use Kubernetes manifests in `k8s/`.
-
-Kubernetes
+## Kubernetes
 -----------
 After building and pushing images, update `k8s/` manifests if you used different image names/tags and apply them:
 ```bash
