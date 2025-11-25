@@ -1,0 +1,139 @@
+name: CI - Kubernetes Integration Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: car-rental-angular/package.json
+
+      - name: Build Java services
+        run: |
+          chmod +x gradlew
+          ./gradlew :carRental:build -x test
+          ./gradlew :auctionServiceServer:build -x test
+
+      - name: Build Angular frontend
+        run: |
+          cd car-rental-angular
+          npm ci
+          npm run build --if-present
+
+      - name: Build Docker images
+        run: |
+          docker build -t carrental:latest ./carRental
+          docker build -t auction-service-server:latest ./auctionServiceServer
+          docker build -t car-rental-angular:latest ./car-rental-angular
+
+      - name: Setup Kind cluster with Istio
+        run: |
+          chmod +x k8s/setup-kind-cluster.sh
+          ./k8s/setup-kind-cluster.sh
+
+      - name: Load Docker images into Kind
+        run: |
+          kind load docker-image carrental:latest --name kind
+          kind load docker-image auction-service-server:latest --name kind
+          kind load docker-image car-rental-angular:latest --name kind
+
+      - name: Deploy application to Kind
+        run: |
+          chmod +x k8s/deploy.sh
+          ./k8s/deploy.sh
+
+      - name: Wait for PostgreSQL to be ready
+        run: |
+          kubectl wait --for=condition=ready pod -l app=postgres -n rental-service --timeout=180s
+
+      - name: Wait for application pods to be ready
+        run: |
+          kubectl wait --for=condition=ready pod -l app=carrental -n rental-service --timeout=300s
+          kubectl wait --for=condition=ready pod -l app=frontend-angular -n rental-service --timeout=300s
+          kubectl wait --for=condition=ready pod -l app=auction-service-server -n rental-service --timeout=300s
+
+      - name: Verify Istio sidecar injection
+        run: |
+          echo "Checking carrental pod containers:"
+          kubectl get pod -n rental-service -l app=carrental -o jsonpath='{.items[0].spec.containers[*].name}'
+          echo ""
+          echo "Checking frontend pod containers:"
+          kubectl get pod -n rental-service -l app=frontend-angular -o jsonpath='{.items[0].spec.containers[*].name}'
+          echo ""
+
+      - name: Test API endpoints via Ingress
+        run: |
+          echo "Testing /api/offers endpoint..."
+          curl -f -H "Host: car-rental.local" http://localhost:80/api/offers
+          echo ""
+          echo "Testing health endpoint..."
+          curl -f -H "Host: car-rental.local" http://localhost:80/api/health
+          echo ""
+
+      - name: Test internal service mesh communication
+        run: |
+          echo "Testing internal communication via Istio Gateway..."
+          FRONTEND_POD=$(kubectl get pod -n rental-service -l app=frontend-angular -o jsonpath='{.items[0].metadata.name}')
+          kubectl exec -n rental-service $FRONTEND_POD -c frontend-angular -- wget -qO- http://carrental-service:8080/offers
+
+      - name: Show deployment status
+        if: always()
+        run: |
+          echo "=== Pods Status ==="
+          kubectl get pods -n rental-service -o wide
+          echo ""
+          echo "=== Services ==="
+          kubectl get svc -n rental-service
+          echo ""
+          echo "=== Ingress ==="
+          kubectl get ingress -n rental-service
+          echo ""
+          echo "=== Istio Gateway ==="
+          kubectl get gateway -n rental-service
+          echo ""
+          echo "=== Istio VirtualService ==="
+          kubectl get virtualservice -n rental-service
+
+      - name: Show logs on failure
+        if: failure()
+        run: |
+          echo "=== CarRental logs ==="
+          kubectl logs -n rental-service -l app=carrental --tail=100 --all-containers=true || true
+          echo ""
+          echo "=== Frontend logs ==="
+          kubectl logs -n rental-service -l app=frontend-angular --tail=100 --all-containers=true || true
+          echo ""
+          echo "=== Auction Service logs ==="
+          kubectl logs -n rental-service -l app=auction-service-server --tail=100 --all-containers=true || true
+          echo ""
+          echo "=== PostgreSQL logs ==="
+          kubectl logs -n rental-service -l app=postgres --tail=100 || true
+          echo ""
+          echo "=== Istio Ingress Gateway logs ==="
+          kubectl logs -n istio-system -l app=istio-ingressgateway --tail=50 || true
+
+      - name: Cleanup
+        if: always()
+        run: |
+          kind delete cluster --name kind || true
