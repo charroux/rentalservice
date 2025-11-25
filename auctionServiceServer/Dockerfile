@@ -14,7 +14,7 @@ RUN chmod +x ./gradlew && ./gradlew dependencies --no-daemon || true
 COPY . .
 
 # Build optimisé
-RUN ./gradlew :auctionServiceServer:bootJar -x test --no-daemon --parallel
+RUN ./gradlew bootJar -x test --no-daemon --parallel
 
 # Runtime stage: image JRE optimisée
 FROM eclipse-temurin:21-jre-jammy
@@ -29,7 +29,7 @@ RUN apt-get update && \
 
 # Configuration optimisée
 WORKDIR /app
-COPY --from=builder /home/gradle/project/auctionServiceServer/build/libs/*.jar app.jar
+COPY --from=builder /home/gradle/project/build/libs/*.jar app.jar
 
 # Changer vers utilisateur non-root
 USER spring:spring
