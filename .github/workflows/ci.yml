@@ -62,22 +62,24 @@ jobs:
         run: |
           chmod +x k8s/deploy.sh
           ./k8s/deploy.sh
+          
+          echo "Waiting for rollout to complete..."
+          kubectl rollout status deployment/auction-service-server -n rental-service --timeout=300s
+          kubectl rollout status deployment/carrental -n rental-service --timeout=600s
+          kubectl rollout status deployment/frontend-angular -n rental-service --timeout=300s
 
       - name: Wait for PostgreSQL to be ready
         run: |
           echo "Waiting for PostgreSQL..."
-          kubectl wait --for=condition=ready pod -l app=postgres -n rental-service --timeout=300s
+          kubectl wait --for=condition=ready pod -l component=database -n rental-service --timeout=300s
 
       - name: Wait for application pods to be ready
         run: |
-          echo "Waiting for auction-service-server..."
-          kubectl wait --for=condition=ready pod -l app=auction-service-server -n rental-service --timeout=300s
+          echo "Waiting for backend services (auction-service-server and carrental)..."
+          kubectl wait --for=condition=ready pod -l component=backend -n rental-service --timeout=600s
           
-          echo "Waiting for carrental (may take up to 5 minutes)..."
-          kubectl wait --for=condition=ready pod -l app=carrental -n rental-service --timeout=600s
-          
-          echo "Waiting for frontend-angular..."
-          kubectl wait --for=condition=ready pod -l app=frontend-angular -n rental-service --timeout=300s
+          echo "Waiting for frontend..."
+          kubectl wait --for=condition=ready pod -l component=frontend -n rental-service --timeout=300s
 
       - name: Check pod status
         run: |

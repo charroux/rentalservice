@@ -17,6 +17,7 @@ spec:
       labels:
         app: carrental
         component: backend
+        service-name: carrental
     spec:
       containers:
       - name: carrental
@@ -87,7 +88,7 @@ metadata:
     component: backend
 spec:
   selector:
-    app: carrental
+    service-name: carrental
   ports:
   - port: 8080
     targetPort: 8080

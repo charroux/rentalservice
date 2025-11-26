@@ -69,9 +69,13 @@ if kubectl get namespace istio-system &> /dev/null; then
     # Restart deployments to inject sidecars
     echo -e "${BLUE}Restarting deployments to inject Istio sidecars...${NC}"
     kubectl rollout restart deployment -n rental-service
-    kubectl delete pod postgres-0 -n rental-service --ignore-not-found=true
     
-    echo -e "${GREEN}✓ Deployments restarted${NC}"
+    echo -e "${BLUE}Waiting for rollouts to complete...${NC}"
+    kubectl rollout status deployment/auction-service-server -n rental-service --timeout=300s
+    kubectl rollout status deployment/carrental -n rental-service --timeout=600s
+    kubectl rollout status deployment/frontend-angular -n rental-service --timeout=300s
+    
+    echo -e "${GREEN}✓ Deployments restarted and ready${NC}"
 else
     echo -e "${RED}✗ Istio is not installed${NC}"
     echo -e "${YELLOW}Please install Istio first:${NC}"
@@ -79,10 +83,14 @@ else
     exit 1
 fi
 
-# Wait for rollout
+# Additional wait to ensure all pods are fully ready
 echo ""
-echo -e "${BLUE}⏳ Waiting for deployments to be ready...${NC}"
-kubectl wait --for=condition=ready pod --all -n rental-service --timeout=120s
+echo -e "${BLUE}⏳ Final check: waiting for all pods to be ready...${NC}"
+
+# Wait using component labels since commonLabels overwrites app labels
+kubectl wait --for=condition=ready pod -l component=database -n rental-service --timeout=180s
+kubectl wait --for=condition=ready pod -l component=backend -n rental-service --timeout=300s
+kubectl wait --for=condition=ready pod -l component=frontend -n rental-service --timeout=300s
 
 echo ""
 echo -e "${GREEN}✅ Deployment complete!${NC}"

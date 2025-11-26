@@ -17,6 +17,7 @@ spec:
       labels:
         app: frontend-angular
         component: frontend
+        service-name: frontend
     spec:
       containers:
       - name: frontend-angular
@@ -60,7 +61,7 @@ metadata:
     component: frontend
 spec:
   selector:
-    app: frontend-angular
+    service-name: frontend
   ports:
   - port: 80
     targetPort: 80

@@ -35,6 +35,8 @@ spec:
       labels:
         app: postgres
         component: database
+      annotations:
+        sidecar.istio.io/inject: "false"  # PostgreSQL n'a pas besoin du sidecar Istio
     spec:
       containers:
         - name: postgres

@@ -17,6 +17,7 @@ spec:
       labels:
         app: auction-service-server
         component: backend
+        service-name: auction
     spec:
       containers:
       - name: auction-service-server
@@ -60,7 +61,7 @@ metadata:
     component: backend
 spec:
   selector:
-    app: auction-service-server
+    service-name: auction
   ports:
   - port: 9090
     targetPort: 9090
