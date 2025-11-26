@@ -92,10 +92,10 @@ jobs:
       - name: Verify Istio sidecar injection
         run: |
           echo "Checking carrental pod containers:"
-          kubectl get pod -n rental-service -l app=carrental -o jsonpath='{.items[0].spec.containers[*].name}'
+          kubectl get pod -n rental-service -l service-name=carrental -o jsonpath='{.items[0].spec.containers[*].name}'
           echo ""
           echo "Checking frontend pod containers:"
-          kubectl get pod -n rental-service -l app=frontend-angular -o jsonpath='{.items[0].spec.containers[*].name}'
+          kubectl get pod -n rental-service -l service-name=frontend -o jsonpath='{.items[0].spec.containers[*].name}'
           echo ""
 
       - name: Test API endpoints via Ingress
