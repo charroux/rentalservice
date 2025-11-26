@@ -31,7 +31,7 @@ Internet/Browser
                             │  PostgreSQL   │ ┌─────────────────┐
                             │  (Database)   │ │ auctionService  │
                             │  Port: 5432   │ │    (gRPC)       │
-                            │  [+ Envoy]    │ │   Port: 9090    │
+                            │  [NO sidecar] │ │   Port: 9090    │
                             └───────────────┘ │   [+ Envoy]     │
                                               └─────────────────┘
 ```
@@ -48,6 +48,7 @@ Internet/Browser
 - Circuit breaker and retry policies
 - Traffic monitoring and distributed tracing
 - Fine-grained traffic control
+- **Postgres excluded** from sidecar injection (annotation: `sidecar.istio.io/inject: "false"`)
 
 ✅ **NGINX Benefits for External Access**
 - Lightweight and fast
@@ -93,11 +94,7 @@ EOF
 kind create cluster --name rental-service-cluster --config /tmp/kind-istio-config.yaml
 ```
 
-### 3. Install Istio
-
-```bash
-# Download Istio
-### 2. Install Istio
+### 2. Install Istio and NGINX Ingress
 
 ```bash
 # Download Istio (adds istio-1.23.2/ directory - already in .gitignore)
@@ -109,11 +106,32 @@ export PATH="$PWD/istio-1.23.2/bin:$PATH"
 # Install Istio with demo profile (includes ingress gateway)
 istioctl install --set profile=demo -y
 
-# Verify installation
+# Verify Istio installation
 kubectl get pods -n istio-system
+
+# Install NGINX Ingress Controller
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.8.1/deploy/static/provider/kind/deploy.yaml
+kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=90s
+
+# Patch NGINX to run on control-plane (where Kind port mapping is configured)
+kubectl patch deployment ingress-nginx-controller -n ingress-nginx -p '{
+  "spec": {
+    "template": {
+      "spec": {
+        "nodeSelector": {"ingress-ready": "true"},
+        "tolerations": [
+          {"key": "node-role.kubernetes.io/control-plane", "operator": "Equal", "effect": "NoSchedule"},
+          {"key": "node-role.kubernetes.io/master", "operator": "Equal", "effect": "NoSchedule"}
+        ]
+      }
+    }
+  }
+}'
+kubectl rollout status deployment ingress-nginx-controller -n ingress-nginx --timeout=90s
 ```
 
 > **Note**: Le dossier `istio-1.23.2/` est automatiquement exclu de git via `.gitignore`
+> **Important**: NGINX must run on control-plane node to access Kind's port mapping (80:80, 443:443)
 
 ### 3. Build and Load Images
 
@@ -129,42 +147,65 @@ kind load docker-image carrental:latest auction-service-server:latest car-rental
 
 ### 4. Deploy Services
 
+**Recommended: Use deployment script**
+```bash
+cd k8s
+./deploy.sh
+```
+
+The script automatically:
+- Detects Kind or Minikube environment
+- Applies correct Kustomize overlay
+- Waits for database readiness using `component=database` label
+- Waits for backend/frontend using `component=backend|frontend` labels
+- Uses `kubectl rollout status` for deployment verification
+
+**Manual deployment (advanced):**
 ```bash
 # Create namespace with Istio injection enabled
 kubectl apply -f k8s/namespace.yaml
 kubectl label namespace rental-service istio-injection=enabled
 
-# Deploy secrets and database
-kubectl apply -f k8s/postgres-secret.yaml
-kubectl apply -f k8s/postgres-statefulset.yaml
+# Deploy using Kustomize
+kubectl apply -k k8s/overlays/kind  # or k8s/overlays/minikube
 
-# Wait for PostgreSQL
-kubectl wait --for=condition=ready pod/postgres-0 -n rental-service --timeout=120s
+# Wait for PostgreSQL (uses component label)
+kubectl wait --for=condition=ready pod -l component=database -n rental-service --timeout=300s
 
-# Deploy application services (Istio sidecars auto-injected)
-kubectl apply -f k8s/carrental-deployment.yaml
-kubectl apply -f k8s/auction-deployment.yaml
-kubectl apply -f k8s/frontend-deployment.yaml
+# Wait for backend (carRental + auction)
+kubectl wait --for=condition=ready pod -l component=backend -n rental-service --timeout=600s
 
-# Deploy Istio Gateway and routing rules
-kubectl apply -f k8s/istio-internal-gateway.yaml
-
-# Install NGINX Ingress Controller
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.8.1/deploy/static/provider/kind/deploy.yaml
-kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=90s
-
-# Deploy Ingress rules
-kubectl apply -f k8s/ingress.yaml
+# Wait for frontend
+kubectl wait --for=condition=ready pod -l component=frontend -n rental-service --timeout=300s
 ```
+
+**Label Strategy:**
+
+Pods have multiple labels due to Kustomize commonLabels:
+- `app=rental-service` - Common label applied by Kustomize to all resources
+- `service-name=carrental|frontend|auction|postgres` - Used by Service selectors
+- `component=backend|frontend|database` - Used for kubectl wait operations
+
+Services select pods using `service-name` label (not `app` which is overwritten by commonLabels).
 
 ### 5. Verify Deployment
 
 ```bash
-# Check all pods (should show 2/2 for app pods = app + Envoy sidecar)
+# Check all pods (apps show 2/2 = app + Envoy, postgres shows 1/1 = no sidecar)
 kubectl get pods -n rental-service
+
+# Expected output:
+# NAME                                      READY   STATUS    RESTARTS   AGE
+# auction-service-server-xxx                2/2     Running   0          2m
+# carrental-xxx                             2/2     Running   0          2m
+# frontend-angular-xxx                      2/2     Running   0          2m
+# postgres-0                                1/1     Running   0          3m
 
 # Check Istio configuration
 kubectl get gateway,virtualservice,destinationrule,peerauthentication -n rental-service
+
+# Verify labels
+kubectl get pods -n rental-service --show-labels
 
 # Run monitoring script
 chmod +x k8s/monitor-istio.sh
@@ -390,6 +431,86 @@ Browser → NGINX Ingress → Frontend ─┐
 - Intelligent load balancing
 - Traffic metrics and distributed tracing
 - Canary deployments ready
+
+## 🔄 CI/CD Pipeline
+
+### GitHub Actions Workflow
+
+This project includes a complete CI/CD pipeline (`.github/workflows/ci.yml`) that:
+
+1. **Build Phase**
+   - Sets up JDK 17 and Node.js 20
+   - Builds Java services with Gradle (`:carRental:bootJar`, `:auctionServiceServer:bootJar`)
+   - Builds Angular frontend with npm
+
+2. **Docker Phase**
+   - Builds Docker images for all three services
+   - Uses root context with `-f` flag for Java services
+   - Tags images as `latest`
+
+3. **Cluster Setup**
+   - Creates Kind cluster (name: `kind`)
+   - Installs Istio service mesh
+   - Installs and patches NGINX Ingress to run on control-plane
+   - Configures MetalLB for LoadBalancer services
+
+4. **Deployment**
+   - Loads Docker images into Kind cluster
+   - Deploys using `deploy.sh` script (same as local workflow)
+   - Waits for rollouts using `kubectl rollout status`
+
+5. **Verification**
+   - Verifies Istio sidecar injection using `service-name` labels
+   - Checks pod container counts (2/2 for apps, 1/1 for postgres)
+   - Tests API endpoint: `curl -H "Host: car-rental.local" http://localhost:80/api/offers`
+
+6. **Cleanup**
+   - Captures logs before cluster deletion
+   - Deletes Kind cluster
+
+### Key CI Configurations
+
+```yaml
+# Cluster name must be "kind" (default)
+kind create cluster
+
+# Images loaded into Kind
+kind load docker-image carrental:latest auction-service-server:latest car-rental-angular:latest
+
+# Verification uses service-name labels
+kubectl get pods -n rental-service -l service-name=carrental -o jsonpath='{.items[0].spec.containers[*].name}'
+
+# Component-based wait commands
+kubectl wait --for=condition=ready pod -l component=backend -n rental-service --timeout=600s
+```
+
+### Running CI Locally
+
+You can replicate CI steps locally:
+
+```bash
+# 1. Build applications
+./gradlew :carRental:bootJar :auctionServiceServer:bootJar
+cd car-rental-angular && npm install && npm run build && cd ..
+
+# 2. Build Docker images
+docker build -f carRental/Dockerfile -t carrental:latest .
+docker build -f auctionServiceServer/Dockerfile -t auction-service-server:latest .
+docker build -f car-rental-angular/Dockerfile -t car-rental-angular:latest .
+
+# 3. Setup cluster
+cd k8s
+./setup-kind-cluster.sh
+
+# 4. Load images
+kind load docker-image carrental:latest auction-service-server:latest car-rental-angular:latest --name kind
+
+# 5. Deploy
+./deploy.sh
+
+# 6. Test
+curl -H "Host: car-rental.local" http://localhost:80/api/offers
+```
 
 ## 🚀 Next Steps
 

@@ -73,10 +73,29 @@ kubectl create namespace rental-service
 kubectl label namespace rental-service istio-injection=enabled
 ```
 
-4. Install NGINX Ingress:
+4. Install NGINX Ingress and patch to run on control-plane:
 ```bash
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
+kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=90s
+
+# Patch NGINX controller to run on control-plane (where Kind port mapping is configured)
+kubectl patch deployment ingress-nginx-controller -n ingress-nginx -p '{
+  "spec": {
+    "template": {
+      "spec": {
+        "nodeSelector": {"ingress-ready": "true"},
+        "tolerations": [
+          {"key": "node-role.kubernetes.io/control-plane", "operator": "Equal", "effect": "NoSchedule"},
+          {"key": "node-role.kubernetes.io/master", "operator": "Equal", "effect": "NoSchedule"}
+        ]
+      }
+    }
+  }
+}'
+kubectl rollout status deployment ingress-nginx-controller -n ingress-nginx --timeout=90s
 ```
+
+**Why?** Kind's port mapping (80:80, 443:443) is configured on the control-plane node. NGINX must run there to access localhost ports.
 
 5. Add to `/etc/hosts`:
 ```
@@ -195,6 +214,62 @@ kubectl port-forward -n rental-service svc/frontend-service 4200:80
 - **Replicas:** 1 per deployment (optimized for limited Minikube resources)
 - **Important:** Ingress controller must be changed to LoadBalancer type for tunnel to work
 
+## Label Architecture
+
+### Kustomize commonLabels and Label Overwrites
+
+The `kustomization.yaml` files define `commonLabels: app=rental-service` which is applied to **all resources**. However, Kustomize overwrites pod template labels, causing issues with service selectors that rely on specific `app` labels.
+
+**Problem:** If a deployment defines `app: carrental` in its pod template, Kustomize changes it to `app: rental-service`.
+
+**Solution:** Use dedicated labels that won't be overwritten:
+
+```yaml
+# Deployment pod template
+metadata:
+  labels:
+    app: rental-service          # Overwritten by commonLabels (expected)
+    service-name: carrental       # NOT overwritten - used for service selector
+    component: backend            # NOT overwritten - used for kubectl wait
+```
+
+### Service Selector Strategy
+
+Services use `service-name` label to select their pods:
+
+```yaml
+# carrental-service.yaml
+spec:
+  selector:
+    service-name: carrental    # Matches service-name label in pod template
+```
+
+**Available service-name values:**
+- `carrental` - carRental backend
+- `frontend` - Angular frontend
+- `auction` - auction service
+- `postgres` - PostgreSQL database
+
+### Component-Based Selectors for Operations
+
+For kubectl wait commands and operational tasks, use `component` label:
+
+```bash
+# Wait for backend pods
+kubectl wait --for=condition=ready pod -l component=backend -n rental-service --timeout=600s
+
+# Wait for frontend pods
+kubectl wait --for=condition=ready pod -l component=frontend -n rental-service --timeout=300s
+
+# Wait for database
+kubectl wait --for=condition=ready pod -l component=database -n rental-service --timeout=300s
+```
+
+**Available component values:**
+- `backend` - carRental and auction services
+- `frontend` - Angular frontend
+- `database` - PostgreSQL
+
 ## Istio Configuration
 
 Both environments share the same Istio configuration:
@@ -203,10 +278,13 @@ Both environments share the same Istio configuration:
 - DestinationRule with load balancing and circuit breaker
 - PeerAuthentication with PERMISSIVE mTLS
 - **Automatic sidecar injection** enabled via namespace label `istio-injection=enabled`
+- **Postgres excluded from Istio** via annotation `sidecar.istio.io/inject: "false"`
 
-All application pods run with 2 containers:
-- Main application container
-- Istio Envoy sidecar proxy
+Application pods run with 2 containers (app + istio-proxy), postgres runs with 1 container:
+- **carRental**: 2/2 (carrental + istio-proxy)
+- **frontend**: 2/2 (frontend-angular + istio-proxy)
+- **auction**: 2/2 (auction-service-server + istio-proxy)
+- **postgres**: 1/1 (postgres only, no sidecar)
 
 ## Access URLs
 
@@ -229,7 +307,7 @@ Check Istio sidecar injection:
 kubectl get pods -n rental-service -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spec.containers[*].name}{"\n"}{end}'
 ```
 
-You should see 2 containers per pod: `<app-name>` and `istio-proxy`.
+You should see 2 containers per application pod (app + istio-proxy), but only 1 for postgres:
 
 Expected output:
 ```
@@ -238,6 +316,16 @@ carrental-xxx                 carrental istio-proxy
 frontend-angular-xxx          frontend-angular istio-proxy
 postgres-0                    postgres
 ```
+
+Verify labels:
+```bash
+kubectl get pods -n rental-service --show-labels
+```
+
+You should see labels like:
+- `app=rental-service` (common to all)
+- `service-name=carrental|frontend|auction|postgres` (specific)
+- `component=backend|frontend|database` (operational)
 
 ## Troubleshooting
 
@@ -260,25 +348,27 @@ kubectl label namespace rental-service istio-injection=enabled --overwrite
 kubectl rollout restart deployment -n rental-service
 ```
 
-### Pods have wrong labels (app=rental-service instead of specific app names)
+### Services not routing correctly
 
-If services don't route correctly, pods might have generic labels instead of specific ones:
+If services can't find their pods, check that pods have the correct `service-name` labels:
 
 1. Check pod labels:
 ```bash
 kubectl get pods -n rental-service --show-labels
 ```
 
-2. If pods have `app=rental-service` instead of `app=carrental`, `app=frontend-angular`, etc., delete and recreate:
-```bash
-# Delete deployments with wrong labels
-kubectl delete deployment carrental auction-service-server frontend-angular -n rental-service
+2. Verify each pod has its specific `service-name` label:
+- carRental pods: `service-name=carrental`
+- Frontend pods: `service-name=frontend`
+- Auction pods: `service-name=auction`
+- Postgres pods: `service-name=postgres`
 
-# Recreate with correct labels from base manifests
-kubectl apply -f k8s/base/carrental-deployment.yaml
-kubectl apply -f k8s/base/auction-deployment.yaml
-kubectl apply -f k8s/base/frontend-deployment.yaml
+3. If labels are missing, redeploy:
+```bash
+kubectl apply -k overlays/kind  # or overlays/minikube
 ```
+
+**Note:** The `app=rental-service` label is normal and expected (from Kustomize commonLabels). Services use `service-name` for pod selection.
 
 ### Ingress controller not accessible with minikube tunnel
 
@@ -320,6 +410,25 @@ The deployment probes are configured with extended delays for Java applications 
 - Failure threshold: 6 attempts
 
 This is normal for Spring Boot applications with Istio sidecars and PostgreSQL initialization.
+
+## CI/CD Pipeline
+
+This project includes a GitHub Actions CI/CD pipeline (`.github/workflows/ci.yml`) that automatically:
+
+1. **Builds** Java and Node.js applications
+2. **Creates** Docker images for all services
+3. **Sets up** Kind cluster with Istio and NGINX Ingress
+4. **Deploys** application using `deploy.sh` script
+5. **Verifies** Istio sidecar injection and rollout status
+6. **Tests** API endpoints via Ingress
+
+The pipeline uses the same deployment workflow as local development, ensuring consistency between CI and manual deployments.
+
+**Key CI configurations:**
+- Uses Kind cluster (name: `kind`)
+- Loads Docker images with `kind load docker-image`
+- Verifies sidecars using `service-name` labels
+- Tests endpoints via `curl -H "Host: car-rental.local" http://localhost:80/api/offers`
 
 ## Cluster Management
 
