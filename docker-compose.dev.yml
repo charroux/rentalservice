@@ -67,8 +67,29 @@ services:
       timeout: 5s
       retries: 3
 
+  frontend-angular:
+    build:
+      context: ./car-rental-angular
+      dockerfile: Dockerfile
+    image: charroux/car-rental-angular:dev
+    container_name: car-rental-frontend
+    restart: unless-stopped
+    ports:
+      - "4200:80"  # Map host port 4200 to container nginx port 80
+    depends_on:
+      car-rental:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    volumes:
+      - ./car-rental-angular/nginx-docker-compose.conf:/etc/nginx/conf.d/default.conf:ro
+
 volumes:
   postgres-data:
     name: car_rental_postgres_data
   gradle-cache:
     name: gradle_cache
+

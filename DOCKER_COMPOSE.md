@@ -26,7 +26,8 @@ This command:
 This will:
 - Build and start the Postgres database
 - Build and start the car-rental service on port 8080
-- Build and start the agreement-service (gRPC) on port 9090
+- Build and start the auction-service (gRPC) on port 9090
+- Build and start the Angular frontend on port 4200 (served by nginx)
 
 3. Run in detached mode:
 
@@ -51,73 +52,136 @@ Note: Add `-v` flag to also remove volumes (this will delete persistent data):
 docker compose -f docker-compose.dev.yml --env-file .env.dev down -v
 ```
 
-## Commandes curl pour tester les enchères
+## Commandes curl pour tester l'application
 
-### 1. **Lister les modèles de voitures disponibles**
+### Accès via le frontend (recommandé)
+Le frontend Angular est accessible sur http://localhost:4200 et expose les mêmes endpoints via son proxy nginx.
+
+**Via le frontend nginx (port 4200):**
+```bash
+# Lister les offres
+curl -X GET http://localhost:4200/api/offers
+
+# Participer à une enchère
+curl -X POST http://localhost:4200/api/auction/participate \
+  -H "Content-Type: application/json" \
+  -d '{"carModelId": 1}'
+```
+
+**Directement sur le backend (port 8080):**
+```bash
+# Lister les offres
+curl -X GET http://localhost:8080/offers
+
+# Participer à une enchère
+curl -X POST http://localhost:8080/auction/participate \
+  -H "Content-Type: application/json" \
+  -d '{"carModelId": 1}'
+```
+
+### 1. **Lister les offres de location (endpoint principal Angular)**
+```bash
+curl -X GET http://localhost:8080/offers
+```
+**Réponse attendue:**
+```json
+[
+  {
+    "id": 1,
+    "brand": "Ferrari",
+    "model": "F8",
+    "photoUrl": "/assets/cars/ferrari-f8.jpg",
+    "rentalPrice": 1500.00
+  },
+  {
+    "id": 2,
+    "brand": "Porsche",
+    "model": "911",
+    "photoUrl": "/assets/cars/porsche-911.jpg",
+    "rentalPrice": 900.00
+  }
+]
+```
+
+### 2. **Lister les modèles de voitures (legacy endpoint)**
+```bash
+curl -X GET http://localhost:8080/car-models
+```
+
+### 3. **Lister les voitures disponibles avec plaques (legacy endpoint)**
 ```bash
 curl -X GET http://localhost:8080/cars
 ```
 
-### 2. **Participer à une enchère Ferrari F8**
+### 4. **Obtenir une voiture spécifique par plaque**
 ```bash
-# Enchère avec companyId par défaut
-curl -X POST http://localhost:8080/auction/Ferrari/F8
-
-# Enchère avec une entreprise spécifique
-curl -X POST http://localhost:8080/auction/Ferrari/F8?companyId=HERTZ_COMPANY
+curl -X GET http://localhost:8080/cars/FE-001-F8
 ```
 
-### 3. **Enchères pour différents modèles**
+### 5. **Participer à une enchère (endpoint principal Angular)**
 ```bash
-# Porsche 911 (600€-900€)
-curl -X POST http://localhost:8080/auction/Porsche/911?companyId=AVIS_RENTAL
-
-# Tesla Model S (300€-500€) - Attention à l'encodage URL
-curl -X POST "http://localhost:8080/auction/Tesla/Model%20S?companyId=ENTERPRISE"
+# Enchère avec carModelId (utilisé par Angular)
+curl -X POST http://localhost:8080/auction/participate \
+  -H "Content-Type: application/json" \
+  -d '{"carModelId": 1}'
+```
+**Réponse attendue:**
+```json
+{
+  "plateNumber": "FE-001-F8",
+  "finalPrice": 1200.00,
+  "originalPrice": 1500.00,
+  "discountAmount": 300.00,
+  "discountApplied": true
+}
 ```
 
-### 4. **Tests d'enchères simultanées**
+### 6. **Soumettre une demande de location (formulaire Angular)**
+```bash
+curl -X POST "http://localhost:8080/cars/FE-001-F8?firstName=John&lastName=Doe&email=john.doe@example.com&beginDate=2025-12-01&endDate=2025-12-10"
+```
+
+### 7. **Tests d'enchères pour différents modèles**
+```bash
+# Ferrari F8 (carModelId: 1)
+curl -X POST http://localhost:8080/auction/participate \
+  -H "Content-Type: application/json" \
+  -d '{"carModelId": 1}'
+
+# Porsche 911 (carModelId: 2)
+curl -X POST http://localhost:8080/auction/participate \
+  -H "Content-Type: application/json" \
+  -d '{"carModelId": 2}'
+
+# Tesla Model S (carModelId: 3)
+curl -X POST http://localhost:8080/auction/participate \
+  -H "Content-Type: application/json" \
+  -d '{"carModelId": 3}'
+
+# Lamborghini Huracan (carModelId: 4)
+curl -X POST http://localhost:8080/auction/participate \
+  -H "Content-Type: application/json" \
+  -d '{"carModelId": 4}'
+```
+
+### 8. **Tests d'enchères simultanées**
 Pour tester la logique de concurrence, lancez plusieurs enchères en parallèle :
 
 ```bash
 # Terminal 1
-curl -X POST http://localhost:8080/auction/Ferrari/F8?companyId=COMPANY_A &
+curl -X POST http://localhost:8080/auction/participate \
+  -H "Content-Type: application/json" \
+  -d '{"carModelId": 1}' &
 
 # Terminal 2
-curl -X POST http://localhost:8080/auction/Ferrari/F8?companyId=COMPANY_B &
+curl -X POST http://localhost:8080/auction/participate \
+  -H "Content-Type: application/json" \
+  -d '{"carModelId": 1}' &
 
 # Terminal 3
-curl -X POST http://localhost:8080/auction/Ferrari/F8?companyId=COMPANY_C &
-```
-
-### 5. **Vérifier les résultats d'enchère**
-
-Après une enchère réussie, vous obtenez une plaque d'immatriculation. Vous pouvez alors :
-
-```bash
-# Voir les détails de la voiture (pour l'utilisateur final)
-curl -X GET http://localhost:8080/cars/FE-001-F8
-
-# Voir la marge de la carRentalCompany
-curl -X GET http://localhost:8080/cars/FE-001-F8/margin
-```
-
-## Réponses attendues
-
-### Enchère réussie :
-```json
-{
-  "plateNumber": "FE-001-F8",
-  "brand": "Ferrari",
-  "model": "F8", 
-  "rentalPrice": 1200,
-  "photo": "default_photo_url"
-}
-```
-
-### Informations sur la marge :
-```
-Voiture FE-001-F8 - Prix d'acquisition: 800€, Prix de location: 1200€, Marge: 400€ (50.0%)
+curl -X POST http://localhost:8080/auction/participate \
+  -H "Content-Type: application/json" \
+  -d '{"carModelId": 1}' &
 ```
 
 ## Rebuild specific services
@@ -125,7 +189,11 @@ Voiture FE-001-F8 - Prix d'acquisition: 800€, Prix de location: 1200€, Marge
 ```bash
 # Rebuild single service
 docker compose -f docker-compose.dev.yml --env-file .env.dev build car-rental
-docker compose -f docker-compose.dev.yml --env-file .env.dev up -d
+docker compose -f docker-compose.dev.yml --env-file .env.dev up -d car-rental
+
+# Rebuild frontend
+docker compose -f docker-compose.dev.yml --env-file .env.dev build frontend-angular
+docker compose -f docker-compose.dev.yml --env-file .env.dev up -d frontend-angular
 
 # Rebuild all services
 docker compose -f docker-compose.dev.yml --env-file .env.dev build
@@ -139,7 +207,18 @@ docker compose -f docker-compose.dev.yml --env-file .env.dev up -d
 - Builds and starts the `agreement-service` gRPC server from `agreementServiceServer/Dockerfile`.
 - Exposes the following ports on the host:
   - `8080`: car-rental REST API
-  - `9090`: agreement-service gRPC endpoint
+  - `9090`: auction-service gRPC endpoint
+  - `4200`: Angular frontend (nginx serves the app and proxies `/api/` to car-rental service)
+
+## Frontend access
+
+Once the stack is running, you can access:
+
+- **Angular Frontend**: http://localhost:4200
+- **Backend API (direct)**: http://localhost:8080
+- **Backend API (via frontend proxy)**: http://localhost:4200/api/
+
+The frontend nginx automatically proxies all `/api/*` requests to the `car-rental` service, so the Angular app can make API calls to `/api/offers`, `/api/auction/participate`, etc.
 
 ## Healthchecks and caveats
 
