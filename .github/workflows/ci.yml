@@ -47,6 +47,51 @@ jobs:
           docker build -t auction-service-server:latest -f auctionServiceServer/Dockerfile .
           docker build -t car-rental-angular:latest ./car-rental-angular
 
+      - name: Run Trivy vulnerability scanner - CarRental
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: 'carrental:latest'
+          format: 'sarif'
+          output: 'trivy-carrental-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy results - CarRental
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-carrental-results.sarif'
+          category: 'trivy-carrental'
+
+      - name: Run Trivy vulnerability scanner - Auction Service
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: 'auction-service-server:latest'
+          format: 'sarif'
+          output: 'trivy-auction-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy results - Auction Service
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-auction-results.sarif'
+          category: 'trivy-auction'
+
+      - name: Run Trivy vulnerability scanner - Angular Frontend
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: 'car-rental-angular:latest'
+          format: 'sarif'
+          output: 'trivy-angular-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy results - Angular Frontend
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-angular-results.sarif'
+          category: 'trivy-angular'
+
       - name: Setup Kind cluster with Istio
         run: |
           chmod +x k8s/setup-kind-cluster.sh
