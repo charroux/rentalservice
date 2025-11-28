@@ -37,7 +37,7 @@ jobs:
       - name: Build Java services
         run: |
           chmod +x gradlew
-          ./gradlew :carRental:build -x test
+          ./gradlew :carRental:build
           ./gradlew :auctionServiceServer:build -x test
 
       - name: Build Angular frontend
