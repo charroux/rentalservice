@@ -106,7 +106,7 @@ kubectl rollout status deployment ingress-nginx-controller -n ingress-nginx --ti
 
 1. Start Minikube:
 ```bash
-minikube start --cpus=4 --memory=8192
+minikube start --cpus=4 --memory=7800
 ```
 
 2. Enable addons:
