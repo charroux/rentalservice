@@ -97,7 +97,22 @@ kubectl rollout status deployment ingress-nginx-controller -n ingress-nginx --ti
 
 **Why?** Kind's port mapping (80:80, 443:443) is configured on the control-plane node. NGINX must run there to access localhost ports.
 
-5. Add to `/etc/hosts`:
+5. **Build and load Docker images into Kind:**
+```bash
+# Build all images
+docker build -f carRental/Dockerfile -t carrental:latest .
+docker build -f auctionServiceServer/Dockerfile -t auction-service-server:latest .
+docker build -t car-rental-angular:latest ./car-rental-angular
+
+# Load images into Kind cluster
+kind load docker-image carrental:latest --name rental-service-cluster
+kind load docker-image auction-service-server:latest --name rental-service-cluster
+kind load docker-image car-rental-angular:latest --name rental-service-cluster
+```
+
+**Note:** Kind doesn't have access to your local Docker images by default. You must explicitly load them with `kind load docker-image`.
+
+6. Add to `/etc/hosts`:
 ```
 127.0.0.1 car-rental.local
 ```
@@ -134,7 +149,7 @@ eval $(minikube docker-env)
 # Build all images
 docker build -f carRental/Dockerfile -t carrental:latest .
 docker build -f auctionServiceServer/Dockerfile -t auction-service-server:latest .
-docker build -f car-rental-angular/Dockerfile -t car-rental-angular:latest .
+docker build -t car-rental-angular:latest ./car-rental-angular
 ```
 
 6. **Configure Ingress as LoadBalancer for tunnel:**
