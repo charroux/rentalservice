@@ -4,6 +4,7 @@ rootProject.name = 'carRentalService'
 include 'auctionService'          // gRPC protocol buffer definitions
 include 'auctionServiceServer'    // gRPC server, replica of customers from Kafka
 include 'carRental'                // REST Web service, gRPC client of the agreement service
+include 'deliveryService'         // Kafka consumer for delivery tracking
 
 // Future services
 //include 'customerService'        // Owner of customers, notify customer changes to Kafka
@@ -12,3 +13,4 @@ include 'carRental'                // REST Web service, gRPC client of the agree
 project(':auctionServiceServer').projectDir = file('auctionServiceServer')
 project(':auctionService').projectDir = file('auctionService')
 project(':carRental').projectDir = file('carRental')
+project(':deliveryService').projectDir = file('deliveryService')

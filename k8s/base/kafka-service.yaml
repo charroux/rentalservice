@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-service
+  namespace: rental-service
+  labels:
+    app: kafka
+spec:
+  ports:
+    - name: kafka
+      port: 9092
+      targetPort: 9092
+      protocol: TCP
+    - name: controller
+      port: 9093
+      targetPort: 9093
+      protocol: TCP
+  clusterIP: None  # Headless service for StatefulSet
+  selector:
+    app: kafka
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka
+  namespace: rental-service
+  labels:
+    app: kafka
+spec:
+  type: ClusterIP
+  ports:
+    - name: kafka
+      port: 9092
+      targetPort: 9092
+      protocol: TCP
+  selector:
+    app: kafka

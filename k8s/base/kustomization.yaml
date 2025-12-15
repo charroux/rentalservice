@@ -7,7 +7,11 @@ resources:
   - namespace.yaml
   - postgres-secret.yaml
   - postgres-statefulset.yaml
+  - kafka-configmap.yaml
+  - kafka-service.yaml
+  - kafka-statefulset.yaml
   - carrental-deployment.yaml
+  - delivery-deployment.yaml
   - frontend-deployment.yaml
   - auction-deployment.yaml
   - istio-internal-gateway.yaml

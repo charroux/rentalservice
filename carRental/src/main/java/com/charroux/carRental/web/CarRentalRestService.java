@@ -2,9 +2,12 @@ package com.charroux.carRental.web;
 
 import com.charroux.carRental.dto.AuctionResultDTO;
 import com.charroux.carRental.dto.OfferDTO;
+import com.charroux.carRental.dto.RentalConfirmationDTO;
 import com.charroux.carRental.entity.Car;
 import com.charroux.carRental.entity.CarModelJPA;
 import com.charroux.carRental.entity.CarModelJPARepository;
+import com.charroux.carRental.event.CarRentedEvent;
+import com.charroux.carRental.service.EventPublisher;
 import com.charroux.carRental.service.RentalService;
 
 import org.slf4j.Logger;
@@ -22,13 +25,15 @@ public class CarRentalRestService {
 
     RentalService rentalService;
     CarModelJPARepository carModelJPARepository;
+    EventPublisher eventPublisher;
     Logger logger = org.slf4j.LoggerFactory.getLogger(CarRentalRestService.class);
 
     @Autowired
-    public CarRentalRestService(RentalService rentalService, CarModelJPARepository carModelJPARepository) {
+    public CarRentalRestService(RentalService rentalService, CarModelJPARepository carModelJPARepository, EventPublisher eventPublisher) {
         super();
         this.rentalService = rentalService;
         this.carModelJPARepository = carModelJPARepository;
+        this.eventPublisher = eventPublisher;
     }
 
     /**
@@ -172,6 +177,45 @@ public class CarRentalRestService {
         
         public Long getCarModelId() { return carModelId; }
         public void setCarModelId(Long carModelId) { this.carModelId = carModelId; }
+    }
+    
+    /**
+     * RENTAL CONFIRMATION ENDPOINT - Used by Angular frontend
+     * Confirms rental and publishes event to Kafka
+     */
+    @PostMapping("/rental/confirm")
+    public ResponseEntity<String> confirmRental(@RequestBody RentalConfirmationDTO request) {
+        logger.info("Rental confirmation received for car {} by {} {}", 
+                request.getPlateNumber(), 
+                request.getCustomerInfo().getFirstName(), 
+                request.getCustomerInfo().getLastName());
+        
+        try {
+            // Create and publish CarRentedEvent to Kafka
+            CarRentedEvent event = new CarRentedEvent(
+                request.getPlateNumber(),
+                request.getBrand(),
+                request.getModel(),
+                request.getCarModelId(),
+                request.getFinalPrice(),
+                request.getOriginalPrice(),
+                request.getDiscountAmount(),
+                request.getDiscountApplied(),
+                request.getCustomerInfo().getFirstName(),
+                request.getCustomerInfo().getLastName(),
+                request.getCustomerInfo().getEmail()
+            );
+            
+            eventPublisher.publishCarRentedEvent(event);
+            
+            logger.info("CarRentedEvent published successfully for car {}", request.getPlateNumber());
+            
+            return ResponseEntity.ok("Rental confirmed successfully");
+        } catch (Exception e) {
+            logger.error("Error confirming rental: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error confirming rental: " + e.getMessage());
+        }
     }
 
 }

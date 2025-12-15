@@ -122,4 +122,33 @@ export class RentalService {
       console.log('Response status:', res.status);
     });
   }
+
+  confirmRental(auctionResult: AuctionResult, offer: Offer, customerInfo: any): Observable<string> {
+    const confirmUrl = `${environment.apiUrl}/rental/confirm`;
+    const body = {
+      plateNumber: auctionResult.plateNumber,
+      brand: offer.brand,
+      model: offer.model,
+      carModelId: offer.carModelId,
+      finalPrice: auctionResult.finalCustomerPrice,
+      originalPrice: auctionResult.originalPrice,
+      discountAmount: auctionResult.discountAmount,
+      discountApplied: auctionResult.discountApplied,
+      customerInfo: customerInfo
+    };
+    
+    console.log('Confirming rental:', body);
+    
+    return this.http.post<string>(confirmUrl, body, {
+      headers: new HttpHeaders({ 'Content-Type': 'application/json' })
+    }).pipe(
+      tap(response => {
+        console.log('Rental confirmed:', response);
+      }),
+      catchError(error => {
+        console.error('Error confirming rental:', error);
+        throw error;
+      })
+    );
+  }
 }

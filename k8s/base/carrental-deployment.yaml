@@ -54,6 +54,9 @@ spec:
           value: "static://auction-service:9090"
         - name: GRPC_CLIENT_AUCTIONSERVICE_NEGOTIATIONTYPE
           value: "plaintext"
+        # Kafka configuration
+        - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+          value: "kafka-service:9092"
         resources:
           requests:
             memory: "256Mi"

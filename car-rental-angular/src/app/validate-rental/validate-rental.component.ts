@@ -129,18 +129,30 @@ export class ValidateRentalComponent implements OnInit {
   }
 
   confirmRental() {
-    if (this.auctionResult) {
+    if (this.auctionResult && this.offer && this.customerInfo) {
       console.log(`Rental confirmed at ${this.auctionResult.finalCustomerPrice}€/day for car ${this.auctionResult.plateNumber}`);
       console.log('Customer:', this.customerInfo);
       
-      // Ici, vous pourriez faire un appel API pour sauvegarder la confirmation de location
-      // this.rentalService.confirmRental(this.auctionResult, this.customerInfo).subscribe(...)
+      const plateNumber = this.auctionResult.plateNumber;
+      const finalPrice = this.auctionResult.finalCustomerPrice;
       
-      alert(`Rental confirmed!\nCar: ${this.auctionResult.plateNumber}\nFinal price: ${this.auctionResult.finalCustomerPrice}€/day`);
+      // Appel API pour sauvegarder la confirmation de location et publier l'événement Kafka
+      this.rentalService.confirmRental(this.auctionResult, this.offer, this.customerInfo).subscribe({
+        next: (response) => {
+          console.log('Rental confirmation response:', response);
+          alert(`Rental confirmed!\nCar: ${plateNumber}\nFinal price: ${finalPrice}€/day`);
+          // Rediriger vers la page d'accueil
+          this.router.navigate(['/']);
+        },
+        error: (error) => {
+          console.error('Error confirming rental:', error);
+          alert('Error confirming rental. Please try again.');
+        }
+      });
+    } else {
+      console.error('Missing required data for rental confirmation');
+      alert('Error: Missing rental information');
     }
-    
-    // Rediriger vers la page d'accueil
-    this.router.navigate(['/']);
   }
 
   goBack() {
