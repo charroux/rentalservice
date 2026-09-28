@@ -25,6 +25,18 @@ dependencies {
 	implementation 'com.h2database:h2'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	
+	// Redis and event publishing
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis:3.2.0'
+	implementation 'io.lettuce:lettuce-core'
+	
+	// Jackson JSON serialization with Java 8 date/time support
+	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+	
+	// Lombok for reducing boilerplate
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+	
 	// implementation 'net.devh:grpc-client-spring-boot-starter:3.1.0.RELEASE' // Temporarily disabled for testing
 	// implementation 'io.grpc:grpc-stub:1.58.0' // Temporarily disabled for testing
 	// implementation 'io.grpc:grpc-protobuf:1.58.0' // Temporarily disabled for testing

@@ -1,6 +1,23 @@
 version: '3.8'
 
 services:
+  redis:
+    image: redis:7-alpine
+    container_name: car-rental-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - car-rental-network
+
   postgres:
     image: postgres:15
     container_name: car-rental-postgres
@@ -19,6 +36,8 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+    networks:
+      - car-rental-network
 
   car-rental:
     build:
@@ -35,10 +54,15 @@ services:
       SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/${POSTGRES_DB}"
       SPRING_DATASOURCE_USERNAME: "${POSTGRES_USER}"
       SPRING_DATASOURCE_PASSWORD: "${POSTGRES_PASSWORD}"
+      # Redis configuration
+      SPRING_REDIS_HOST: "redis"
+      SPRING_REDIS_PORT: "6379"
       # gRPC service configuration
       AUCTION_SERVICE_HOST: "auction-service"
       AUCTION_SERVICE_PORT: "9090"
     depends_on:
+      redis:
+        condition: service_healthy
       postgres:
         condition: service_healthy
       auction-service:
@@ -48,6 +72,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 6
+    networks:
+      - car-rental-network
 
   auction-service:
     build:
@@ -66,6 +92,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+    networks:
+      - car-rental-network
 
   frontend-angular:
     build:
@@ -86,10 +114,18 @@ services:
       retries: 3
     volumes:
       - ./car-rental-angular/nginx-docker-compose.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - car-rental-network
 
 volumes:
+  redis-data:
+    name: car_rental_redis_data
   postgres-data:
     name: car_rental_postgres_data
   gradle-cache:
     name: gradle_cache
+
+networks:
+  car-rental-network:
+    driver: bridge
 

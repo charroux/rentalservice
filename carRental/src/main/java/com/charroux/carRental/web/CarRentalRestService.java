@@ -5,6 +5,8 @@ import com.charroux.carRental.dto.OfferDTO;
 import com.charroux.carRental.entity.Car;
 import com.charroux.carRental.entity.CarModelJPA;
 import com.charroux.carRental.entity.CarModelJPARepository;
+import com.charroux.carRental.events.AuctionEventPublisher;
+import com.charroux.carRental.events.AuctionWonEvent;
 import com.charroux.carRental.service.RentalService;
 
 import org.slf4j.Logger;
@@ -14,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
@@ -22,13 +25,18 @@ public class CarRentalRestService {
 
     RentalService rentalService;
     CarModelJPARepository carModelJPARepository;
+    AuctionEventPublisher auctionEventPublisher;
     Logger logger = org.slf4j.LoggerFactory.getLogger(CarRentalRestService.class);
 
     @Autowired
-    public CarRentalRestService(RentalService rentalService, CarModelJPARepository carModelJPARepository) {
+    public CarRentalRestService(
+            RentalService rentalService, 
+            CarModelJPARepository carModelJPARepository,
+            AuctionEventPublisher auctionEventPublisher) {
         super();
         this.rentalService = rentalService;
         this.carModelJPARepository = carModelJPARepository;
+        this.auctionEventPublisher = auctionEventPublisher;
     }
 
     /**
@@ -154,6 +162,29 @@ public class CarRentalRestService {
                     discountAmount,
                     discountApplied
                 );
+                
+                // 🆕 NOUVEAU: Publier l'événement AuctionWon (non-blocking)
+                try {
+                    AuctionWonEvent event = AuctionWonEvent.create(
+                        "RENT-" + resultCar.getId(),
+                        resultCar.getId(),
+                        resultCar.getPlateNumber(),
+                        "CUST-" + UUID.randomUUID().toString(),
+                        carModel.getBrand(),
+                        carModel.getModel(),
+                        resultCar.getFinalCustomerPrice(),
+                        resultCar.getRentalPrice(),
+                        (int) discountAmount.longValue()
+                    );
+                    
+                    boolean published = auctionEventPublisher.publishAuctionWon(event);
+                    if (!published) {
+                        logger.warn("⚠️ Événement non publié mais l'enchère a réussi - rentalId: {}", event.getRentalId());
+                    }
+                } catch (Exception e) {
+                    logger.error("❌ Erreur lors de la publication de l'événement AuctionWon: {}", e.getMessage(), e);
+                    // L'enchère a réussi même si l'événement n'a pas pu être publié
+                }
                 
                 return ResponseEntity.ok(result);
             } else {
