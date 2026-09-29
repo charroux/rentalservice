@@ -7,7 +7,103 @@ Audience: **Developers, AI Agents, Architects, DevOps**
 
 ---
 
-## 📖 Documentation Files (5 files, 60 pages total)
+## 📖 Documentation Files (9 files, 100+ pages total)
+
+### 🔴 NEW: Architecture Decision & Multi-Service Patterns
+
+#### 0️⃣ ARCHITECTURE_DECISION_STATE_MANAGEMENT.md ⭐ READ THIS FIRST
+```
+📄 Pages: 10 | Time: 10-15 min | Format: Decision + Roadmap
+👥 Audience: All roles (architects, devs, decision makers)
+🎯 Purpose: Understand the hybrid Redis + DB pattern
+```
+
+**What's inside:**
+- ❓ Your question answered: Redis + Kafka KTable comparison
+- ✅ Decision: Hybrid pattern (Redis events + PostgreSQL state)
+- 📊 Decision matrix comparing all options
+- 🏗️ Architecture diagram (Phases 1, 2, 3)
+- 🚫 What NOT to do (3 anti-patterns)
+- 🔄 Implementation roadmap (now, 3-6 months, 6+ months)
+- ✅ Phase 1 complete (MVP)
+- ⏳ Phase 2 planned (multi-service)
+- ❓ Phase 3 optional (Kafka if needed)
+- ✅ Verification checklist
+
+**Start here if:** You need to understand state management strategy
+
+**Output:** Confidence in architecture choice
+
+---
+
+#### MICROSERVICES_STATE_MANAGEMENT.md 📚 DETAILED ANALYSIS
+```
+📄 Pages: 30+ | Time: 45-60 min | Format: Comprehensive analysis
+👥 Audience: Architects, tech leads, decision makers
+🎯 Purpose: Complete comparison: Redis vs Kafka KTable vs PostgreSQL
+```
+
+**What's inside:**
+- 🔍 What is a Kafka KTable? (with diagrams)
+- 🚨 5 limitations of Redis for state storage
+- ✅ Redis strengths (where it excels)
+- ✨ 3 recommended patterns:
+  1. Redis Events + Dedicated DB (RECOMMENDED)
+  2. Kafka for Events + KTable for State
+  3. Hybrid (Redis real-time + Kafka audit + DB persistent)
+- 📊 Decision matrix (when to use what)
+- 🎯 Your situation analysis
+- 💡 Anti-patterns to avoid (3 detailed)
+- 🚀 3-phase implementation roadmap
+- 📋 Storage considerations (permanent vs temporary)
+- 💰 Cost analysis
+
+**Start here if:** You want to understand the full landscape
+
+**Output:** Informed architectural decisions
+
+---
+
+#### HYBRID_STATE_PATTERNS.md 🏗️ CODE PATTERNS FOR PHASE 2
+```
+📄 Pages: 35+ | Time: 30-45 min | Format: Production patterns + code
+👥 Audience: Java developers implementing multi-service
+🎯 Purpose: Ready-to-use patterns for Phase 2 (PostgreSQL state)
+```
+
+**What's inside:**
+- 🎯 Pattern 1: Event consumer with idempotent processing
+  ├─ RentalEventListener.java (full implementation)
+  ├─ Entities: RentalState, ProcessedEvent
+  ├─ Repositories: JPA interfaces
+  └─ Idempotency logic explained
+- 🔄 Pattern 2: Polling consumer from Redis
+  ├─ RedisEventPollingService.java
+  ├─ Non-blocking thread management
+  └─ Error handling
+- 🔍 Pattern 3: Query state via REST API
+  ├─ RentalStateController.java
+  ├─ DTO layer
+  └─ Query by status/rental ID
+- 🗄️ Database schema (SQL)
+  ├─ rental_state table
+  ├─ processed_events table (idempotency)
+  └─ audit_log table (optional)
+- ⚙️ Spring Boot configuration (YAML)
+  ├─ DataSource pooling
+  ├─ JPA/Hibernate settings
+  └─ Redis connection
+- 🧪 Unit tests (idempotency verification)
+- 🧪 Integration tests (end-to-end Docker)
+- 📈 Monitoring metrics
+- ✅ Deployment checklist
+- 🎯 Best practices summary
+
+**Start here if:** You're implementing Phase 2
+
+**Output:** Copy-paste ready patterns
+
+---
 
 ### 1️⃣ QUICK_START_REDIS_EVENTS.md ⭐ START HERE
 ```
@@ -150,28 +246,76 @@ Audience: **Developers, AI Agents, Architects, DevOps**
 ```
 docs/
 │
-├── QUICK_START_REDIS_EVENTS.md              ← START HERE (5 min)
-│   └─ TL;DR, code templates, common mistakes
+├── ARCHITECTURE_DECISION_STATE_MANAGEMENT.md  ← Read First! (15 min)
+│   └─ Your question answered, roadmap, decision matrix
 │
-├── TECHNICAL_CHOICES.md                     ← Deep dive (30+ min)
+├── MICROSERVICES_STATE_MANAGEMENT.md          ← Deep Analysis (60 min)
+│   └─ Full comparison: Redis vs Kafka vs PostgreSQL
+│
+├── HYBRID_STATE_PATTERNS.md                   ← Code Patterns (45 min)
+│   └─ Production-ready patterns for Phase 2
+│
+├── QUICK_START_REDIS_EVENTS.md                ← Phase 1 Quickstart (10 min)
+│   └─ TL;DR, templates, common mistakes
+│
+├── TECHNICAL_CHOICES.md                       ← Phase 1 Reference (40 min)
 │   └─ All decisions, alternatives, trade-offs
 │
-├── EVENT_PUBLISHING.md                      ← Implementation (20 min)
+├── EVENT_PUBLISHING.md                        ← Phase 1 Implementation (20 min)
 │   └─ Architecture, code, configuration
 │
-├── TESTING_EVENT_PUBLISHING.md              ← Validation (15 min)
+├── TESTING_EVENT_PUBLISHING.md                ← Phase 1 Validation (15 min)
 │   └─ Docker setup, end-to-end testing
 │
-├── README_ONBOARDING.md                     ← Navigation hub (10 min)
+├── README_ONBOARDING.md                       ← Navigation hub (10 min)
 │   └─ Doc index, journeys, cross-refs
 │
-└── REDIS_TECHNICAL_SUMMARY.md               ← This file (10 min)
+└── REDIS_TECHNICAL_SUMMARY.md                 ← Executive summary (10 min)
     └─ One-page reference of everything
 ```
 
 ---
 
 ## 🚀 Recommended Reading Paths
+
+### Path 0: "I need to understand state management architecture" 🏗️ NEW
+```
+Time Budget: 15 minutes (quick) or 60 minutes (deep)
+│
+Quick Option (15 min):
+├─→ ARCHITECTURE_DECISION_STATE_MANAGEMENT.md (10-15 min)
+│   Read: Decision summary + roadmap
+│
+└─ You understand: Hybrid pattern, why PostgreSQL for state
+
+Deep Option (60 min):
+├─→ ARCHITECTURE_DECISION_STATE_MANAGEMENT.md (15 min)
+│   Read: Everything
+│
+├─→ MICROSERVICES_STATE_MANAGEMENT.md (45 min)
+│   Read: KTable analysis, patterns, decision matrix
+│
+└─ You understand: ALL alternatives, full trade-offs, when to use what
+```
+**Result**: Confident architecture decision ✅
+
+---
+
+### Path 0.5: "I need code patterns for Phase 2" 💻 NEW
+```
+Time Budget: 45 minutes
+│
+├─→ ARCHITECTURE_DECISION_STATE_MANAGEMENT.md (10 min)
+│   Understand: Why this pattern
+│
+├─→ HYBRID_STATE_PATTERNS.md (35 min)
+│   Learn: 3 patterns, databases, tests, config
+│
+└─ Result: Ready to code Phase 2
+```
+**Result**: Copy-paste patterns for multi-service state ✅
+
+---
 
 ### Path 1: "I need working Redis events TODAY" ⚡
 ```
@@ -253,24 +397,30 @@ Time Budget: 25 minutes
 ## 📊 Documentation Statistics
 
 ```
-┌──────────────────────────────┬────────┬──────────┬────────────┐
-│ Document                     │ Pages  │ Time     │ Focus      │
-├──────────────────────────────┼────────┼──────────┼────────────┤
-│ QUICK_START_REDIS_EVENTS     │ 5      │ 5-10m    │ Fastest    │
-│ TECHNICAL_CHOICES            │ 20     │ 30-45m   │ Complete   │
-│ EVENT_PUBLISHING             │ 15     │ 20m      │ Impl       │
-│ TESTING_EVENT_PUBLISHING     │ 10     │ 15-20m   │ Validation │
-│ README_ONBOARDING            │ 8      │ 10m      │ Navigation │
-│ REDIS_TECHNICAL_SUMMARY      │ 8      │ 10-15m   │ Reference  │
-├──────────────────────────────┼────────┼──────────┼────────────┤
-│ TOTAL                        │ 66     │ ~90m     │ All topics │
-└──────────────────────────────┴────────┴──────────┴────────────┘
+┌───────────────────────────────────────────┬────────┬──────────┬────────────┐
+│ Document                                  │ Pages  │ Time     │ Focus      │
+├───────────────────────────────────────────┼────────┼──────────┼────────────┤
+│ ARCHITECTURE_DECISION_STATE_MANAGEMENT    │ 10     │ 10-15m   │ Decision   │
+│ MICROSERVICES_STATE_MANAGEMENT            │ 30+    │ 45-60m   │ Analysis   │
+│ HYBRID_STATE_PATTERNS                     │ 35+    │ 30-45m   │ Code       │
+├───────────────────────────────────────────┼────────┼──────────┼────────────┤
+│ QUICK_START_REDIS_EVENTS                  │ 5      │ 5-10m    │ Fastest    │
+│ TECHNICAL_CHOICES                         │ 20     │ 30-45m   │ Complete   │
+│ EVENT_PUBLISHING                          │ 15     │ 20m      │ Impl       │
+│ TESTING_EVENT_PUBLISHING                  │ 10     │ 15-20m   │ Validation │
+│ README_ONBOARDING                         │ 8      │ 10m      │ Navigation │
+│ REDIS_TECHNICAL_SUMMARY                   │ 8      │ 10-15m   │ Reference  │
+├───────────────────────────────────────────┼────────┼──────────┼────────────┤
+│ TOTAL                                     │ 141    │ ~180m    │ All topics │
+└───────────────────────────────────────────┴────────┴──────────┴────────────┘
 ```
 
 **Reading Strategy:**
 - ⚡ Quick path: 1 + 4 = 20 minutes (working setup)
-- 📚 Learning path: 1 + 2 + 5 = 45 minutes (full understanding)
-- 🏢 Enterprise path: All 6 = 90 minutes (complete mastery)
+- 🏗️ Architecture path: 0 + 2 = 60 minutes (understand state pattern)
+- 💻 Coding path: 0 + 3 + 1 + 4 = 90 minutes (implement Phase 2)
+- 📚 Learning path: 1 + 2 + 5 + 0 + 2 = 2 hours (full understanding)
+- 🏢 Enterprise path: All 9 = 3 hours (complete mastery)
 
 ---
 
