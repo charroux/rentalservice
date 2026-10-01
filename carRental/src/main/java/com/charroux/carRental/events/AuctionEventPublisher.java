@@ -2,77 +2,78 @@ package com.charroux.carRental.events;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.stereotype.Service;
-
-import java.util.concurrent.TimeUnit;
+import org.springframework.stereotype.Component;
 
 /**
- * Publishes auction events to Redis for consumption by partner services.
- * Uses RedisTemplate with a list-based queue for simplicity in the prototype.
- * Later can be migrated to full Redis Streams or Kafka without code changes in consumers.
+ * Publishes auction events to Redis queue.
+ * 
+ * Phase 1 (Current): Uses simple list-based queue for MVP reliability.
+ * Phase 2: Will upgrade to Redis Streams with consumer groups.
+ * 
+ * Purpose: Notify other services (RentalService, InsuranceService) of auction events.
  */
-@Service
+@Component
 @Slf4j
 public class AuctionEventPublisher {
     
     private static final String AUCTION_EVENTS_QUEUE = "auction:events:queue";
-    private static final long EVENT_TTL_HOURS = 24;
     
     private final RedisTemplate<String, String> redisTemplate;
     private final ObjectMapper objectMapper;
     
-    @Autowired
-    public AuctionEventPublisher(RedisTemplate<String, String> redisTemplate, ObjectMapper objectMapper) {
+    public AuctionEventPublisher(
+            RedisTemplate<String, String> redisTemplate,
+            ObjectMapper objectMapper) {
         this.redisTemplate = redisTemplate;
         this.objectMapper = objectMapper;
     }
     
     /**
-     * Publishes an AuctionWonEvent to the Redis queue for consumption by partner services.
+     * Publishes a serialized auction event to Redis queue.
      * 
-     * @param event The auction won event to publish
-     * @return true if the event was successfully published, false otherwise
+     * @param eventJson The serialized event JSON
+     * @return true if published successfully
      */
-    public boolean publishAuctionWon(AuctionWonEvent event) {
+    public boolean publishAuctionEvent(String eventJson) {
         try {
-            // Serialize event to JSON with metadata
-            String eventJson = objectMapper.writeValueAsString(event);
+            // Push to Redis queue (LPUSH semantics)
+            Long queueLength = redisTemplate.opsForList()
+                .rightPush(AUCTION_EVENTS_QUEUE, eventJson);
             
-            String messageWithMetadata = String.format(
-                "{\"eventType\":\"AuctionWon\",\"eventId\":\"%s\",\"timestamp\":%d,\"data\":%s}",
-                event.getEventId(),
-                event.getTimestamp(),
-                eventJson
-            );
+            log.info("✓ Published auction event to queue, queue_size={}", queueLength);
             
-            // Push event to Redis list (acts as queue for consumers)
-            Long result = redisTemplate.opsForList().rightPush(AUCTION_EVENTS_QUEUE, messageWithMetadata);
-            
-            if (result != null && result > 0) {
-                // Set TTL on the queue to prevent unbounded growth
-                redisTemplate.expire(AUCTION_EVENTS_QUEUE, EVENT_TTL_HOURS, TimeUnit.HOURS);
-                
-                log.info("✓ AuctionWonEvent published successfully - eventId: {} | rentalId: {} | carBrand: {} | carModel: {} | plateNumber: {}",
-                    event.getEventId(),
-                    event.getRentalId(),
-                    event.getCarBrand(),
-                    event.getCarModel(),
-                    event.getPlateNumber());
-                
-                return true;
-            } else {
-                log.warn("❌ Failed to publish AuctionWonEvent to Redis queue - eventId: {}", event.getEventId());
-                return false;
-            }
+            return true;
             
         } catch (Exception e) {
-            log.error("❌ Error publishing AuctionWonEvent to Redis: eventId={}, error={}", 
-                event.getEventId(), 
-                e.getMessage(), 
-                e);
+            log.error("❌ Failed to publish auction event: {}", e.getMessage(), e);
             return false;
         }
+    }
+    
+    /**
+     * Publishes an AuctionWonEvent to Redis queue for other services to consume.
+     * 
+     * Phase 1: Simple queue for MVP
+     * 
+     * @param event The auction event to publish (must have eventId, auctionId, customerId fields)
+     * @return true if published successfully
+     */
+    public boolean publishAuctionWon(Object event) {
+        try {
+            String eventJson = objectMapper.writeValueAsString(event);
+            return publishAuctionEvent(eventJson);
+            
+        } catch (Exception e) {
+            log.error("❌ Failed to publish AuctionWon event: {}", e.getMessage(), e);
+            return false;
+        }
+    }
+    
+    /**
+     * Gets the queue name for testing/monitoring.
+     */
+    public String getQueueName() {
+        return AUCTION_EVENTS_QUEUE;
     }
 }
