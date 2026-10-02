@@ -1,0 +1,41 @@
+:root {
+  --course-navy: #17324d;
+  --course-blue: #2b6f9f;
+  --course-orange: #d66b2c;
+}
+
+.reveal {
+  color: var(--course-navy);
+  font-size: 32px;
+}
+
+.reveal .slides {
+  text-align: left;
+}
+
+.reveal h1,
+.reveal h2 {
+  color: var(--course-navy);
+  text-transform: none;
+}
+
+.reveal h2 {
+  border-bottom: 4px solid var(--course-orange);
+  padding-bottom: 0.2em;
+}
+
+.reveal strong {
+  color: var(--course-blue);
+}
+
+.reveal code {
+  color: #8a3f16;
+}
+
+.reveal table {
+  font-size: 0.72em;
+}
+
+.reveal .small {
+  font-size: 0.72em;
+}

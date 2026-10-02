@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   redis:
     image: redis:7-alpine
@@ -55,8 +53,8 @@ services:
       SPRING_DATASOURCE_USERNAME: "${POSTGRES_USER}"
       SPRING_DATASOURCE_PASSWORD: "${POSTGRES_PASSWORD}"
       # Redis configuration
-      SPRING_REDIS_HOST: "redis"
-      SPRING_REDIS_PORT: "6379"
+      SPRING_DATA_REDIS_HOST: "redis"
+      SPRING_DATA_REDIS_PORT: "6379"
       # gRPC service configuration
       AUCTION_SERVICE_HOST: "auction-service"
       AUCTION_SERVICE_PORT: "9090"
@@ -69,6 +67,57 @@ services:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    networks:
+      - car-rental-network
+
+  event-router:
+    build:
+      context: .
+      dockerfile: eventRouterService/Dockerfile
+    image: charroux/event-router:dev
+    container_name: event-router
+    restart: unless-stopped
+    environment:
+      REDIS_HOST: "redis"
+      REDIS_PORT: "6379"
+      SUBSCRIPTIONS_DIR: "/app/subscriptions"
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8090/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 6
+    networks:
+      - car-rental-network
+
+  insurance-service:
+    build:
+      context: .
+      dockerfile: insuranceService/Dockerfile
+    image: charroux/insurance-service:dev
+    container_name: insurance-service
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_PROFILES_ACTIVE: "prod"
+      SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/${POSTGRES_DB}"
+      SPRING_DATASOURCE_USERNAME: "${POSTGRES_USER}"
+      SPRING_DATASOURCE_PASSWORD: "${POSTGRES_PASSWORD}"
+      SPRING_DATA_REDIS_HOST: "redis"
+      SPRING_DATA_REDIS_PORT: "6379"
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
       interval: 10s
       timeout: 5s
       retries: 6
@@ -107,8 +156,10 @@ services:
     depends_on:
       car-rental:
         condition: service_healthy
+      insurance-service:
+        condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80/"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:80/"]
       interval: 10s
       timeout: 5s
       retries: 3

@@ -5,14 +5,15 @@ spring:
       on-profile: dev
   
   # Redis configuration for local development
-  redis:
-    host: localhost
-    port: 6379
-    timeout: 2000ms
-    jedis:
-      pool:
-        max-active: 8
-        max-idle: 8
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
   
   # H2 in-memory database for testing
   datasource:

@@ -8,8 +8,11 @@ COPY gradlew gradlew.bat settings.gradle build.gradle ./
 COPY auctionService/build.gradle ./auctionService/
 COPY auctionServiceServer/build.gradle ./auctionServiceServer/
 
+# Le checkout Windows utilise CRLF ; normaliser le script avant exécution Linux.
+RUN sed -i 's/\r$//' ./gradlew && chmod +x ./gradlew
+
 # Télécharger les dépendances (mise en cache Docker)
-RUN chmod +x ./gradlew && ./gradlew :auctionServiceServer:dependencies --no-daemon || true
+RUN ./gradlew :auctionServiceServer:dependencies --no-daemon
 
 # Copier le code source (auctionServiceServer dépend de auctionService)
 COPY auctionService/ ./auctionService/

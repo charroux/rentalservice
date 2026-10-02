@@ -3,6 +3,9 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
+    "generate:extensions": "python scripts/generate_extensions.py src/app/extensions src/app/extension-platform/generated/rental-extensions.generated.ts",
+    "prestart": "npm run generate:extensions",
+    "prebuild": "npm run generate:extensions",
     "start": "NG_BUILD_PARALLEL_TS=0 ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development"

@@ -1,0 +1,94 @@
+---
+title: "Operability and Architectural Evaluation"
+subtitle: "Module 11 · Evidence, failure drills, and trade-offs"
+format:
+  revealjs:
+    theme: simple
+    css: ../../slides.css
+    slide-number: true
+    transition: fade
+    width: 1280
+    height: 720
+---
+
+## Learning objectives
+
+By the end of this module, you should be able to:
+
+- define observable signals for synchronous and asynchronous workflows
+- connect service objectives to metrics and alerts
+- design a failure drill with a verifiable recovery condition
+- compare the current architecture with credible alternatives
+
+## Observability answers questions
+
+Logs explain individual events, metrics reveal trends, and traces connect work
+across boundaries. Each signal needs stable identifiers.
+
+Useful correlation fields include rental ID, event ID, event type and version,
+consumer name, service version, and request trace ID.
+
+## Signals for the event path
+
+| Question | Signal |
+|---|---|
+| Is publication keeping up? | Published List depth and oldest age |
+| Is routing blocked? | Routing List depth and error count |
+| Is a consumer behind? | Ready and processing depth per consumer |
+| Are duplicates increasing? | Idempotence-hit counter |
+| Are messages invalid? | Validation and dead-letter counts |
+
+Queue depth without message age can hide a small but permanently stuck queue.
+
+## Service objectives
+
+An objective should describe user-visible behavior and a time window.
+
+Example: 99 percent of accepted auction results produce an insurance offer
+within 10 seconds over a rolling 30-day window.
+
+The associated indicator needs timestamps at publication and successful
+consumer commit. Infrastructure uptime alone cannot measure this outcome.
+
+## Failure drills
+
+```{mermaid}
+flowchart LR
+    Hypothesis[Recovery hypothesis] --> Inject[Controlled failure]
+    Inject --> Observe[Collect evidence]
+    Observe --> Recover[Verify recovery]
+    Recover --> Improve[Record corrective action]
+```
+
+A drill has a limited blast radius, an abort condition, an owner, and a clear
+definition of recovered service.
+
+## Architecture scorecard
+
+| Quality | Current strength | Current limitation |
+|---|---|---|
+| Learnability | Lists expose delivery steps | More custom code than a broker abstraction |
+| Decoupling | Stable ingress and subscriptions | Router fan-out can duplicate |
+| Recoverability | Processing Lists retain work | Dead-letter policy remains incomplete |
+| Evolvability | Versioned event contracts | Contract retirement needs governance |
+| Query flexibility | PostgreSQL supports business queries | No separate CQRS projection yet |
+
+Trade-offs require workload evidence rather than technology preference.
+
+## Next experimental increments
+
+Redis Streams will run beside Lists and compare consumer groups, pending
+entries, replay, and retention. CQRS will then add a separate read projection
+and make freshness visible to the user.
+
+The existing Lists path stays available as the baseline. See
+[`training/roadmap.qmd`](../../roadmap.qmd) for entry criteria.
+
+## Module investigation
+
+1. Define one user objective for auction and insurance processing.
+2. Map every objective to logs, metrics, or traces.
+3. Run one bounded failure drill.
+4. Recommend the next architecture increment from observed evidence.
+
+Continue with [Lab 11](lab.md).

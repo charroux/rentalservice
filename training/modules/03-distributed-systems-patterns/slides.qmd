@@ -1,0 +1,88 @@
+---
+title: "Distributed Systems Patterns"
+subtitle: "Module 03 · Rental Service architecture course"
+format:
+  revealjs:
+    theme: simple
+    css: ../../slides.css
+    slide-number: true
+    transition: fade
+    width: 1280
+    height: 720
+---
+
+## Learning objectives
+
+By the end of this module, you should be able to:
+
+- reason about partial failure and uncertain outcomes
+- apply timeout, retry, idempotency, and circuit-breaker policies
+- explain the dual-write problem
+- compare saga, outbox, and inbox patterns
+
+## An uncertain outcome
+
+```{mermaid}
+sequenceDiagram
+    participant R as Rental service
+    participant A as Auction service
+    R->>A: Start auction
+    A->>A: Commit result
+    A--xR: Response lost
+```
+
+The caller sees a timeout. It cannot infer whether the operation failed or
+committed. A blind retry can create a second auction.
+
+## Retry requires a policy
+
+- Set a deadline before selecting a retry count.
+- Retry transient failures with bounded exponential backoff and jitter.
+- Protect non-idempotent operations with a stable request identifier.
+- Stop retries when the remaining deadline cannot cover another attempt.
+
+A circuit breaker limits repeated calls to a dependency that already fails.
+
+## Idempotent processing
+
+```{mermaid}
+flowchart LR
+    Message[Event with eventId] --> Lookup{Already processed?}
+    Lookup -->|yes| Ack[Acknowledge]
+    Lookup -->|no| Work[Apply business change]
+    Work --> Record[Record eventId in same transaction]
+```
+
+Idempotence turns duplicate delivery into a normal condition rather than an
+exceptional one.
+
+## The dual-write problem
+
+A service cannot atomically commit a PostgreSQL transaction and publish to
+Redis with an ordinary local transaction.
+
+| Order | Failure window |
+|---|---|
+| Database then message | State commits but no message appears |
+| Message then database | Consumers react to state that never commits |
+
+The transactional outbox stores the business update and publication intent in
+one database transaction.
+
+## Coordination patterns
+
+- **Saga:** each service commits locally and compensates when a later step fails.
+- **Outbox:** a durable local record drives later publication.
+- **Inbox:** a consumer records delivery identity with its business update.
+- **Dead-letter queue:** operators retain messages that cannot progress safely.
+
+These patterns manage failure. They do not recreate a global ACID transaction.
+
+## Module investigation
+
+1. Find the unique constraint used for event idempotence.
+2. Identify the current dual-write window around auction completion.
+3. Define a retry policy for one read and one command.
+4. Sketch an outbox table for the rental service.
+
+Continue with [Lab 03](lab.md).

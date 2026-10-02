@@ -1,0 +1,37 @@
+---
+title: "Rental Service Architecture Training"
+---
+
+This course uses an executable rental platform to study distributed systems,
+NoSQL, cloud-native delivery, and event-driven architecture. It targets
+graduate computer science students and software professionals.
+
+## Active modules
+
+1. [Architectural decomposition and microservices](modules/01-architectural-decomposition/slides.qmd)
+2. [Synchronous communication with REST and gRPC](modules/02-synchronous-communication/slides.qmd)
+3. [Distributed systems patterns](modules/03-distributed-systems-patterns/slides.qmd)
+4. [Containers and Docker Compose](modules/04-containers-compose/slides.qmd)
+5. [Cloud-native delivery](modules/05-cloud-native-delivery/slides.qmd)
+6. [Kubernetes fundamentals](modules/06-kubernetes-fundamentals/slides.qmd)
+7. [NoSQL foundations](modules/07-nosql-foundations/slides.qmd)
+8. [Redis data and messaging](modules/08-redis-data-messaging/slides.qmd)
+9. [Event-driven architecture with Redis Lists](modules/09-event-driven-lists/slides.qmd)
+10. [Consumer decoupling and application extensions](modules/10-consumer-decoupling/slides.qmd)
+11. [Operability and architectural evaluation](modules/11-operability-evaluation/slides.qmd)
+
+Each module links to its lab from the final slide.
+
+## Planned modules
+
+[Redis Streams and CQRS roadmap](roadmap.qmd) describes the future software
+increments and their associated training modules. They are intentionally not
+part of the rendered course yet.
+
+## Local rendering
+
+```bash
+quarto preview training
+```
+
+The material remains editable while classroom evaluation is in progress.

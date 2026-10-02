@@ -1,0 +1,6 @@
+{
+  "id": "insurance",
+  "order": 100,
+  "componentClass": "InsurancePanelComponent",
+  "importPath": "../../extensions/insurance/insurance-panel.component"
+}

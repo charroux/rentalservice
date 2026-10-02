@@ -11,3 +11,4 @@ patchesStrategicMerge:
   - patches/carrental-image-pull.yaml
   - patches/frontend-image-pull.yaml
   - patches/auction-image-pull.yaml
+  - patches/insurance-image-pull.yaml

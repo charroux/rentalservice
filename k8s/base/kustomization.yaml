@@ -7,7 +7,10 @@ resources:
   - namespace.yaml
   - postgres-secret.yaml
   - postgres-statefulset.yaml
+  - redis-statefulset.yaml
+  - event-router-deployment.yaml
   - carrental-deployment.yaml
+  - insurance-deployment.yaml
   - frontend-deployment.yaml
   - auction-deployment.yaml
   - istio-internal-gateway.yaml

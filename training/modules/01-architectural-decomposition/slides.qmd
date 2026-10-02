@@ -1,0 +1,88 @@
+---
+title: "Architectural Decomposition and Microservices"
+subtitle: "Module 01 · Rental Service architecture course"
+format:
+  revealjs:
+    theme: simple
+    css: ../../slides.css
+    slide-number: true
+    transition: fade
+    width: 1280
+    height: 720
+---
+
+## Learning objectives
+
+By the end of this module, you should be able to:
+
+- identify a service boundary from business responsibility and data ownership
+- compare a modular monolith with a distributed design
+- recognize coupling across APIs, databases, deployment, and teams
+- justify when a microservice adds more cost than value
+
+## One business flow, several responsibilities
+
+```{mermaid}
+flowchart LR
+    Customer[Customer] --> Rental[Rental lifecycle]
+    Rental --> Auction[Vehicle auction]
+    Rental --> Insurance[Optional insurance]
+    Rental --> UI[Rental experience]
+```
+
+A useful boundary owns a business decision and the data required to make it.
+Technical layers alone do not define services.
+
+## Service boundaries in the repository
+
+| Component | Responsibility | Owned state |
+|---|---|---|
+| `carRental` | Rental workflow | Rentals and processed events |
+| `auctionServiceServer` | Auction execution | Auction runtime state |
+| `insuranceService` | Optional insurance offers | Offers and processing history |
+| Angular application | User interaction | Transient presentation state |
+
+The boundary remains incomplete if two services must update the same tables.
+
+## Distribution changes the failure model
+
+```{mermaid}
+flowchart TB
+    Call[Local method call] --> Same[One process and one failure domain]
+    Network[Remote call] --> Delay[Latency and timeout]
+    Network --> Partial[Partial failure]
+    Network --> Version[Independent versions]
+```
+
+Every remote boundary adds operational cost. The business or organizational
+benefit must pay for that cost.
+
+## Coupling has several forms
+
+- **Temporal coupling:** both services must run at the same time.
+- **Data coupling:** consumers depend on one producer representation.
+- **Deployment coupling:** a change requires coordinated releases.
+- **Organizational coupling:** several teams must approve one change.
+
+Local code duplication can be cheaper than a shared library that couples every
+release.
+
+## Architecture decision
+
+A microservice is a poor default when:
+
+- one team changes the entire feature together
+- the domain boundary remains unclear
+- independent scaling or release brings no measurable benefit
+- operational skills and observability are missing
+
+A modular monolith often provides a safer starting point.
+
+## Module investigation
+
+1. Locate each service entry point in `settings.gradle`.
+2. Assign every persisted table to one service.
+3. Find one synchronous and one asynchronous boundary.
+4. Record one boundary you would merge or split, with evidence.
+
+Continue with [Lab 01](lab.md).

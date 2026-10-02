@@ -49,6 +49,11 @@ spec:
           value: "update"
         - name: SPRING_JPA_DATABASE_PLATFORM
           value: "org.hibernate.dialect.PostgreSQLDialect"
+        # Redis list-based event transport (Phase 1)
+        - name: SPRING_DATA_REDIS_HOST
+          value: "redis"
+        - name: SPRING_DATA_REDIS_PORT
+          value: "6379"
         # gRPC client configuration for auction service
         - name: GRPC_CLIENT_AUCTIONSERVICE_ADDRESS
           value: "static://auction-service:9090"

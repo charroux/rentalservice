@@ -10,8 +10,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.ListOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 
-import java.util.concurrent.TimeUnit;
-
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -42,10 +40,7 @@ class AuctionEventPublisherTest {
     @Test
     void testPublishAuctionWonSuccess() {
         // Given
-        when(listOperations.rightPush(eq("auction:events:queue"), anyString()))
-            .thenReturn(1L);
-        when(redisTemplate.expire(eq("auction:events:queue"), eq(24L), eq(TimeUnit.HOURS)))
-            .thenReturn(true);
+        when(listOperations.rightPush(anyString(), anyString())).thenReturn(1L);
         
         AuctionWonEvent event = AuctionWonEvent.create(
             "RENT-001",
@@ -64,19 +59,13 @@ class AuctionEventPublisherTest {
         
         // Then
         assertTrue(result);
-        verify(listOperations).rightPush(eq("auction:events:queue"), anyString());
-        verify(redisTemplate).expire(eq("auction:events:queue"), eq(24L), eq(TimeUnit.HOURS));
+        verify(listOperations).rightPush(eq(AuctionEventPublisher.PUBLISHED_QUEUE), anyString());
     }
     
     @Test
     void testPublishAuctionWonMultipleEvents() {
         // Given
-        when(listOperations.rightPush(eq("auction:events:queue"), anyString()))
-            .thenReturn(1L)
-            .thenReturn(2L)
-            .thenReturn(3L);
-        when(redisTemplate.expire(eq("auction:events:queue"), eq(24L), eq(TimeUnit.HOURS)))
-            .thenReturn(true);
+        when(listOperations.rightPush(anyString(), anyString())).thenReturn(1L);
         
         AuctionWonEvent event1 = AuctionWonEvent.create(
             "RENT-001", 1L, "ABC-123", "CUST-001", "Ferrari", "F8", 850, 1000, 150
@@ -97,14 +86,13 @@ class AuctionEventPublisherTest {
         assertTrue(result1);
         assertTrue(result2);
         assertTrue(result3);
-        verify(listOperations, times(3)).rightPush(eq("auction:events:queue"), anyString());
-        verify(redisTemplate, times(3)).expire(eq("auction:events:queue"), eq(24L), eq(TimeUnit.HOURS));
+        verify(listOperations, times(3)).rightPush(eq(AuctionEventPublisher.PUBLISHED_QUEUE), anyString());
     }
     
     @Test
     void testPublishAuctionWonException() {
         // Given
-        when(listOperations.rightPush(eq("auction:events:queue"), anyString()))
+        when(listOperations.rightPush(eq(AuctionEventPublisher.PUBLISHED_QUEUE), anyString()))
             .thenThrow(new RuntimeException("Redis connection error"));
         
         AuctionWonEvent event = AuctionWonEvent.create(

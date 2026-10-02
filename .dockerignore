@@ -46,6 +46,19 @@ tmp/
 # Node modules (pour le front Angular)
 node_modules/
 
+# Python local environments and caches
+.tools/
+**/__pycache__/
+**/.pytest_cache/
+tools/training-ci/.pytest_cache/
+eventRouterService/.pytest_cache/
+**/.pytest_cache
+**/.pytest_cache/**
+tools/training-ci/.pytest_cache
+eventRouterService/.pytest_cache
+**/*.egg-info/
+**/.venv/
+
 # Angular build
 car-rental-angular/dist/
 car-rental-angular/.angular/

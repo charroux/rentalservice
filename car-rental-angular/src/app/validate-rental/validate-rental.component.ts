@@ -3,6 +3,8 @@ import {CommonModule} from '@angular/common';
 import {ActivatedRoute, Router} from '@angular/router';
 import {RentalService} from '../rental.service';
 import {Cardetail, Offer, AuctionResult} from '../cardetail';
+import {RentalExtensionContext} from '../extension-platform/rental-extension';
+import {RENTAL_EXTENSION_COMPONENTS} from '../extension-platform/generated/rental-extensions.generated';
 
 @Component({
   selector: 'app-validate-rental',
@@ -61,6 +63,12 @@ import {Cardetail, Offer, AuctionResult} from '../cardetail';
           </p>
         </div>
 
+        <section class="rental-extensions" *ngIf="extensionContext">
+          <ng-container *ngFor="let extension of extensionComponents">
+            <ng-container *ngComponentOutlet="extension; inputs: {context: extensionContext}"></ng-container>
+          </ng-container>
+        </section>
+
         <div class="customer-info" *ngIf="customerInfo">
           <h3>Customer Information</h3>
           <p><strong>Name:</strong> {{ customerInfo.firstName }} {{ customerInfo.lastName }}</p>
@@ -91,6 +99,8 @@ export class ValidateRentalComponent implements OnInit {
   // Conservé pour compatibilité template
   cardetail: Cardetail | undefined;
   assignedCar: any;
+  readonly extensionComponents = RENTAL_EXTENSION_COMPONENTS;
+  extensionContext: RentalExtensionContext | undefined;
 
   ngOnInit() {
     const carModelId = parseInt(this.route.snapshot.params['id'], 10);
@@ -119,6 +129,11 @@ export class ValidateRentalComponent implements OnInit {
         this.assignedCar = {
           plateNumber: this.auctionResult.plateNumber,
           finalPrice: this.auctionResult.finalCustomerPrice
+        };
+        this.extensionContext = {
+          auctionResult: this.auctionResult,
+          offer: this.offer,
+          customerInfo: this.customerInfo
         };
       }
     } else {

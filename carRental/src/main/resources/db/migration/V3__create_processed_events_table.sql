@@ -3,7 +3,7 @@
 -- Phase: Phase 1 - Redis Streams Event-Driven Architecture
 -- Description: 
 --   Tracks which events have been processed by which consumers.
---   Ensures exactly-once semantics in event-driven microservices.
+--   Supports idempotent handling when an event is delivered more than once.
 --   Prevents duplicate processing if consumers retry or crash/recover.
 
 CREATE TABLE processed_events (

@@ -4,10 +4,15 @@
 Projet microservives composé de :
 - **car-rental-angular** : Frontend Angular (build séparé avec npm/ng)
 - **carRental** : Service principal avec API REST, JPA, et client gRPC
+- **insuranceService** : Consommateur événementiel qui propose une assurance complémentaire après une enchère gagnée
+- **eventRouterService** : Routeur Python 3.12 qui distribue les événements selon des descripteurs de souscription
 - **auctionServiceServer** : Implémente le serveur gRPC à partir des définitions protobuf
 - **auctionService** : Contient les définitions protobuf (`.proto`)
 
-Au démarrage, le front angular sollicite le service REST qui demande au serveur gRPC des modèles de voitures (créés à la volée) dont il dispose. Le service REST stocke les modèles de voiture dans une base postgres et les renvoie au front. Quand l'utilisateur choisit un modèle, une requête est envoyée au service REST qui déclenche des enchères pour récupérer une voiture particulière d'un modèle particulier. Le serveur gRPC est unique. C'est lui qui reçoit les enchères venant potentiellement de plusieurs service REST (chaque service REST est censé être la propriété d'un loueur de voiture). Le service REST qui remporte l'enchère fait une réduction à l'utilisateur final sur le prix de la location de la voiture. La durée de l'enchère est fixée à quelques secondes (mode test).
+Au démarrage, le front angular sollicite le service REST qui demande au serveur gRPC des modèles de voitures (créés à la volée) dont il dispose. Le service REST stocke les modèles de voiture dans une base postgres et les renvoie au front. Quand l'utilisateur choisit un modèle, une requête est envoyée au service REST qui déclenche des enchères pour récupérer une voiture particulière d'un modèle particulier. Le serveur gRPC est unique. C'est lui qui reçoit les enchères venant potentiellement de plusieurs service REST (chaque service REST est censé être la propriété d'un loueur de voiture). Le service REST qui remporte l'enchère fait une réduction à l'utilisateur final sur le prix de la location de la voiture. La durée de l'enchère est fixée à quelques secondes (mode test). L'événement d'enchère gagnée est ensuite distribué par Redis Lists au service de location et au service d'assurance. Le front récupère la proposition d'assurance et permet de l'accepter.
+
+Le parcours du service d'assurance est détaillé dans [docs/INSURANCE_SERVICE.md](docs/INSURANCE_SERVICE.md).
+Le support de formation Quarto se trouve dans [training/README.md](training/README.md).
 
 
 ## Build Instructions avec Gradle
@@ -35,6 +40,13 @@ Ce projet utilise Gradle comme système de build. Voici les commandes principale
 
 # Module carRental (service principal REST + JPA)
 ./gradlew :carRental:build
+
+# Module insuranceService (consommateur Redis + API REST)
+./gradlew :insuranceService:build
+
+# Tests du routeur Python et des contrôles pédagogiques
+python -m pip install -e "tools/training-ci[test]" -e "eventRouterService[test]"
+pytest tools/training-ci/tests eventRouterService/tests
 ```
 
 ### Commandes spécifiques pour les fichiers Protobuf/gRPC
@@ -79,7 +91,7 @@ Le système d'enchères permet aux carRentalCompany de participer à des enchèr
 
 ```bash
 # Méthode 1: Docker Compose (recommandée pour les tests)
-docker compose -f docker-compose.dev.yml up
+docker compose --env-file .env.dev -f docker-compose.dev.yml up
 
 # Méthode 2: Gradle (pour le développement)
 # Terminal 1 - Serveur gRPC d'enchères

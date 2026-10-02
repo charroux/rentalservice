@@ -2,9 +2,11 @@ package com.charroux.carRental.repository;
 
 import com.charroux.carRental.entity.ProcessedEvent;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,7 +26,7 @@ public interface ProcessedEventRepository extends JpaRepository<ProcessedEvent, 
     
     /**
      * Check if an event was already processed by a consumer.
-     * Used to ensure exactly-once semantics.
+     * Used to make repeated delivery idempotent.
      *
      * @param eventId The unique event identifier
      * @param consumerName The consumer that should have processed it
@@ -86,6 +88,8 @@ public interface ProcessedEventRepository extends JpaRepository<ProcessedEvent, 
      * @param olderThan LocalDateTime threshold (e.g., 30 days ago)
      * @return Number of records deleted
      */
+    @Modifying
+    @Transactional
     @Query("DELETE FROM ProcessedEvent pe WHERE pe.processedAt < :olderThan AND pe.errorMessage IS NULL")
     long deleteProcessedEventsBefore(@Param("olderThan") LocalDateTime olderThan);
     

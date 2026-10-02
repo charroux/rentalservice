@@ -1,0 +1,111 @@
+---
+title: "Consumer Decoupling and Application Extensions"
+subtitle: "Module 10 · Independent backend and frontend evolution"
+format:
+  revealjs:
+    theme: simple
+    css: ../../slides.css
+    slide-number: true
+    transition: fade
+    width: 1280
+    height: 720
+---
+
+## Learning objectives
+
+By the end of this module, you should be able to:
+
+- explain why a producer should not enumerate its consumers
+- add a subscription without changing producer code
+- distinguish event-contract stability from consumer implementation
+- extend the Angular workflow through a stable host context
+
+## Producer knowledge creates coupling
+
+```{mermaid}
+flowchart LR
+    Producer[Rental producer] --> Published[(Stable published List)]
+    Published --> Router[Event router]
+    Router --> Rental[Rental consumer]
+    Router --> Insurance[Insurance consumer]
+    Router --> Future[Future consumer]
+```
+
+The producer publishes one business fact. Subscription descriptors tell the
+router which consumer queues receive a copy.
+
+## Subscription descriptors
+
+```json
+{
+  "consumer": "insurance-service",
+  "eventType": "AuctionWon",
+  "eventVersion": 1,
+  "queue": "auction:events:simple:insurance-service:ready"
+}
+```
+
+A new consumer adds configuration and its own queue. The producer contract and
+deployment can remain unchanged.
+
+## Router delivery and duplicates
+
+```{mermaid}
+sequenceDiagram
+    participant I as Published List
+    participant R as Routing List
+    participant D as Router
+    participant C as Consumer Lists
+    D->>I: LMOVE published to routing
+    D->>C: RPUSH one copy per subscription
+    D->>R: LREM acknowledgement
+```
+
+A crash during fan-out can deliver to some queues before retry. Every consumer
+therefore retains its own idempotence boundary.
+
+## Event evolution
+
+Changing the meaning of an existing field forces independent consumers to
+coordinate. Prefer a new version or event type when meaning changes.
+
+During migration:
+
+- keep V1 readable
+- publish or translate V2 explicitly
+- test examples for each supported version
+- retire V1 only after consumer evidence confirms migration
+
+## Angular extension boundary
+
+```{mermaid}
+flowchart TB
+    Host[Rental validation page] --> Registry[Generated extension registry]
+    Registry --> Insurance[Insurance panel]
+    Context[Stable rental context] --> Insurance
+    Registry --> Future[Future extension]
+    Context --> Future
+```
+
+Each extension owns its component, API client, models, and descriptor. The host
+supplies rental context without importing insurance-specific types.
+
+## End-to-end feature ownership
+
+A new optional service may require:
+
+- an event subscription and idempotent backend consumer
+- owned persistence and API endpoints
+- one Angular extension and descriptor
+- deployment, health, tests, and operating evidence
+
+The shared contracts remain deliberately small.
+
+## Module investigation
+
+1. Add a notification subscription descriptor on paper.
+2. Trace how the Angular registry is generated.
+3. List files owned by the Insurance extension.
+4. Identify a router crash point that can create duplicates.
+
+Continue with [Lab 10](lab.md).

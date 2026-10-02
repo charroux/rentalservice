@@ -16,7 +16,8 @@ import java.time.LocalDateTime;
  * - Data corruption from concurrent event handlers
  *
  * Pattern: Event ID + Consumer Name = Unique constraint
- * Ensures each consumer processes each event exactly once (idempotence)
+ * Supports idempotent handling by preventing the same consumer from committing
+ * the same event twice. Transport-level exactly-once delivery is not implied.
  */
 @Entity
 @Table(

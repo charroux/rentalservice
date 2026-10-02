@@ -1,0 +1,84 @@
+---
+title: "Kubernetes Fundamentals"
+subtitle: "Module 06 · Rental Service architecture course"
+format:
+  revealjs:
+    theme: simple
+    css: ../../slides.css
+    slide-number: true
+    transition: fade
+    width: 1280
+    height: 720
+---
+
+## Learning objectives
+
+By the end of this module, you should be able to:
+
+- explain desired state and controller reconciliation
+- distinguish Pod, Deployment, Service, and StatefulSet
+- configure discovery, health probes, resources, and persistence
+- describe the role of Ingress or Gateway at the cluster boundary
+
+## Desired state and reconciliation
+
+```{mermaid}
+flowchart LR
+    Manifest[Desired state] --> API[Kubernetes API]
+    API --> Controller[Controller]
+    Controller --> Pods[Observed workloads]
+    Pods --> Controller
+```
+
+Controllers repeatedly compare observed state with the declared target. A
+manifest describes the outcome rather than a sequence of shell commands.
+
+## Workload and network objects
+
+| Object | Responsibility |
+|---|---|
+| Pod | Smallest scheduled runtime unit |
+| Deployment | Replaceable replicas and rollout strategy |
+| Service | Stable virtual address and DNS name |
+| StatefulSet | Stable identity and ordered stateful workload |
+
+Kubernetes Service DNS performs in-cluster service discovery.
+
+## Health signals
+
+- **Startup probe:** allows slow initialization without premature restart.
+- **Readiness probe:** removes an instance from traffic until it can serve.
+- **Liveness probe:** restarts a process that cannot recover internally.
+
+A liveness probe must not fail merely because a remote dependency is briefly
+unavailable.
+
+## Configuration, state, and resources
+
+ConfigMaps carry non-sensitive configuration. Secrets carry sensitive values.
+PersistentVolumeClaims request durable storage. CPU and memory requests guide
+scheduling, while limits bound resource use.
+
+The repository uses Deployments for application services and StatefulSets for
+Redis and PostgreSQL.
+
+## North-south traffic
+
+```{mermaid}
+flowchart LR
+    Browser[Browser] --> Gateway[Istio Gateway]
+    Gateway --> Frontend[Frontend Service]
+    Gateway --> APIs[Backend Services]
+```
+
+A Gateway or Ingress controller implements external routing. Kubernetes alone
+defines the API but does not supply every controller implementation.
+
+## Module investigation
+
+1. Render the base and overlay manifests with Kustomize.
+2. Match each workload to a Service and storage requirement.
+3. Review the probes and resource settings.
+4. Trace one external request through the Istio gateway.
+
+Continue with [Lab 06](lab.md).

@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rentalservice.local/contracts/events/auction-won/v1/schema.json",
+  "title": "AuctionWonV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "eventType",
+    "eventVersion",
+    "eventId",
+    "rentalId",
+    "carId",
+    "plateNumber",
+    "customerId",
+    "carBrand",
+    "carModel",
+    "finalPrice",
+    "originalPrice",
+    "discount",
+    "rentalStartDate",
+    "rentalEndDate",
+    "timestamp"
+  ],
+  "properties": {
+    "eventType": { "const": "AuctionWon" },
+    "eventVersion": { "const": 1 },
+    "eventId": { "type": "string", "format": "uuid" },
+    "rentalId": { "type": "string", "minLength": 1 },
+    "carId": { "type": "integer", "minimum": 1 },
+    "plateNumber": { "type": "string", "minLength": 1 },
+    "customerId": { "type": "string", "minLength": 1 },
+    "carBrand": { "type": "string", "minLength": 1 },
+    "carModel": { "type": "string", "minLength": 1 },
+    "finalPrice": { "type": "integer", "minimum": 0 },
+    "originalPrice": { "type": "integer", "minimum": 0 },
+    "discount": { "type": "integer", "minimum": 0 },
+    "rentalStartDate": { "type": "string", "minLength": 1 },
+    "rentalEndDate": { "type": "string", "minLength": 1 },
+    "timestamp": { "type": "integer", "minimum": 0 }
+  }
+}

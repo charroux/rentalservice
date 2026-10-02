@@ -1,0 +1,22 @@
+project:
+  type: website
+  output-dir: _site
+  render:
+    - index.qmd
+    - roadmap.qmd
+    - modules/**/*.qmd
+    - modules/**/*.md
+
+website:
+  title: "Rental Service Architecture Training"
+  navbar:
+    left:
+      - href: index.qmd
+        text: Home
+      - href: roadmap.qmd
+        text: Roadmap
+
+format:
+  html:
+    toc: true
+    theme: cosmo

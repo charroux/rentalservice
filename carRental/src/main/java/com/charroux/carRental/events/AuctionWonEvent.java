@@ -9,13 +9,19 @@ import java.util.UUID;
 
 /**
  * Event published when an auction is won and a car is assigned to a rental company.
- * This event is published to Redis Streams for consumption by partner services.
+ * The Phase 1 transport is a Redis List. The same event contract can later be
+ * published in parallel to Redis Streams for the CQRS path.
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class AuctionWonEvent {
-    
+
+    public static final String EVENT_TYPE = "AuctionWon";
+    public static final int EVENT_VERSION = 1;
+
+    private String eventType;
+    private Integer eventVersion;
     private String eventId;              // Unique event identifier
     private String rentalId;             // Unique rental identifier
     private Long carId;                  // Database ID of the car
@@ -45,6 +51,8 @@ public class AuctionWonEvent {
             Integer discount) {
         
         AuctionWonEvent event = new AuctionWonEvent();
+        event.setEventType(EVENT_TYPE);
+        event.setEventVersion(EVENT_VERSION);
         event.setEventId(UUID.randomUUID().toString());
         event.setRentalId(rentalId);
         event.setCarId(carId);

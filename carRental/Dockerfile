@@ -8,8 +8,11 @@ COPY gradle/ gradle/
 COPY gradlew gradlew.bat settings.gradle build.gradle ./
 COPY carRental/build.gradle ./carRental/
 
+# Le checkout Windows utilise CRLF ; normaliser le script avant exécution Linux.
+RUN sed -i 's/\r$//' ./gradlew && chmod +x ./gradlew
+
 # Télécharger les dépendances (mise en cache Docker)
-RUN chmod +x ./gradlew && ./gradlew :carRental:dependencies --no-daemon || true
+RUN ./gradlew :carRental:dependencies --no-daemon
 
 # Copier le code source
 COPY carRental/ ./carRental/

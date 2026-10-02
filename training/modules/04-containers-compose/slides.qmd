@@ -1,0 +1,89 @@
+---
+title: "Containers and Docker Compose"
+subtitle: "Module 04 · Rental Service architecture course"
+format:
+  revealjs:
+    theme: simple
+    css: ../../slides.css
+    slide-number: true
+    transition: fade
+    width: 1280
+    height: 720
+---
+
+## Learning objectives
+
+By the end of this module, you should be able to:
+
+- explain the relationship between image, container, volume, and network
+- read a multi-stage Dockerfile
+- diagnose service discovery and readiness in Compose
+- preserve or remove local state intentionally
+
+## Image and container lifecycle
+
+```{mermaid}
+flowchart LR
+    Source[Source code] --> Build[Image build]
+    Build --> Image[Immutable image]
+    Image --> Container[Running container]
+    Container --> Logs[Logs]
+    Container --> Volume[(Persistent volume)]
+```
+
+The image captures the application and runtime. Configuration and persistent
+state enter at runtime.
+
+## Multi-stage builds
+
+A build stage compiles source with a complete toolchain. A runtime stage copies
+only the required artifact and runtime dependencies.
+
+Benefits include smaller images, fewer packages to patch, and a reproducible
+build boundary. Pinning base-image versions remains necessary.
+
+## Compose topology
+
+```{mermaid}
+flowchart TB
+    Frontend[Angular and Nginx] --> Rental[Rental]
+    Rental --> Auction[Auction]
+    Rental --> Redis[(Redis)]
+    Router[Event router] --> Redis
+    Insurance[Insurance] --> Redis
+    Rental --> Postgres[(PostgreSQL)]
+    Insurance --> Postgres
+```
+
+Compose service names provide DNS names on the shared network. `localhost`
+inside a container refers to that container.
+
+## Startup and readiness
+
+`depends_on` controls startup ordering only when combined with meaningful
+health conditions. A running process may still reject traffic while it starts.
+
+- Health checks describe container health.
+- Application retries absorb short dependency delays.
+- Readiness belongs to the service contract, not a fixed sleep duration.
+
+## State and cleanup
+
+Named volumes preserve Redis and PostgreSQL data across container replacement.
+
+```bash
+docker compose stop       # retain containers and volumes
+docker compose down       # remove containers and network
+docker compose down -v    # also remove named volumes
+```
+
+The final command destroys local data and requires deliberate use.
+
+## Module investigation
+
+1. List the Compose services, networks, and volumes.
+2. Find every health check and dependency condition.
+3. Explain why container hostnames differ from host-machine URLs.
+4. Trace the Angular request through Nginx to a backend service.
+
+Continue with [Lab 04](lab.md).

@@ -20,6 +20,7 @@ export interface Offer {
 
 // Interface pour le résultat d'enchère
 export interface AuctionResult {
+    rentalId: string;
     plateNumber: string;
     finalCustomerPrice: number;
     originalPrice: number;

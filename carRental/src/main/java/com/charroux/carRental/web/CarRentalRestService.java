@@ -154,8 +154,10 @@ public class CarRentalRestService {
                 java.math.BigDecimal finalPrice = java.math.BigDecimal.valueOf(resultCar.getFinalCustomerPrice());
                 java.math.BigDecimal discountAmount = originalPrice.subtract(finalPrice);
                 boolean discountApplied = discountAmount.compareTo(java.math.BigDecimal.ZERO) > 0;
+                String rentalId = "RENT-" + resultCar.getId();
                 
                 AuctionResultDTO result = new AuctionResultDTO(
+                    rentalId,
                     resultCar.getPlateNumber(),
                     finalPrice,
                     originalPrice,
@@ -166,7 +168,7 @@ public class CarRentalRestService {
                 // 🆕 NOUVEAU: Publier l'événement AuctionWon (non-blocking)
                 try {
                     AuctionWonEvent event = AuctionWonEvent.create(
-                        "RENT-" + resultCar.getId(),
+                        rentalId,
                         resultCar.getId(),
                         resultCar.getPlateNumber(),
                         "CUST-" + UUID.randomUUID().toString(),

@@ -2,6 +2,8 @@
 # Builder stage: Build the Angular app
 FROM node:20-alpine AS builder
 
+RUN apk add --no-cache python3 && ln -s /usr/bin/python3 /usr/local/bin/python
+
 WORKDIR /app
 
 # Copy package files first for better caching
@@ -41,6 +43,14 @@ server {
     # API proxy to backend service
     location /api/ {
         proxy_pass http://carrental-service:8080/;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+    }
+
+    location /insurance-api/ {
+        proxy_pass http://insurance-service:8081/;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;

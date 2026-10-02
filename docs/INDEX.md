@@ -1,6 +1,14 @@
 # 📚 Documentation: Event-Driven Redis Architecture
 ## Complete File Index
 
+> Implémentation pédagogique actuelle :
+> [SIMPLE_EVENT_ARCHITECTURE.md](SIMPLE_EVENT_ARCHITECTURE.md) décrit la file
+> Redis List fiable conservée en parallèle de la future voie Streams/CQRS.
+> [INSURANCE_SERVICE.md](INSURANCE_SERVICE.md) décrit le premier consommateur
+> métier indépendant et son intégration au parcours Angular.
+> [EXTENSIBILITY_ARCHITECTURE.md](EXTENSIBILITY_ARCHITECTURE.md) décrit le
+> routeur Python, les contrats immuables et le registre d'extensions Angular.
+
 Créée le: **December 2024**  
 Status: **✅ Production Ready**  
 Audience: **Developers, AI Agents, Architects, DevOps**

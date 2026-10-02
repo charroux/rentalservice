@@ -1,0 +1,132 @@
+---
+title: "NoSQL Foundations"
+subtitle: "Module 07 · Data models, consistency, and selection"
+format:
+  revealjs:
+    theme: simple
+    css: ../../slides.css
+    slide-number: true
+    transition: fade
+    width: 1280
+    height: 720
+---
+
+## Learning objectives
+
+By the end of this module, you should be able to:
+
+- distinguish key-value, document, wide-column, and graph models
+- design data around access patterns and aggregate boundaries
+- explain consistency choices during a network partition
+- evaluate a NoSQL database without treating the category as one technology
+
+## Why teams choose NoSQL
+
+NoSQL systems make different trade-offs to support particular data shapes,
+access patterns, distribution models, or scale requirements.
+
+They do not remove schema design. The application, validation rules, indexes,
+and migration process still define a schema, even when the database does not
+enforce a fixed table layout.
+
+## Four common data models
+
+| Model | Primary structure | Typical strength |
+|---|---|---|
+| Key-value | Opaque value addressed by key | Direct lookup and caching |
+| Document | Nested document with indexed fields | Aggregate retrieval and flexible records |
+| Wide-column | Partitioned rows with sparse columns | Large write-oriented datasets |
+| Graph | Vertices and relationships | Relationship traversal |
+
+The product label matters less than the operations the workload requires.
+
+## Access patterns shape the model
+
+```{mermaid}
+flowchart LR
+    Question[Business question] --> Access[Access pattern]
+    Access --> Aggregate[Aggregate boundary]
+    Aggregate --> Keys[Keys and partitions]
+    Keys --> Indexes[Indexes and duplication]
+```
+
+Begin with reads, writes, cardinality, and growth. A relational schema designed
+for arbitrary joins rarely transfers directly to a distributed NoSQL model.
+
+## Aggregate-oriented design
+
+A rental document could contain the selected car and current price when the
+application usually reads them together. Insurance offers can remain separate
+when they have an independent lifecycle.
+
+```json
+{
+  "rentalId": "RENT-42",
+  "car": { "plateNumber": "EJP-623", "model": "Compact" },
+  "status": "CONFIRMED",
+  "finalPrice": 62
+}
+```
+
+An aggregate boundary defines the scope of one atomic update.
+
+## Consistency during partition {.smaller}
+
+During a network partition, a distributed operation cannot guarantee both an
+immediate consistent answer and uninterrupted availability for every request.
+
+The useful design questions are concrete:
+
+- Which stale reads can the business tolerate?
+- Which conflicts can the application merge?
+- Which operations must reject traffic without a quorum?
+- How much normal-operation latency is acceptable?
+
+CAP describes partition behavior. PACELC also draws attention to latency and
+consistency when the network operates normally.
+
+## Duplication and indexes
+
+NoSQL designs often duplicate data to answer known queries without joins.
+Every duplicate creates a maintenance obligation.
+
+```text
+Write path: update aggregate, indexes, and projections
+Read path: retrieve data shaped for one question
+```
+
+Record the source of truth, propagation mechanism, repair process, and accepted
+staleness for every duplicate.
+
+## Selection criteria
+
+- Required queries and their frequency
+- Atomicity boundary and consistency requirement
+- Expected data volume, throughput, and growth
+- Partitioning and geographic placement
+- Recovery, backup, and operational skills
+- Security, cost, and ecosystem constraints
+
+Benchmark representative data and failure conditions before selecting a
+database for scale claims.
+
+## Polyglot persistence in the rental platform
+
+```{mermaid}
+flowchart TB
+    Services[Business services] --> Postgres[(PostgreSQL: durable business state)]
+    Services --> Redis[(Redis: queues and transient coordination)]
+    Contracts[Versioned event contracts] --> Redis
+```
+
+The current architecture uses each database for a different responsibility.
+Replacing PostgreSQL with Redis would change durability and query assumptions.
+
+## Module investigation
+
+1. Model a rental as a document and as key-value records.
+2. List the queries supported efficiently by each model.
+3. Identify the atomic update boundary.
+4. Write a consistency requirement for accepting an insurance offer.
+
+Continue with [Lab 07](lab.md).

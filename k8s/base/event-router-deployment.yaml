@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: event-router
+  namespace: rental-service
+  labels:
+    app: event-router
+    component: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      service-name: event-router
+  template:
+    metadata:
+      labels:
+        app: event-router
+        component: backend
+        service-name: event-router
+    spec:
+      containers:
+        - name: event-router
+          image: event-router:latest
+          imagePullPolicy: Never
+          env:
+            - name: REDIS_HOST
+              value: "redis"
+            - name: REDIS_PORT
+              value: "6379"
+            - name: SUBSCRIPTIONS_DIR
+              value: "/app/subscriptions"
+          ports:
+            - containerPort: 8090
+              name: health
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8090
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8090
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          resources:
+            requests:
+              memory: "32Mi"
+              cpu: "20m"
+            limits:
+              memory: "128Mi"
+              cpu: "150m"

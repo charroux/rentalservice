@@ -1,0 +1,102 @@
+---
+title: "Event-Driven Architecture with Redis Lists"
+subtitle: "Module 09 · Reliable delivery without Streams"
+format:
+  revealjs:
+    theme: simple
+    css: ../../slides.css
+    slide-number: true
+    transition: fade
+    width: 1280
+    height: 720
+---
+
+## Learning objectives
+
+By the end of this module, you should be able to:
+
+- distinguish an event from a command and a notification
+- define a versioned event contract
+- trace at-least-once delivery through ready and processing Lists
+- locate duplicate, poison-message, and message-loss failure windows
+
+## Events record business facts
+
+`AuctionWon` states that an auction has already produced a winner. A consumer
+cannot reject the past fact, although it can reject or retry its own reaction.
+
+```json
+{
+  "eventType": "AuctionWon",
+  "eventVersion": 1,
+  "eventId": "b820a46d-1e3f-48a0-9459-f723c80e1260",
+  "rentalId": "RENT-42",
+  "finalPrice": 62
+}
+```
+
+## Public contract and implementation
+
+The JSON Schema and representative examples define the event contract. Java
+classes and Redis serialization code remain implementation details.
+
+- `eventId` supports idempotent processing.
+- `eventType` selects the business fact.
+- `eventVersion` gives the payload an explicit interpretation.
+- Domain identifiers connect the fact to business state.
+
+## Reliable consumption with Lists
+
+```{mermaid}
+sequenceDiagram
+    participant Q as Ready List
+    participant P as Processing List
+    participant C as Consumer
+    participant D as PostgreSQL
+    C->>Q: LMOVE ready to processing
+    Q->>P: Atomic move
+    C->>D: Commit business update and eventId
+    C->>P: LREM acknowledgement
+```
+
+A crash after the move leaves the message visible in processing. Recovery can
+return it to ready.
+
+## Delivery semantics
+
+The design provides at-least-once delivery when recovery retries retained
+messages. A crash after the database commit but before acknowledgement causes
+a duplicate.
+
+Exactly-once business effect comes from the database uniqueness constraint and
+transaction boundary, not from claiming exactly-once transport.
+
+## Ordering and concurrency
+
+Lists preserve element order for the commands applied to one key. End-to-end
+business order can still change through retries, multiple queues, or parallel
+consumers.
+
+If order matters per rental, the design needs an ordering key, expected version,
+or business rule that detects stale transitions.
+
+## Invalid and poison messages
+
+The current implementation retains an invalid message for retry. A production
+policy also needs:
+
+- validation before business processing
+- bounded retry with failure classification
+- a dead-letter destination with diagnostic context
+- an operator procedure for correction or discard
+
+Automatic infinite retry can block useful work and hide data defects.
+
+## Module investigation
+
+1. Trace one event through all List names.
+2. Find the atomic move and acknowledgement commands.
+3. Find the database idempotence constraint.
+4. Identify the current poison-message behavior.
+
+Continue with [Lab 09](lab.md).

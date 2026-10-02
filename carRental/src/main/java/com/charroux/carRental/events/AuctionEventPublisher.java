@@ -6,18 +6,19 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 /**
- * Publishes auction events to Redis queue.
+ * Publishes auction events to the stable ingress queue.
  * 
  * Phase 1 (Current): Uses simple list-based queue for MVP reliability.
  * Phase 2: Will upgrade to Redis Streams with consumer groups.
  * 
- * Purpose: Notify other services (RentalService, InsuranceService) of auction events.
+ * A separate router owns consumer discovery and fan-out. The producer therefore
+ * remains unchanged when a new consumer subscribes.
  */
 @Component
 @Slf4j
 public class AuctionEventPublisher {
     
-    private static final String AUCTION_EVENTS_QUEUE = "auction:events:queue";
+    public static final String PUBLISHED_QUEUE = "events:simple:published";
     
     private final RedisTemplate<String, String> redisTemplate;
     private final ObjectMapper objectMapper;
@@ -37,12 +38,12 @@ public class AuctionEventPublisher {
      */
     public boolean publishAuctionEvent(String eventJson) {
         try {
-            // Push to Redis queue (LPUSH semantics)
-            Long queueLength = redisTemplate.opsForList()
-                .rightPush(AUCTION_EVENTS_QUEUE, eventJson);
-            
-            log.info("✓ Published auction event to queue, queue_size={}", queueLength);
-            
+            Long queueLength = redisTemplate.opsForList().rightPush(PUBLISHED_QUEUE, eventJson);
+            if (queueLength == null) {
+                log.warn("Redis did not confirm publication to {}", PUBLISHED_QUEUE);
+                return false;
+            }
+            log.info("Published auction event to {}, queue_size={}", PUBLISHED_QUEUE, queueLength);
             return true;
             
         } catch (Exception e) {
@@ -74,6 +75,6 @@ public class AuctionEventPublisher {
      * Gets the queue name for testing/monitoring.
      */
     public String getQueueName() {
-        return AUCTION_EVENTS_QUEUE;
+        return PUBLISHED_QUEUE;
     }
 }

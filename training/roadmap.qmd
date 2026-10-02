@@ -1,0 +1,58 @@
+---
+title: "Planned Training and Software Increments"
+---
+
+The current course stops after a complete Redis Lists implementation. The next
+two increments will coexist with that implementation so learners can compare
+the models on the same business flow.
+
+## Module 12: Redis Streams in parallel
+
+### Software increment
+
+- Add stream keys that do not replace the existing Lists keys.
+- Publish the same versioned event contract to both paths behind explicit configuration.
+- Add one consumer group per logical service.
+- Expose pending entries, acknowledgements, retry, and reclaim behavior.
+- Add end-to-end tests that compare duplicate delivery and recovery.
+- Keep the Angular extension contract unchanged.
+
+### Training outcomes
+
+Learners will explain consumer groups, pending entries, acknowledgements,
+retention, ordering, and replay. The lab will stop consumers, inspect the
+pending-entry list, reclaim a message, and compare the result with `LMOVE`.
+
+### Entry criteria
+
+- The Lists path remains green in CI.
+- Both paths use the same `AuctionWon` contract version.
+- Metrics make delivery and acknowledgement visible.
+
+## Module 13: CQRS and projections
+
+### Software increment
+
+- Introduce an explicit command endpoint and write model.
+- Build a separate rental summary projection from events.
+- Add a query endpoint backed only by the projection.
+- Display projection freshness in Angular.
+- Support idempotent rebuild from a retained event source.
+- Test lag, replay, schema evolution, and projection replacement.
+
+### Training outcomes
+
+Learners will distinguish CQRS from Event Sourcing, design an idempotent
+projection, reason about stale reads, and rebuild a read model without changing
+the write model.
+
+### Entry criteria
+
+- The Streams comparison has identified the retained event source.
+- Event ordering and versioning policies are documented.
+- The user interface can display eventual consistency explicitly.
+
+## Deliberate exclusions
+
+Kafka, full Event Sourcing, and distributed transactions are comparison topics,
+not implementation requirements for these two increments.

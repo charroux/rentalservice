@@ -1,0 +1,17 @@
+{
+  "eventType": "AuctionWon",
+  "eventVersion": 1,
+  "eventId": "b820a46d-1e3f-48a0-9459-f723c80e1260",
+  "rentalId": "RENT-42",
+  "carId": 42,
+  "plateNumber": "EDU-042",
+  "customerId": "CUST-001",
+  "carBrand": "Tesla",
+  "carModel": "Model 3",
+  "finalPrice": 62,
+  "originalPrice": 65,
+  "discount": 3,
+  "rentalStartDate": "2026-10-02T09:00:00",
+  "rentalEndDate": "2026-10-07T09:00:00",
+  "timestamp": 1790931600000
+}

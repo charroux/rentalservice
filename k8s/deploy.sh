@@ -73,6 +73,8 @@ if kubectl get namespace istio-system &> /dev/null; then
     echo -e "${BLUE}Waiting for rollouts to complete...${NC}"
     kubectl rollout status deployment/auction-service-server -n rental-service --timeout=300s
     kubectl rollout status deployment/carrental -n rental-service --timeout=600s
+    kubectl rollout status deployment/event-router -n rental-service --timeout=300s
+    kubectl rollout status deployment/insurance-service -n rental-service --timeout=300s
     kubectl rollout status deployment/frontend-angular -n rental-service --timeout=300s
     
     echo -e "${GREEN}✓ Deployments restarted and ready${NC}"

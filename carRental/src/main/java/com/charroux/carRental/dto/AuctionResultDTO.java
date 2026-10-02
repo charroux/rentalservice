@@ -3,6 +3,7 @@ package com.charroux.carRental.dto;
 import java.math.BigDecimal;
 
 public record AuctionResultDTO(
+    String rentalId,
     String plateNumber,
     BigDecimal finalCustomerPrice,  // Prix que l'utilisateur paiera
     BigDecimal originalPrice,       // Prix de base (avant remise)

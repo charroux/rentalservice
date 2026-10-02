@@ -1,0 +1,6 @@
+{
+  "consumer": "insurance-service",
+  "eventType": "AuctionWon",
+  "eventVersion": 1,
+  "queue": "auction:events:simple:insurance-service:ready"
+}

@@ -1,0 +1,6 @@
+{
+  "consumer": "rental-service",
+  "eventType": "AuctionWon",
+  "eventVersion": 1,
+  "queue": "auction:events:simple:rental-service:ready"
+}

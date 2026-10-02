@@ -1,0 +1,86 @@
+---
+title: "Cloud-Native Delivery"
+subtitle: "Module 05 · Rental Service architecture course"
+format:
+  revealjs:
+    theme: simple
+    css: ../../slides.css
+    slide-number: true
+    transition: fade
+    width: 1280
+    height: 720
+---
+
+## Learning objectives
+
+By the end of this module, you should be able to:
+
+- explain cloud-native properties without equating them with project management
+- trace a change through build, test, security scan, and deployment validation
+- separate configuration, secrets, and immutable artifacts
+- identify the operational evidence required for an independent release
+
+## Cloud-native properties
+
+Cloud-native systems favor automated delivery, declarative infrastructure,
+replaceable runtime instances, explicit state management, and observable
+behavior under failure.
+
+DevOps practices support these properties by reducing the gap between software
+delivery and operation. Microservices remain optional.
+
+## Stateless and stateful workloads
+
+```{mermaid}
+flowchart LR
+    Request[Request] --> Replaceable[Replaceable service instance]
+    Replaceable --> Database[(Durable database)]
+    Replaceable --> Cache[(Managed cache or queue)]
+```
+
+Cloud-native design does not ban state. It keeps durable state outside
+replaceable application processes or manages it through explicit stateful
+infrastructure.
+
+## Delivery pipeline in the repository
+
+```{mermaid}
+flowchart LR
+    Change[Source change] --> Tests[Java Python Angular tests]
+    Tests --> Docs[Quarto render]
+    Docs --> Images[Container images]
+    Images --> Scan[Vulnerability scan]
+    Scan --> Cluster[Kind deployment test]
+```
+
+Each stage supplies evidence. A green build alone does not prove runtime
+readiness.
+
+## Configuration and secrets
+
+| Concern | Appropriate mechanism |
+|---|---|
+| Non-sensitive environment difference | Environment variable or ConfigMap |
+| Password, token, private key | Secret manager or Kubernetes Secret |
+| Application binary | Immutable image |
+| Database schema | Versioned migration |
+
+Configuration changes need review and rollback even when source code does not
+change.
+
+## Release evidence
+
+- Automated tests cover business and failure behavior.
+- Images have traceable versions and vulnerability results.
+- Health and readiness checks reflect usable service behavior.
+- Logs and metrics identify the deployed version and failed dependency.
+- Database migrations have forward and recovery plans.
+
+## Module investigation
+
+1. Read the CI workflow from checkout to cleanup.
+2. Mark which stages create evidence and which change runtime state.
+3. Find configuration that should become a secret.
+4. Define one rollback signal for a failed release.
+
+Continue with [Lab 05](lab.md).

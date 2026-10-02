@@ -1,0 +1,110 @@
+---
+title: "Redis Data and Messaging"
+subtitle: "Module 08 · NoSQL structures, durability, and delivery"
+format:
+  revealjs:
+    theme: simple
+    css: ../../slides.css
+    slide-number: true
+    transition: fade
+    width: 1280
+    height: 720
+---
+
+## Learning objectives
+
+By the end of this module, you should be able to:
+
+- select a Redis structure from an access pattern
+- explain expiration, eviction, persistence, and replication as separate concerns
+- compare Pub/Sub, Lists, and Streams
+- inspect the rental platform's Redis keys and delivery state
+
+## Redis data structures
+
+| Structure | Useful operations | Example use |
+|---|---|---|
+| String | `GET`, `SET`, `INCR` | Cache entry or counter |
+| Hash | Field read and update | Compact object attributes |
+| Set | Membership and intersection | Unique tags or eligibility |
+| Sorted set | Score range and rank | Time or priority index |
+| List | Push, pop, blocking move | Work queue |
+| Stream | Append, range, consumer groups | Retained event log |
+
+A Redis key also needs a namespace, ownership rule, lifetime, and size limit.
+
+## Keys and expiration
+
+```text
+rental:RENT-42:summary
+insurance:RENT-42:offer
+auction:events:simple:insurance-service:ready
+```
+
+Time-to-live supports expiration. An eviction policy handles memory pressure.
+These mechanisms solve different problems: expiration follows application
+rules, while eviction protects the Redis instance.
+
+## Atomic operations
+
+Each Redis command executes atomically. Multi-key correctness depends on the
+chosen command, transaction, or Lua script and on cluster key placement.
+
+`LMOVE source destination LEFT RIGHT` removes and inserts one element as one
+operation. The application still needs a later acknowledgement step after the
+business transaction succeeds.
+
+## Persistence and recovery
+
+| Mechanism | Purpose | Trade-off |
+|---|---|---|
+| RDB snapshot | Point-in-time dataset | Changes after the snapshot can be lost |
+| AOF | Log write operations | More storage and replay work |
+| Replication | Maintain copies | Replicas can contain the same logical error |
+| Backup | Recover outside the live system | Requires restore testing |
+
+Durability depends on configuration and failure assumptions. Memory speed does
+not imply ephemeral-only use, and persistence does not guarantee zero loss.
+
+## Three messaging choices
+
+| Mechanism | Offline consumer | Competing consumers | Replay |
+|---|---:|---:|---:|
+| Pub/Sub | No | No queue ownership | No |
+| List | Yes while retained | Yes | Manual |
+| Stream | Yes while retained | Consumer groups | Range and group position |
+
+The current platform uses Lists. A future module will add Streams in parallel
+to compare behavior with the same event contract.
+
+## Redis in the repository
+
+```{mermaid}
+flowchart LR
+    Publisher[Rental publisher] --> Published[(events:simple:published)]
+    Published --> Router[Python event router]
+    Router --> RentalQ[(Rental ready list)]
+    Router --> InsuranceQ[(Insurance ready list)]
+```
+
+PostgreSQL stores durable business state and processed-event identities. Redis
+coordinates delivery.
+
+## Operational questions
+
+- Which keys can grow without a bound?
+- Which data can expire safely?
+- What happens after Redis restarts?
+- Which commands reveal queue depth and stuck processing?
+- Which business records allow reconciliation after message loss?
+
+Answers belong in runbooks and monitoring, not only in application code.
+
+## Module investigation
+
+1. Inspect key types and lengths with `redis-cli`.
+2. Compare an expiring cache key with a persistent queue key.
+3. Read the AOF configuration in Compose and Kubernetes.
+4. Explain why Pub/Sub cannot replace the current Lists safely.
+
+Continue with [Lab 08](lab.md).

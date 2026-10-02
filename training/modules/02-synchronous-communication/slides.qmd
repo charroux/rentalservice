@@ -1,0 +1,91 @@
+---
+title: "Synchronous Communication with REST and gRPC"
+subtitle: "Module 02 · Rental Service architecture course"
+format:
+  revealjs:
+    theme: simple
+    css: ../../slides.css
+    slide-number: true
+    transition: fade
+    width: 1280
+    height: 720
+---
+
+## Learning objectives
+
+By the end of this module, you should be able to:
+
+- separate interaction style from transport protocol
+- compare REST resource APIs with RPC operation contracts
+- trace the repository's Angular, REST, and gRPC calls
+- design timeout and error behavior for a synchronous dependency
+
+## Two independent design choices
+
+| Question | Examples |
+|---|---|
+| What interaction does the client request? | Resource manipulation, remote operation, asynchronous message |
+| How does the data travel? | HTTP/1.1, HTTP/2, TCP-based broker protocol |
+
+gRPC commonly uses HTTP/2. REST semantics do not require HTTP/1.1, and a
+message-driven system still relies on a transport.
+
+## REST at the system boundary
+
+```{mermaid}
+sequenceDiagram
+    participant U as Angular application
+    participant R as Rental REST API
+    U->>R: POST /auction/participate
+    R-->>U: Rental result
+    U->>R: GET /cars/{plateNumber}
+    R-->>U: Rental state
+```
+
+REST exposes resources and HTTP semantics. Clients still depend on paths,
+representations, status codes, and latency.
+
+## gRPC inside the platform
+
+```{mermaid}
+sequenceDiagram
+    participant R as Rental service
+    participant A as Auction gRPC service
+    R->>A: participateInAuction(request)
+    A-->>R: winning bid or error
+```
+
+Protocol Buffers provide a typed contract and efficient binary encoding.
+Generated code does not remove network failure or versioning concerns.
+
+## Contract evolution
+
+- Additive fields preserve more compatibility than changed meanings.
+- Clients must tolerate fields they do not use.
+- Removing a field requires evidence that no supported client depends on it.
+- HTTP and gRPC errors form part of the public contract.
+
+Contract tests should verify behavior, not only serialization.
+
+## Synchronous failure budget
+
+If one request crosses three services, each call consumes part of the user
+request deadline. An unbounded timeout can exhaust threads and connections.
+
+```text
+Browser deadline
+  Rental processing
+    Auction call timeout
+    Response serialization
+```
+
+Retries must fit inside the original deadline and apply only to safe operations.
+
+## Module investigation
+
+1. Locate the rental REST endpoints.
+2. Locate the auction Protocol Buffer contract.
+3. Identify the timeout behavior of the gRPC client.
+4. Define the response that Angular should receive when Auction is unavailable.
+
+Continue with [Lab 02](lab.md).

@@ -1,0 +1,11 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: insurance-service
+  namespace: rental-service
+spec:
+  template:
+    spec:
+      containers:
+      - name: insurance-service
+        imagePullPolicy: IfNotPresent
