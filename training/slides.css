@@ -39,3 +39,16 @@
 .reveal .small {
   font-size: 0.72em;
 }
+
+.reveal .slides section.chapter-slide h2 {
+  color: white;
+  border-bottom-color: var(--course-orange);
+  font-size: 1.8em;
+  margin-top: 1.8em;
+}
+
+.reveal .slides section.chapter-slide p {
+  color: white;
+  font-size: 1.05em;
+  margin-top: 1.2em;
+}

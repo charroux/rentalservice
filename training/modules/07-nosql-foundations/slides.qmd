@@ -16,9 +16,14 @@ format:
 By the end of this module, you should be able to:
 
 - distinguish key-value, document, wide-column, and graph models
-- design data around access patterns and aggregate boundaries
-- explain consistency choices during a network partition
+- design data around access patterns, partitions, and aggregate boundaries
+- explain CAP and PACELC trade-offs for a specific operation
+- use duplication, indexes, and projections deliberately
 - evaluate a NoSQL database without treating the category as one technology
+
+## 1 · Data models and access patterns {.chapter-slide background-color="#17324d"}
+
+From workload questions to partitions and query-oriented structures
 
 ## Why teams choose NoSQL
 
@@ -26,19 +31,72 @@ NoSQL systems make different trade-offs to support particular data shapes,
 access patterns, distribution models, or scale requirements.
 
 They do not remove schema design. The application, validation rules, indexes,
-and migration process still define a schema, even when the database does not
-enforce a fixed table layout.
+partition keys, and migration process still define a schema, even when the
+database does not enforce a fixed table layout.
 
-## Four common data models
+## Four common data models {.smaller}
 
-| Model | Primary structure | Typical strength |
-|---|---|---|
-| Key-value | Opaque value addressed by key | Direct lookup and caching |
-| Document | Nested document with indexed fields | Aggregate retrieval and flexible records |
-| Wide-column | Partitioned rows with sparse columns | Large write-oriented datasets |
-| Graph | Vertices and relationships | Relationship traversal |
+| Model | Primary structure | Typical strength | Example databases |
+|---|---|---|---|
+| Key-value | Opaque value addressed by key | Direct lookup and caching | Redis, Amazon DynamoDB, Riak KV |
+| Document | Nested document with indexed fields | Aggregate retrieval and flexible records | MongoDB, Couchbase, CouchDB |
+| Wide-column | Partitioned rows ordered by clustering columns | Large, write-oriented datasets | Apache Cassandra, Apache HBase, Google Cloud Bigtable |
+| Graph | Vertices and relationships | Relationship traversal | Neo4j, Amazon Neptune, JanusGraph |
 
-The product label matters less than the operations the workload requires.
+Products may span categories: DynamoDB also stores document values, and Redis
+offers structures richer than opaque values. Start with required operations,
+not the product label.
+
+## Wide-column: model queries as partitions {.smaller}
+
+```sql
+CREATE TABLE offers_by_company_day (
+  company_id text,
+  rental_day date,
+  won_at timestamp,
+  rental_id text,
+  car_model text,
+  final_price int,
+  PRIMARY KEY ((company_id, rental_day), won_at, rental_id)
+) WITH CLUSTERING ORDER BY (won_at DESC);
+```
+
+```text
+Partition key: (HERTZ, 2026-10-05)
+  won_at 10:42 | RENT-42 | Model 3 | 62 EUR
+  won_at 09:17 | RENT-31 | 208     | 48 EUR
+
+Partition key: (AVIS, 2026-10-05)
+  won_at 11:03 | RENT-57 | Clio    | 39 EUR
+```
+
+- The **partition key** selects the nodes and bounds each data group.
+- **Clustering columns** order rows inside the partition for range reads.
+- The table is intentionally shaped for “recent wins for one company and day”.
+
+## Why queries drive wide-column modeling {.smaller}
+
+Rows are physically distributed by partition key. There is no general-purpose
+`JOIN` that can cheaply reconnect arbitrary data across nodes.
+
+```{mermaid}
+flowchart LR
+    Good[Query by company + day] --> One[One bounded partition]
+    Bad[Query without partition key] --> Coordinator[Coordinator]
+    Coordinator --> P1[Partition A]
+    Coordinator --> P2[Partition B]
+    Coordinator --> P3[Partition C]
+    P1 --> Merge[Merge results]
+    P2 --> Merge
+    P3 --> Merge
+```
+
+- A **scatter-gather** query fans out to many partitions, waits for the slowest,
+  transfers more data, and becomes less predictable as the cluster grows.
+- Model one bounded access path per important query.
+- **Denormalize deliberately:** duplicate car, price, or customer facts into
+  query-specific tables instead of depending on cross-node joins.
+- Name the authoritative source and define how every duplicate is refreshed.
 
 ## Access patterns shape the model
 
@@ -46,29 +104,119 @@ The product label matters less than the operations the workload requires.
 flowchart LR
     Question[Business question] --> Access[Access pattern]
     Access --> Aggregate[Aggregate boundary]
-    Aggregate --> Keys[Keys and partitions]
-    Keys --> Indexes[Indexes and duplication]
+    Aggregate --> Keys[Partition and sort keys]
+    Keys --> Views[Indexes, duplication, projections]
 ```
 
 Begin with reads, writes, cardinality, and growth. A relational schema designed
 for arbitrary joins rarely transfers directly to a distributed NoSQL model.
 
+## 2 · Aggregates and service boundaries {.chapter-slide background-color="#17324d"}
+
+Placing state, Web APIs, and event flows in the rental platform
+
+## Access-pattern architecture: rental platform {.smaller}
+
+```{mermaid}
+flowchart LR
+    UI[Angular Web UI]
+    RentalAPI[Car Rental REST API]
+    Auction[Auction gRPC service]
+    InsuranceAPI[Insurance REST API]
+
+    Flow[[Redis Lists → Python router<br/>→ per-consumer queues]]
+    RentalDB[(Rental aggregate<br/>PostgreSQL)]
+    InsuranceDB[(PostgreSQL: InsuranceOffer<br/>unique rentalId + eventId)]
+    Search[(Candidate wide-column projection<br/>partition: company + day<br/>order: wonAt DESC)]
+
+    UI -->|commands and queries| RentalAPI
+    UI -->|offer query and accept| InsuranceAPI
+    RentalAPI -->|bid| Auction
+    RentalAPI -->|aggregate by rentalId| RentalDB
+    InsuranceAPI -->|local aggregate| InsuranceDB
+    RentalAPI -->|AuctionWon| Flow
+    Flow -->|duplicate to rental consumer| RentalAPI
+    Flow -->|duplicate to insurance consumer| InsuranceAPI
+    Flow -.->|project event| Search
+```
+
+**Aggregate:** one transactional business boundary. **Duplication:** the router
+fans out one event. **Partition:** `(companyId, rentalDay)`. **Index/order:**
+`wonAt DESC, rentalId`. The wide-column projection is a proposed learning
+extension; the other components exist in the current project.
+
 ## Aggregate-oriented design
 
 A rental document could contain the selected car and current price when the
-application usually reads them together. Insurance offers can remain separate
-when they have an independent lifecycle.
+application usually reads and changes them together. Insurance offers remain
+separate because they have an independent lifecycle.
 
 ```json
 {
   "rentalId": "RENT-42",
-  "car": { "plateNumber": "EJP-623", "model": "Compact" },
+  "car": { "plateNumber": "EDU-042", "model": "Model 3" },
   "status": "CONFIRMED",
   "finalPrice": 62
 }
 ```
 
-An aggregate boundary defines the scope of one atomic update.
+An aggregate boundary defines the scope of one atomic update—not everything
+that happens to share the same identifier.
+
+## Aggregate boundaries, Web APIs, and event flow {.smaller}
+
+```{mermaid}
+flowchart LR
+    UI[Angular]
+    RentalWeb[Car Rental Web API]
+    InsuranceWeb[Insurance Web API]
+    Auction[gRPC Auction]
+    Redis[[Redis Lists<br/>event transport]]
+    Router[Event Router]
+    RentalState[(Rental aggregate<br/>PostgreSQL)]
+    InsuranceState[(InsuranceOffer aggregate<br/>PostgreSQL)]
+
+    UI -->|REST| RentalWeb
+    UI -->|REST| InsuranceWeb
+    RentalWeb -->|synchronous bid| Auction
+    RentalWeb -->|local transaction| RentalState
+    RentalWeb -->|AuctionWon v1| Redis
+    Redis --> Router
+    Router -->|rental copy| RentalWeb
+    Router -->|insurance copy| InsuranceWeb
+    InsuranceWeb -->|local transaction| InsuranceState
+```
+
+Each service changes only its own aggregate. The event crosses the boundary;
+it does not create a distributed transaction. A Redis List is a **competing-
+consumer queue**: one removal operation claims each item for one consumer.
+
+## Why the event router is required {.smaller}
+
+```{mermaid}
+flowchart LR
+    Shared[[One shared Redis List]] -->|compete| Rental[Rental consumer]
+    Shared -->|compete| Insurance[Insurance consumer]
+
+    Published[[Published List]] --> Router[Event Router]
+    Router --> RentalQ[[Rental List]]
+    Router --> InsuranceQ[[Insurance List]]
+    RentalQ --> Rental2[Rental consumer]
+    InsuranceQ --> Insurance2[Insurance consumer]
+```
+
+- If insurance consumed the rental-service List, both services would **split**
+  events: some would reach rental, others insurance. A List does not broadcast.
+- The router consumes the ingress once and copies each matching event into one
+  List per subscription. Each service then owns its retries, idempotence, and
+  business state independently.
+- Unlike **Redis Streams**, Lists have no separate consumer-group cursors,
+  retained history, or native replay. Unlike **Pub/Sub**, they do not broadcast
+  independently to subscribers. The router provides the missing durable fan-out.
+
+## 3 · Distributed consistency {.chapter-slide background-color="#17324d"}
+
+Making explicit choices during partitions and normal operation
 
 ## Consistency during partition {.smaller}
 
@@ -82,51 +230,234 @@ The useful design questions are concrete:
 - Which operations must reject traffic without a quorum?
 - How much normal-operation latency is acceptable?
 
-CAP describes partition behavior. PACELC also draws attention to latency and
-consistency when the network operates normally.
+CAP describes behavior **while a partition exists**. PACELC also asks about the
+latency/consistency trade-off **else**, during normal operation.
 
-## Duplication and indexes
+## Partition decisions: concrete examples {.smaller}
 
-NoSQL designs often duplicate data to answer known queries without joins.
-Every duplicate creates a maintenance obligation.
+| Situation | Prefer availability | Prefer consistency |
+|---|---|---|
+| Search projection cannot reach its replica | Show the last projection with “updated at” | Rarely justified for browsing |
+| Insurance query is isolated from the writer | Return a cached `PROPOSED` offer | Reject if the UI must never show stale status |
+| Accept-insurance command loses its quorum | Queue a request and expose `PENDING` | Reject/timeout; never confirm two outcomes |
+| Analytics consumer is disconnected | Buffer and catch up later | Stop only if the report is legally real-time |
 
-```text
-Write path: update aggregate, indexes, and projections
-Read path: retrieve data shaped for one question
+In the current single-node PostgreSQL setup, a database outage is not a CAP
+partition scenario. These policies become relevant with replicated databases
+or independently reachable projections.
+
+## CAP: choose per operation during a partition
+
+```{mermaid}
+flowchart LR
+    P[Network partition exists] --> C[Consistency<br/>latest value or error]
+    P --> A[Availability<br/>every request receives a response]
+    C -. cannot guarantee both .- A
 ```
 
-Record the source of truth, propagation mechanism, repair process, and accepted
-staleness for every duplicate.
+- **P is a condition to tolerate**, not a useful feature to trade away.
+- Choosing **CP** means some requests fail or wait when a quorum is impossible.
+- Choosing **AP** means requests continue, but replicas may temporarily diverge.
+- A system—and even one database—can choose differently per operation.
+
+Rental example: accepting an offer is usually CP; browsing a rental projection
+can be AP if its freshness is visible.
+
+## PACELC: partitions are not the whole story {.smaller}
+
+> **If Partitioned:** choose Availability or Consistency; **Else:** choose
+> lower Latency or stronger Consistency.
+
+| Database / mode | During a partition | Else, during normal operation |
+|---|---|---|
+| DynamoDB global table, **MREC** (default) | Availability/eventual convergence | Low local latency/eventual cross-Region reads |
+| DynamoDB global table, **MRSC** | Strong consistency; quorum loss can reject work | Strong cross-Region consistency at higher latency |
+| Cassandra `ONE` / `LOCAL_ONE` | AP-biased | Lower latency, possible stale read |
+| Cassandra intersecting quorums | More consistency, less availability | Higher latency for stronger visibility |
+| MongoDB majority writes + primary/majority reads | CP-biased; minority cannot acknowledge writes | Stronger guarantees with quorum latency |
+| MongoDB secondary + `local`/`available` reads | Stale reads may remain available | Lower latency, weaker recency |
+
+These are **deployment and operation choices**, not permanent labels. Cassandra
+has tunable consistency; MongoDB exposes read/write concerns; DynamoDB exposes
+eventual, strong, and multi-Region modes.
+
+## 4 · Duplication, indexes, and projections {.chapter-slide background-color="#17324d"}
+
+Building fast read models without losing ownership or repairability
+
+## Preferred modeling lever by NoSQL model {.smaller}
+
+| Model | Usually privileged approach | Why |
+|---|---|---|
+| Key-value | **Duplication** under several designed keys | Without joins or rich predicates, each lookup needs a known key |
+| Document | **Secondary indexes** plus embedded/duplicated fields | Field queries need indexes; embedding retrieves an aggregate in one read |
+| Wide-column | **Query-specific projections/tables** | Partition and clustering keys must match each high-volume query |
+| Graph | **Relationships**, with indexes for entry vertices | Traversal replaces joins; indexes efficiently locate the starting vertex |
+
+These are tendencies, not exclusive capabilities. Each additional access path
+still adds storage, write work, consistency lag, and an operational repair duty.
+
+## Duplication and indexes: trade-offs {.smaller}
+
+| Technique | Benefits | Costs / risks | Mitigations |
+|---|---|---|---|
+| Duplicate fields or records | No join; local reads; service autonomy | Stale copies; more storage; write amplification | Immutable events, owner/source recorded, idempotent updates, reconciliation |
+| Secondary index | New query without full scan | Extra storage/write cost; hot or low-selectivity index; possible eventual update | Index only proven queries, monitor cardinality, choose composite keys, rebuild |
+| Query-specific table/projection | Predictable fast query; independent scaling | More code and lag; rebuild required | Checkpoints, replay, versioned projector, freshness metric |
+
+Duplication is not free denormalization. It is a contract: document ownership,
+propagation, accepted staleness, and repair.
+
+## Project example: duplicate once, index for intent {.smaller}
+
+`AuctionWon v1` carries `rentalId`, `plateNumber`, and `finalPrice`. The
+insurance consumer duplicates those facts into `insurance_offers` so its REST
+API can answer without calling the rental service.
+
+```{mermaid}
+flowchart LR
+    Source[Rental state<br/>source at event time] -->|AuctionWon v1| Offer[InsuranceOffer<br/>local copy]
+    Offer --> ByRental[unique index: rental_id]
+    Offer --> ByEvent[unique index: event_id]
+    Event[eventId] -->|idempotence| ByEvent
+```
+
+**Benefits:** autonomous reads, failure isolation, duplicate-event protection.
+**Risk:** a later price correction does not magically update the offer.
+**Repair:** publish a versioned correction event or run reconciliation from the
+authoritative service; never let consumers silently invent the winning value.
+
+## Projection: data shaped for a question {.smaller}
+
+A **projection** transforms authoritative facts or events into a read model.
+It exists because the write aggregate and the best query shape are often
+different.
+
+```{mermaid}
+flowchart LR
+    Event[AuctionWon v1] --> Projector[Idempotent projector]
+    Projector --> P1[(offers_by_company_day<br/>partition: company + day<br/>order: wonAt DESC)]
+    Projector --> P2[(offer_by_rental<br/>key: rentalId)]
+    P1 --> Q1[Recent wins dashboard]
+    P2 --> Q2[Rental detail page]
+```
+
+- The event contract supplies stable input; each projection serves one query.
+- Projection lag is expected and must be observable.
+- Store `eventId` or a checkpoint, make updates idempotent, and support replay.
+- A rebuildable projection is not the source of truth.
+
+## 5 · Selecting and combining databases {.chapter-slide background-color="#17324d"}
+
+Matching each responsibility with an explicit persistence strategy
 
 ## Selection criteria
 
 - Required queries and their frequency
 - Atomicity boundary and consistency requirement
 - Expected data volume, throughput, and growth
-- Partitioning and geographic placement
+- Partition size, hot-key risk, and geographic placement
+- Index and projection maintenance cost
 - Recovery, backup, and operational skills
 - Security, cost, and ecosystem constraints
 
 Benchmark representative data and failure conditions before selecting a
 database for scale claims.
 
-## Polyglot persistence in the rental platform
+## Polyglot persistence · Step 1: SQL state {.smaller}
 
 ```{mermaid}
-flowchart TB
-    Services[Business services] --> Postgres[(PostgreSQL: durable business state)]
-    Services --> Redis[(Redis: queues and transient coordination)]
-    Contracts[Versioned event contracts] --> Redis
+flowchart LR
+    UI[Angular] --> Rental[Car Rental Web API]
+    UI --> Insurance[Insurance Web API]
+    Rental --> RentalDB[(Rental state<br/>PostgreSQL)]
+    Insurance --> InsuranceDB[(InsuranceOffer state<br/>PostgreSQL)]
 ```
 
-The current architecture uses each database for a different responsibility.
-Replacing PostgreSQL with Redis would change durability and query assumptions.
+Start with durable transactional state and familiar query capabilities. The
+current development stack uses one physical PostgreSQL instance, while the
+tables remain logically owned by their business service.
+
+This architecture is sufficient while every cross-service interaction can be
+synchronous and its temporal coupling is acceptable.
+
+## Why services own state and communicate with events {.smaller}
+
+- **State answers “what is true now?”** and enforces each service's invariants.
+- **Events say “what happened?”** and cross service boundaries as immutable,
+  versioned facts.
+- Local state lets a service answer even when another service is unavailable.
+- Events decouple the producer from consumer count, storage model, and release
+  cadence: rental state can remain relational while a new consumer builds a
+  document or wide-column projection.
+- Eventual consistency is explicit; idempotence, lag monitoring, and repair are
+  therefore part of the design.
+
+An event log is not automatically the current state, and a state database
+should not become an integration contract shared by every service.
+
+## Polyglot persistence · Step 2: SQL + Redis Lists {.smaller}
+
+```{mermaid}
+flowchart LR
+    Rental[Car Rental service] --> RentalDB[(SQL state)]
+    Rental -->|AuctionWon| Published[[Redis published List]]
+    Published --> Router[Event Router]
+    Router --> RentalQ[[Rental List]]
+    Router --> InsuranceQ[[Insurance List]]
+    RentalQ --> Rental
+    InsuranceQ --> Insurance[Insurance service]
+    Insurance --> InsuranceDB[(SQL state)]
+```
+
+| Why Lists now | Limits versus Redis Streams |
+|---|---|
+| Small API and low learning overhead | No independent consumer groups or cursors |
+| Atomic move supports ready → processing recovery | No retained event history or native replay |
+| Makes competing consumers and manual fan-out visible | Router, retry, recovery, and observability are application work |
+
+Lists are a deliberate pedagogical step, not a claim that they are the final
+transport. Redis AOF improves recovery, but eviction and durability still need
+explicit operational choices.
+
+## Polyglot persistence · Step 3: NoSQL query projections {.smaller}
+
+```{mermaid}
+flowchart LR
+    Services[Business services] --> SQL[(SQL<br/>authoritative state)]
+    Services -->|versioned events| Redis[[Redis Lists + Router]]
+    Redis --> Projector[Idempotent projector]
+    Projector --> Document[(Document view<br/>rental detail)]
+    Projector --> Wide[(Wide-column view<br/>company + day)]
+    Document --> Web[Fast Web queries]
+    Wide --> Web
+```
+
+- Keep invariants and transactions in service-owned SQL state.
+- Build read models shaped for Web queries without cross-service joins.
+- Scale and index projections independently from command processing.
+- Accept observable projection lag; support replay, rebuild, and reconciliation.
+
+The NoSQL stores are **derived query models**, not new shared sources of truth.
 
 ## Module investigation
 
-1. Model a rental as a document and as key-value records.
+1. Model a rental as a document and as wide-column query tables.
 2. List the queries supported efficiently by each model.
-3. Identify the atomic update boundary.
-4. Write a consistency requirement for accepting an insurance offer.
+3. Identify aggregate and partition boundaries.
+4. Choose CAP behavior for offer browsing and offer acceptance.
+5. Design an idempotent projection from `AuctionWon v1`.
 
 Continue with [Lab 07](lab.md).
+
+## Further reading {.smaller}
+
+- [Amazon DynamoDB read consistency](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.ReadConsistency.html)
+- [Amazon DynamoDB global-table consistency modes](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-global-table-design.html)
+- [Apache Cassandra: Dynamo architecture and tunable consistency](https://cassandra.apache.org/doc/latest/cassandra/architecture/dynamo.html)
+- [Apache Cassandra guarantees](https://cassandra.apache.org/doc/latest/cassandra/architecture/guarantees.html)
+- [MongoDB read concern](https://www.mongodb.com/docs/manual/reference/read-concern/)
+- [MongoDB default read and write concerns](https://www.mongodb.com/docs/manual/reference/mongodb-defaults/)
+
+Use these sources to verify the exact deployment mode and operation settings;
+do not infer behavior from a one-word CAP label.
