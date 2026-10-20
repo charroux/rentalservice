@@ -1,0 +1,359 @@
+---
+title: "Redis Lists with Spring Boot"
+subtitle: "Tutorial 08b · From redis-cli to Java"
+format:
+  revealjs:
+    theme: simple
+    css: ../../slides.css
+    slide-number: true
+    transition: fade
+    width: 1280
+    height: 720
+---
+
+## Learning objectives
+
+By the end of this tutorial, you should be able to:
+
+- map Redis List commands to Spring Data Redis operations
+- publish a JSON event from one Spring Boot service
+- consume that event in a second Spring Boot service
+- inspect the same queue from Java and `redis-cli`
+- explain the delivery limitations of a single Redis List
+
+## An isolated teaching application
+
+```{mermaid}
+flowchart LR
+    Client[curl / REST client] -->|POST /rentals| P[Rental producer<br/>Spring Boot :8091]
+    P -->|RPUSH JSON| Q[(Redis List<br/>:6380)]
+    Q -->|LPOP JSON| C[Insurance consumer<br/>Spring Boot :8092]
+    Client -->|GET /insurance/offers/RENT-42| C
+```
+
+The demonstration has its own Compose file, ports, network, Redis container,
+and `tutorial:v1:` key namespace. It shares no Java code with the rental
+platform.
+
+## Why Spring Data Redis?
+
+- Spring Boot configures the connection factory and the Lettuce client.
+- `StringRedisTemplate` manages connections and exposes Redis operations.
+- `opsForList()` returns `ListOperations<String, String>`.
+- The Java calls preserve the Redis data-model vocabulary learned with CLI.
+- Explicit JSON remains readable by other languages and by `redis-cli`.
+
+We use imperative APIs: reactive programming is not a learning objective here.
+
+## Command-to-code mapping
+
+| Redis CLI | Spring Data Redis |
+|---|---|
+| `RPUSH key value` | `opsForList().rightPush(key, value)` |
+| `LPOP key` | `opsForList().leftPop(key)` |
+| `LLEN key` | `opsForList().size(key)` |
+| `LRANGE key 0 9` | `opsForList().range(key, 0, 9)` |
+| `BLPOP key timeout` | `opsForList().leftPop(key, duration)` |
+
+The client API changes; Redis semantics do not.
+
+## Project layout
+
+```text
+training/demos/redis-list-spring/
+├── docker-compose.yml
+├── settings.gradle
+├── build.gradle
+├── rental-producer/
+│   ├── Dockerfile
+│   └── src/main/...
+└── insurance-consumer/
+    ├── Dockerfile
+    └── src/main/...
+```
+
+This is a standalone Gradle multi-project build. The services do not join the
+root application build.
+
+## The one shared agreement
+
+The services agree on JSON, not on a shared Java class:
+
+```json
+{
+  "eventId": "550e8400-e29b-41d4-a716-446655440000",
+  "eventType": "RentalConfirmed",
+  "eventVersion": 1,
+  "occurredAt": "2026-10-20T10:15:30Z",
+  "rentalId": "RENT-42",
+  "vehicleId": "CAR-7",
+  "dailyPrice": 62
+}
+```
+
+Each service owns a local Java representation. This avoids binary coupling,
+but contract compatibility must be tested and governed.
+
+## Add the Redis starter
+
+In each service:
+
+```groovy
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+}
+```
+
+The starter supplies Spring Data Redis and Lettuce. Do not add a second Redis
+client unless the application has a specific reason to replace Lettuce.
+
+## Configure the connection
+
+```yaml
+spring:
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6380}
+```
+
+- Running Java locally uses `localhost:6380`.
+- Running in Compose injects `REDIS_HOST=redis` and `REDIS_PORT=6379`.
+- Inside a Compose network, a service name is a DNS name.
+- Port 6380 avoids the rental platform's Redis port 6379.
+
+## Model the event with a Java record
+
+```java
+public record RentalConfirmed(
+    String eventId,
+    String eventType,
+    int eventVersion,
+    Instant occurredAt,
+    String rentalId,
+    String vehicleId,
+    int dailyPrice
+) {}
+```
+
+The producer creates a UUID and timestamp. `eventType` and `eventVersion`
+identify the contract; `eventId` will later support idempotence.
+
+## Producer: serialize explicitly
+
+```java
+String json = objectMapper.writeValueAsString(event);
+```
+
+Why not Java native serialization?
+
+- CLI could not display a useful event.
+- Non-Java consumers would inherit a Java-specific format.
+- Class changes could break deserialization.
+- Native deserialization expands the security surface.
+
+JSON makes the wire contract visible. It does not by itself guarantee contract
+compatibility.
+
+## Producer: append to the List
+
+```java
+public static final String QUEUE = "tutorial:v1:rental-events";
+
+Long size = redis.opsForList().rightPush(QUEUE, json);
+if (size == null) {
+    throw new IllegalStateException("Redis did not return the queue size");
+}
+```
+
+`rightPush` is `RPUSH`. The returned value is the List length after insertion,
+not a delivery acknowledgement from the consumer.
+
+## Producer: expose one REST operation
+
+```java
+@PostMapping
+@ResponseStatus(HttpStatus.ACCEPTED)
+public PublicationResponse create(@RequestBody RentalRequest request) {
+    RentalConfirmed event = /* build event */;
+    long queueSize = publisher.publish(event);
+    return new PublicationResponse(event.eventId(), queueSize);
+}
+```
+
+HTTP `202 Accepted` means the event was queued. It does not mean that an
+insurance offer already exists.
+
+## Stop before starting the consumer
+
+```powershell
+docker compose up --build -d redis rental-producer
+
+curl.exe -X POST http://localhost:8091/rentals `
+  -H "Content-Type: application/json" `
+  -d '{"rentalId":"RENT-42","vehicleId":"CAR-7","dailyPrice":62}'
+```
+
+Now inspect exactly what Java wrote:
+
+```powershell
+docker compose exec redis redis-cli `
+  LRANGE tutorial:v1:rental-events 0 -1
+```
+
+An offline consumer does not lose a value already retained in the List.
+
+## Consumer: poll one value
+
+```java
+@Scheduled(fixedDelayString = "${tutorial.consumer.poll-delay-ms:500}")
+public void consumeOne() {
+    String json = redis.opsForList().leftPop(QUEUE);
+    if (json == null) {
+        return;
+    }
+    RentalConfirmed event =
+        objectMapper.readValue(json, RentalConfirmed.class);
+    // Calculate and store the offer.
+}
+```
+
+`leftPop` is `LPOP`: reading is destructive. The scheduler polls again 500 ms
+after the previous invocation completes.
+
+## Business processing stays deliberately small
+
+```java
+int premium = Math.max(
+    5,
+    (int) Math.ceil(event.dailyPrice() * 0.10)
+);
+
+store.save(new InsuranceOffer(
+    event.rentalId(), event.vehicleId(), premium
+));
+```
+
+The in-memory store keeps the example focused on Redis delivery. Restarting the
+consumer loses offers, which is acceptable only for this teaching application.
+
+## Run the complete path
+
+```powershell
+docker compose up --build -d insurance-consumer
+docker compose logs -f insurance-consumer
+```
+
+Then query the result:
+
+```powershell
+curl.exe http://localhost:8092/insurance/offers/RENT-42
+```
+
+Expected premium: `7` EUR/day because 10% of 62 rounds up to 7.
+
+## Observe the queue after consumption
+
+```text
+LLEN tutorial:v1:rental-events
+LRANGE tutorial:v1:rental-events 0 -1
+```
+
+Both observations show an empty List after `LPOP`.
+
+Redis removes an empty List key automatically:
+
+```text
+EXISTS tutorial:v1:rental-events
+TYPE tutorial:v1:rental-events
+```
+
+Expected: `0` and `none`.
+
+## Experiment: two consumers
+
+Scale the same consumer service to two instances and publish several rentals.
+
+Each `LPOP` atomically removes one event. The instances therefore share work:
+
+```text
+event 1 → consumer A
+event 2 → consumer B
+event 3 → one of them
+```
+
+This is useful for horizontal scaling of one logical consumer. It is wrong
+when two different business services must each receive every event.
+
+## Failure window of `LPOP`
+
+```{mermaid}
+sequenceDiagram
+    participant C as Insurance consumer
+    participant R as Redis List
+    participant S as Offer store
+    C->>R: LPOP
+    R-->>C: event and remove it
+    Note over C: process crashes
+    C-xS: offer not stored
+```
+
+The event is no longer in Redis and the business action did not complete.
+There is no acknowledgement or automatic recovery in this minimal protocol.
+
+## From demonstration to reliable delivery
+
+The production-oriented List pattern adds:
+
+1. a `ready` List;
+2. a `processing` List;
+3. atomic `LMOVE ready processing LEFT RIGHT`;
+4. business processing;
+5. `LREM processing 1 event` as acknowledgement;
+6. recovery of abandoned processing entries;
+7. idempotence because recovery can redeliver an event.
+
+This is intentionally the next lesson—not hidden magic in the first example.
+
+## Why the real platform also has a router
+
+One List distributes work among competing consumers; it does not copy an event
+to independent services.
+
+```{mermaid}
+flowchart LR
+    P[Producer] --> Q[(Published List)]
+    Q --> R[Router]
+    R --> A[(Rental ready List)]
+    R --> B[(Insurance ready List)]
+```
+
+The router implements fan-out. This tutorial has only one business consumer,
+so it needs no router.
+
+## What this tutorial proves—and does not
+
+It proves:
+
+- Spring code and CLI manipulate the same Redis List;
+- JSON crosses a process boundary;
+- an offline consumer can later consume a retained List item;
+- multiple consumers of one List compete.
+
+It does not provide durable business state, acknowledgement, idempotence,
+dead-letter handling, contract validation, fan-out, or replay history.
+
+## Clean up only the tutorial
+
+From `training/demos/redis-list-spring`:
+
+```powershell
+docker compose down -v
+```
+
+The Compose project owns its Redis container, network, and volume. Removing it
+does not affect the rental platform's Compose environment.
+
+Continue with [Lab 08b](lab.md), then take the
+[independent reliability assignment](assignment.md).

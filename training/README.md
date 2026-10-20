@@ -15,6 +15,13 @@ The NoSQL sequence has two parts:
 1. data models, aggregate design, consistency, and technology selection;
 2. Redis data structures, persistence, and messaging semantics.
 
+Tutorial 08b bridges Redis CLI and Java with two isolated Spring Boot services
+connected by one Redis List. Its standalone code lives under
+`training/demos/redis-list-spring` and is intentionally separate from the
+rental platform implementation. The companion 08b+ assignment evolves this
+deliberately naive delivery into acknowledgement, recovery, and idempotence;
+its optional tracks expose the limits of building messaging semantics on Lists.
+
 ## Review workflow
 
 ```bash

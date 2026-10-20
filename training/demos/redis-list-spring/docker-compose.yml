@@ -1,0 +1,50 @@
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"
+    volumes:
+      - tutorial-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 2s
+      retries: 20
+    networks:
+      - tutorial-network
+
+  rental-producer:
+    build:
+      context: .
+      dockerfile: rental-producer/Dockerfile
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    ports:
+      - "8091:8091"
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - tutorial-network
+
+  insurance-consumer:
+    build:
+      context: .
+      dockerfile: insurance-consumer/Dockerfile
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    ports:
+      - "8092:8092"
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - tutorial-network
+
+networks:
+  tutorial-network:
+
+volumes:
+  tutorial-redis-data:

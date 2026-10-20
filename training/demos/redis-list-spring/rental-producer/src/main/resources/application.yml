@@ -1,0 +1,10 @@
+server:
+  port: 8091
+
+spring:
+  application:
+    name: tutorial-rental-producer
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6380}

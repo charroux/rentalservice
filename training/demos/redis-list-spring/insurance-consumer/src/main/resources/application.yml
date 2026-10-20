@@ -1,0 +1,14 @@
+server:
+  port: 8092
+
+spring:
+  application:
+    name: tutorial-insurance-consumer
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6380}
+
+tutorial:
+  consumer:
+    poll-delay-ms: 500
