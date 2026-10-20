@@ -25,13 +25,149 @@ By the end of this module, you should be able to:
 | Structure | Useful operations | Example use |
 |---|---|---|
 | String | `GET`, `SET`, `INCR` | Cache entry or counter |
-| Hash | Field read and update | Compact object attributes |
-| Set | Membership and intersection | Unique tags or eligibility |
-| Sorted set | Score range and rank | Time or priority index |
-| List | Push, pop, blocking move | Work queue |
+| Hash | `HSET`, `HGET`, `HMGET` | Compact object attributes |
+| Set | `SADD`, `SISMEMBER`, `SINTER` | Unique tags or eligibility |
+| Sorted set | `ZADD`, `ZRANGE`, `ZRANK` | Time or priority index |
+| List | `RPUSH`, `LPOP`, `LMOVE` | Work queue |
 | Stream | Append, range, consumer groups | Retained event log |
 
 A Redis key also needs a namespace, ownership rule, lifetime, and size limit.
+
+## `redis-cli`: inspect before changing {.smaller}
+
+```text
+TYPE training:rental:RENT-42:status
+EXISTS training:rental:RENT-42:status
+TTL training:rental:RENT-42:status
+SCAN 0 MATCH training:* COUNT 100
+```
+
+- Commands act on a **key**; the key's type determines which commands are valid.
+- `TYPE` prevents mistakes such as applying `HGET` to a String.
+- `EXISTS` returns the number of requested keys that currently exist.
+- `TTL` returns remaining seconds, `-1` for no expiry, and `-2` for no key.
+- `SCAN` incrementally explores a keyspace. Repeat it with the returned cursor
+  until the cursor is `0`.
+- Avoid `KEYS *` on a large production database: it scans the whole keyspace in
+  one blocking operation.
+
+Use the `training:` namespace below; do not experiment on application queues.
+
+## String: one value, counters, and conditional writes {.smaller}
+
+```text
+SET training:rental:RENT-42:status CONFIRMED
+GET training:rental:RENT-42:status
+
+SET training:rental:RENT-42:summary "Tesla Model 3 | 62 EUR" EX 300
+TTL training:rental:RENT-42:summary
+
+SET training:claim:RENT-42 worker-1 NX EX 30
+INCR training:metrics:auctions
+INCRBY training:metrics:auctions 5
+```
+
+- A String stores one binary-safe value; numbers are stored as numeric text.
+- `SET` replaces the previous value. `EX 300` adds a five-minute lifetime.
+- `NX` writes only when the key is absent; `XX` writes only when it exists.
+- `INCR`, `DECR`, and `INCRBY` are atomic, so concurrent increments are not
+  lost.
+- `MGET key1 key2` reads several independent Strings in one round trip.
+
+`SET ... NX EX` demonstrates conditional creation, but a production distributed
+lock also needs a unique token and a safe ownership-checked release.
+
+## Hash: a flat object addressed by fields {.smaller}
+
+```text
+HSET training:rental:RENT-42 status CONFIRMED
+HSET training:rental:RENT-42 carModel "Model 3" finalPrice 62 retryCount 0
+HGET training:rental:RENT-42 status
+HMGET training:rental:RENT-42 carModel finalPrice
+HGETALL training:rental:RENT-42
+HINCRBY training:rental:RENT-42 retryCount 1
+HEXISTS training:rental:RENT-42 finalPrice
+HDEL training:rental:RENT-42 retryCount
+HLEN training:rental:RENT-42
+```
+
+- A Hash groups field/value pairs below one key and updates fields independently.
+- `HSET` creates the Hash or adds/replaces fields; its result is the number of
+  **new** fields, not the number of changed values.
+- `HMGET` is preferable when only a known subset is needed; `HGETALL` transfers
+  the entire object.
+- Fields are flat values, not recursively queryable nested objects.
+- `EXPIRE training:rental:RENT-42 300` expires the whole key in portable designs.
+
+## Set: unique, unordered membership {.smaller}
+
+```text
+SADD training:car:42:features electric automatic gps gps
+SCARD training:car:42:features
+SISMEMBER training:car:42:features gps
+SMISMEMBER training:car:42:features gps sunroof
+SMEMBERS training:car:42:features
+
+SADD training:request:required automatic gps
+SINTER training:car:42:features training:request:required
+SDIFF training:request:required training:car:42:features
+SREM training:car:42:features gps
+```
+
+- Members are unique: the second `gps` adds nothing. Sets have no stable order.
+- Membership tests are the primary access pattern; `SCARD` returns cardinality.
+- `SINTER`, `SUNION`, and `SDIFF` perform set algebra across keys.
+- `SPOP` removes random members; `SRANDMEMBER` samples without necessarily
+  removing them.
+- Be careful with `SMEMBERS` on a very large Set; use `SSCAN` for incremental
+  inspection.
+
+## Sorted Set: unique members ordered by score {.smaller}
+
+```text
+ZADD training:insurance:offers 12.5 OFFER-A 9 OFFER-B 16 OFFER-C
+ZRANGE training:insurance:offers 0 -1 WITHSCORES
+ZRANGE training:insurance:offers 0 1 WITHSCORES
+ZRANK training:insurance:offers OFFER-A
+ZSCORE training:insurance:offers OFFER-A
+ZRANGE training:insurance:offers 0 12.5 BYSCORE WITHSCORES
+ZINCRBY training:insurance:offers -1 OFFER-A
+ZREM training:insurance:offers OFFER-C
+```
+
+- Each member is unique and has a floating-point score. Re-adding a member
+  updates its score instead of creating a duplicate.
+- `ZRANGE key start stop` uses zero-based ranks and sorts scores ascending;
+  add `REV` for descending order.
+- `BYSCORE` selects an inclusive score interval; prefix a bound with `(` to make
+  it exclusive.
+- `ZRANK` returns the position, while `ZSCORE` returns the score itself.
+- Equal scores are ordered lexicographically by member.
+
+## List: sequence, queue, and recoverable processing {.smaller}
+
+```text
+RPUSH training:queue:ready event-1 event-2
+LLEN training:queue:ready
+LRANGE training:queue:ready 0 -1
+LPOP training:queue:ready
+
+LMOVE training:queue:ready training:queue:processing LEFT RIGHT
+LRANGE training:queue:processing 0 -1
+```
+
+On success, acknowledge with `LREM processing 1 event-2`. After a crash before
+acknowledgement, recover with `LMOVE processing ready RIGHT LEFT`.
+
+- `LPUSH`/`RPUSH` add at either end; `LPOP`/`RPOP` remove and return an item.
+- `RPUSH` + `LPOP` implements FIFO. Pops are destructive and naturally create
+  competing consumers: one item is removed by one consumer.
+- `BLPOP`, `BRPOP`, and `BLMOVE` wait for data instead of polling; their final
+  argument is the timeout in seconds (`0` means wait indefinitely).
+- `LMOVE` atomically transfers an item to a processing List. After the database
+  transaction succeeds, `LREM` acknowledges it; recovery moves stuck items back.
+- Use `LRANGE 0 -1` only on small diagnostic Lists; prefer bounded ranges in
+  production.
 
 ## Keys and expiration
 
