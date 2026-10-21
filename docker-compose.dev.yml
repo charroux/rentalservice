@@ -37,6 +37,38 @@ services:
     networks:
       - car-rental-network
 
+  mongodb:
+    image: mongo:7
+    container_name: car-rental-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    networks:
+      - car-rental-network
+
+  mongodb-init:
+    image: mongo:7
+    container_name: car-rental-mongodb-init
+    restart: "no"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    command: >
+      bash -c "mongosh --host mongodb:27017 --quiet --eval
+      \"try { rs.status().ok } catch (e) { rs.initiate({_id:'rs0',members:[{_id:0,host:'mongodb:27017'}]}).ok }\";
+      until mongosh --host mongodb:27017 --quiet --eval \"db.hello().isWritablePrimary\" | grep true;
+      do sleep 1; done"
+    networks:
+      - car-rental-network
+
   car-rental:
     build:
       context: .
@@ -106,18 +138,42 @@ services:
       - "8081:8081"
     environment:
       SPRING_PROFILES_ACTIVE: "prod"
-      SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/${POSTGRES_DB}"
-      SPRING_DATASOURCE_USERNAME: "${POSTGRES_USER}"
-      SPRING_DATASOURCE_PASSWORD: "${POSTGRES_PASSWORD}"
+      SPRING_DATA_MONGODB_URI: "mongodb://mongodb:27017/insurance?replicaSet=rs0"
       SPRING_DATA_REDIS_HOST: "redis"
       SPRING_DATA_REDIS_PORT: "6379"
     depends_on:
       redis:
         condition: service_healthy
-      postgres:
-        condition: service_healthy
+      mongodb-init:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    networks:
+      - car-rental-network
+
+  rental-query-service:
+    build:
+      context: .
+      dockerfile: rentalQueryService/Dockerfile
+    image: charroux/rental-query-service:dev
+    container_name: rental-query-service
+    restart: unless-stopped
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_DATA_MONGODB_URI: "mongodb://mongodb:27017/rental_query?replicaSet=rs0"
+      SPRING_DATA_REDIS_HOST: "redis"
+      SPRING_DATA_REDIS_PORT: "6379"
+    depends_on:
+      redis:
+        condition: service_healthy
+      mongodb-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
       interval: 10s
       timeout: 5s
       retries: 6
@@ -158,6 +214,8 @@ services:
         condition: service_healthy
       insurance-service:
         condition: service_healthy
+      rental-query-service:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:80/"]
       interval: 10s
@@ -173,6 +231,8 @@ volumes:
     name: car_rental_redis_data
   postgres-data:
     name: car_rental_postgres_data
+  mongo-data:
+    name: car_rental_mongo_data
   gradle-cache:
     name: gradle_cache
 

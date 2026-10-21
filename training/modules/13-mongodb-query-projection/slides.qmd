@@ -1,0 +1,126 @@
+---
+title: "MongoDB as a Query Projection"
+subtitle: "Module 13 · Derived, denormalized, eventually consistent views"
+format:
+  revealjs:
+    theme: simple
+    css: ../../slides.css
+    slide-number: true
+    transition: fade
+    width: 1280
+    height: 720
+---
+
+## Learning objectives
+
+- separate aggregates, events, and projections
+- build a denormalized view from duplicate or reordered events
+- expose absence, partial state, and freshness to Angular
+- distinguish conceptual rebuildability from an available replay source
+- explain a future transition from Lists to Streams or an event store
+
+## Aggregate versus projection
+
+| Insurance aggregate | Rental query projection |
+|---|---|
+| Owns acceptance invariant | Owns no business command |
+| Source of truth for insurance | Derived from service events |
+| Must not be deleted casually | Disposable if inputs can be replayed |
+| Optimized for business change | Optimized for `GET by rentalId` |
+
+The databases are separate: `insurance.insurance_offers` and
+`rental_query.rental_views`. Collection ownership is never shared.
+
+## Event-fed architecture
+
+```{mermaid}
+flowchart LR
+  Rental[carRental] -->|AuctionWon v1| Router[Redis List router]
+  Insurance[insuranceService] -->|Proposed / Accepted v1| Router
+  Router --> Ready[[rental-query ready]]
+  Ready --> Projector[rentalQueryService]
+  Projector --> Archive[(projection_event_archive)]
+  Projector --> View[(rental_query.rental_views)]
+  Angular -->|GET by rentalId| Projector
+  Angular -->|accept command| Insurance
+```
+
+## Query-shaped denormalization
+
+One document groups rental, vehicle, price, discount, insurance, event
+identities, and timestamps. Duplication removes front-end joins and
+cross-service availability coupling from the read path.
+
+The cost is propagation lag, storage, projector code, monitoring, and a repair
+obligation. A convenient projection never becomes the source of truth.
+
+## Idempotence and duplicates
+
+At-least-once handling means a database commit can be followed by a crash
+before List acknowledgement. The same envelope will return.
+
+- the append-only archive has a unique `event_id` index;
+- archive insert and view update share one MongoDB transaction;
+- a repeated `eventId` produces no second update;
+- `rental_id` is unique;
+- acknowledgement follows the MongoDB commit.
+
+## Events can arrive out of order
+
+```{mermaid}
+sequenceDiagram
+  participant Q as Query projector
+  participant M as MongoDB view
+  Q->>M: InsuranceOfferAccepted (create partial view)
+  Q->>M: AuctionWon (fill rental fields)
+  Q->>M: InsuranceOfferProposed (fill proposal metadata)
+  Note over M: status remains ACCEPTED
+```
+
+Insurance events carry enough data for a partial component. Accepted never
+regresses to proposed. Per-component timestamps prevent stale replacement.
+
+## Eventual consistency is API behavior
+
+`GET /rental-views/{rentalId}` may return:
+
+- `404` before the first event is projected;
+- `PARTIAL` when insurance arrived before rental facts;
+- `COMPLETE` with no insurance yet because insurance is optional;
+- later, the same view with `PROPOSED` or `ACCEPTED` insurance.
+
+Angular polls for a bounded time and keeps insurance knowledge in its extension.
+
+## Rebuildability: three different claims
+
+1. **Conceptual:** projector code is deterministic and order tolerant.
+2. **Transport reality:** consumed Redis Lists retain no replayable history.
+3. **Durable source:** `projection_event_archive` retains raw accepted inputs.
+4. **Operational rebuild:** disable consumption, delete only `rental_views`,
+   and replay the archive. NDJSON imports cover pre-archive history.
+
+The archive has no TTL. Pruning requires a verified snapshot and replay boundary.
+
+## Failure classification
+
+- malformed or unsupported events move atomically to a service-specific DLQ;
+- MongoDB or Redis failures remain recoverable in `processing`;
+- DLQ entries retain the original payload and diagnostic context;
+- operators alert, repair, and explicitly replay or discard each entry.
+
+## What a retained log adds later
+
+Redis Streams, evaluated in a separate project, add transport IDs, consumer
+groups, pending inspection, and replay within configured retention. An event
+store adds domain-grade, long-term immutable history.
+
+Neither automatically solves schema evolution, poison events, ordering rules,
+or side-effect idempotence.
+
+## CQRS without event sourcing
+
+The implementation separates command owners from a read model: a CQRS shape.
+It is not Event Sourcing because aggregates remain current state and Redis Lists
+are not an authoritative history.
+
+Continue with [Lab 13](lab.md).

@@ -6,9 +6,9 @@ trainers and learners should test it before any module becomes immutable.
 
 ## Current curriculum
 
-Modules 01 to 11 form the testable course. Each module contains a RevealJS
-deck and a lab. Modules 12 and 13 are planned in `roadmap.qmd`; they depend on a
-future Redis Streams and CQRS implementation.
+Modules 01 to 13 form the testable course. Each module contains a RevealJS
+deck and a lab. Modules 12 and 13 distinguish aggregate persistence from a
+query projection; Redis Streams remains a future comparison in `roadmap.qmd`.
 
 The NoSQL sequence has two parts:
 

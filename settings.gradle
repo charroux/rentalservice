@@ -5,6 +5,7 @@ include 'auctionService'          // gRPC protocol buffer definitions
 include 'auctionServiceServer'    // gRPC server, replica of customers from Kafka
 include 'carRental'                // REST Web service, gRPC client of the agreement service
 include 'insuranceService'         // Consumes auction events and proposes optional insurance
+include 'rentalQueryService'       // Builds a MongoDB read projection from business events
 
 // Future services
 //include 'customerService'        // Owner of customers, notify customer changes to Kafka
@@ -14,3 +15,4 @@ project(':auctionServiceServer').projectDir = file('auctionServiceServer')
 project(':auctionService').projectDir = file('auctionService')
 project(':carRental').projectDir = file('carRental')
 project(':insuranceService').projectDir = file('insuranceService')
+project(':rentalQueryService').projectDir = file('rentalQueryService')

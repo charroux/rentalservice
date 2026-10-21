@@ -1,7 +1,7 @@
 package com.charroux.insuranceService.events;
 
 import com.charroux.insuranceService.entity.InsuranceOffer;
-import com.charroux.insuranceService.repository.InsuranceOfferRepository;
+import com.charroux.insuranceService.service.InsuranceOfferCreationService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -28,15 +28,18 @@ public class InsuranceEventConsumer {
 
     private final RedisTemplate<String, String> redisTemplate;
     private final ObjectMapper objectMapper;
-    private final InsuranceOfferRepository repository;
+    private final InsuranceOfferCreationService creationService;
+    private final InsuranceDeadLetterPublisher deadLetterPublisher;
 
     public InsuranceEventConsumer(
             RedisTemplate<String, String> redisTemplate,
             ObjectMapper objectMapper,
-            InsuranceOfferRepository repository) {
+            InsuranceOfferCreationService creationService,
+            InsuranceDeadLetterPublisher deadLetterPublisher) {
         this.redisTemplate = redisTemplate;
         this.objectMapper = objectMapper;
-        this.repository = repository;
+        this.creationService = creationService;
+        this.deadLetterPublisher = deadLetterPublisher;
     }
 
     @Scheduled(
@@ -62,6 +65,13 @@ public class InsuranceEventConsumer {
             Long removed = lists.remove(PROCESSING_QUEUE, 1, eventJson);
             if (removed == null || removed != 1) {
                 logger.warn("Insurance event processed but not acknowledged");
+            }
+        } catch (IllegalArgumentException invalid) {
+            try {
+                deadLetterPublisher.moveInvalid(eventJson, invalid);
+                logger.error("Invalid insurance event moved to dead-letter queue", invalid);
+            } catch (Exception dlqFailure) {
+                logger.error("Invalid insurance event remains recoverable because DLQ transfer failed", dlqFailure);
             }
         } catch (Exception e) {
             logger.error("Insurance event remains recoverable after processing failure", e);
@@ -103,26 +113,38 @@ public class InsuranceEventConsumer {
     private void processEvent(String eventJson) {
         try {
             JsonNode event = objectMapper.readTree(eventJson);
-            String eventId = requiredText(event, "eventId");
-            if (repository.existsByEventId(eventId)) {
-                logger.debug("Insurance event {} already processed", eventId);
-                return;
+            String eventType = requiredText(event, "eventType");
+            int eventVersion = requiredInteger(event, "eventVersion");
+            if (!"AuctionWon".equals(eventType) || eventVersion != 1) {
+                throw new IllegalArgumentException(
+                    "Unsupported event contract: " + eventType + " v" + eventVersion
+                );
             }
-
+            String eventId = requiredText(event, "eventId");
             String rentalId = requiredText(event, "rentalId");
             String plateNumber = requiredText(event, "plateNumber");
             int rentalPrice = requiredInteger(event, "finalPrice");
+            int originalPrice = requiredInteger(event, "originalPrice");
+            int discount = requiredInteger(event, "discount");
             int dailyPremium = Math.max(
                 MINIMUM_DAILY_PREMIUM,
                 (int) Math.ceil(rentalPrice * PREMIUM_RATE)
             );
 
-            repository.save(new InsuranceOffer(
+            InsuranceOffer offer = creationService.createOrReplay(new InsuranceOffer(
                 eventId,
                 rentalId,
-                plateNumber,
+                new InsuranceOffer.Vehicle(
+                    requiredLong(event, "carId"),
+                    plateNumber,
+                    requiredText(event, "carBrand"),
+                    requiredText(event, "carModel")
+                ),
                 rentalPrice,
-                dailyPremium
+                originalPrice,
+                discount,
+                dailyPremium,
+                java.time.Instant.now()
             ));
 
             logger.info(
@@ -130,6 +152,10 @@ public class InsuranceEventConsumer {
                 rentalId,
                 dailyPremium
             );
+        } catch (IllegalArgumentException e) {
+            throw e;
+        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+            throw new IllegalArgumentException("Invalid event JSON", e);
         } catch (Exception e) {
             throw new IllegalStateException("Failed to process insurance event", e);
         }
@@ -149,5 +175,13 @@ public class InsuranceEventConsumer {
             throw new IllegalArgumentException("Missing integer field: " + fieldName);
         }
         return value.asInt();
+    }
+
+    private long requiredLong(JsonNode event, String fieldName) {
+        JsonNode value = event.path(fieldName);
+        if (!value.isIntegralNumber()) {
+            throw new IllegalArgumentException("Missing integer field: " + fieldName);
+        }
+        return value.asLong();
     }
 }

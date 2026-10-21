@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rentalservice.local/contracts/events/insurance-offer-accepted/v1/schema.json",
+  "title": "InsuranceOfferAcceptedV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["eventType", "eventVersion", "eventId", "rentalId", "sourceAuctionEventId", "carId", "plateNumber", "carBrand", "carModel", "rentalDailyPrice", "originalDailyPrice", "discount", "dailyPremium", "status", "occurredAt"],
+  "properties": {
+    "eventType": { "const": "InsuranceOfferAccepted" },
+    "eventVersion": { "const": 1 },
+    "eventId": { "type": "string", "format": "uuid" },
+    "rentalId": { "type": "string", "minLength": 1 },
+    "sourceAuctionEventId": { "type": "string", "minLength": 1 },
+    "carId": { "type": "integer", "minimum": 1 },
+    "plateNumber": { "type": "string", "minLength": 1 },
+    "carBrand": { "type": "string", "minLength": 1 },
+    "carModel": { "type": "string", "minLength": 1 },
+    "rentalDailyPrice": { "type": "integer", "minimum": 0 },
+    "originalDailyPrice": { "type": "integer", "minimum": 0 },
+    "discount": { "type": "integer", "minimum": 0 },
+    "dailyPremium": { "type": "integer", "minimum": 0 },
+    "status": { "const": "ACCEPTED" },
+    "occurredAt": { "type": "string", "format": "date-time" }
+  }
+}

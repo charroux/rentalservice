@@ -1,0 +1,8 @@
+{
+  "eventType": "InsuranceOfferProposed", "eventVersion": 1,
+  "eventId": "84db9b5e-e715-4fa1-aee6-4e6ee5877b0b", "rentalId": "RENT-42",
+  "sourceAuctionEventId": "b820a46d-1e3f-48a0-9459-f723c80e1260", "carId": 42,
+  "plateNumber": "EDU-042", "carBrand": "Tesla", "carModel": "Model 3",
+  "rentalDailyPrice": 62, "originalDailyPrice": 65, "discount": 3,
+  "dailyPremium": 7, "status": "PROPOSED", "occurredAt": "2026-10-20T09:15:00Z"
+}

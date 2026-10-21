@@ -1,7 +1,7 @@
 package com.charroux.insuranceService.events;
 
 import com.charroux.insuranceService.entity.InsuranceOffer;
-import com.charroux.insuranceService.repository.InsuranceOfferRepository;
+import com.charroux.insuranceService.service.InsuranceOfferCreationService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,7 +21,9 @@ import static org.mockito.Mockito.*;
 class InsuranceEventConsumerTest {
 
     private static final String EVENT = """
-        {"eventId":"event-1","rentalId":"RENT-1","plateNumber":"AA-123-AA","finalPrice":62}
+        {"eventType":"AuctionWon","eventVersion":1,"eventId":"event-1","rentalId":"RENT-1",
+         "carId":42,"plateNumber":"AA-123-AA","carBrand":"Tesla","carModel":"Model 3",
+         "finalPrice":62,"originalPrice":65,"discount":3}
         """;
 
     @Mock
@@ -29,14 +31,16 @@ class InsuranceEventConsumerTest {
     @Mock
     private ListOperations<String, String> lists;
     @Mock
-    private InsuranceOfferRepository repository;
+    private InsuranceOfferCreationService creationService;
+    @Mock
+    private InsuranceDeadLetterPublisher deadLetterPublisher;
 
     private InsuranceEventConsumer consumer;
 
     @BeforeEach
     void setUp() {
         when(redisTemplate.opsForList()).thenReturn(lists);
-        consumer = new InsuranceEventConsumer(redisTemplate, new ObjectMapper(), repository);
+        consumer = new InsuranceEventConsumer(redisTemplate, new ObjectMapper(), creationService, deadLetterPublisher);
     }
 
     @Test
@@ -47,39 +51,40 @@ class InsuranceEventConsumerTest {
             InsuranceEventConsumer.PROCESSING_QUEUE,
             Direction.RIGHT
         )).thenReturn(EVENT);
-        when(repository.existsByEventId("event-1")).thenReturn(false);
-        when(repository.save(any(InsuranceOffer.class)))
+        when(creationService.createOrReplay(any(InsuranceOffer.class)))
             .thenAnswer(invocation -> invocation.getArgument(0));
         when(lists.remove(InsuranceEventConsumer.PROCESSING_QUEUE, 1, EVENT)).thenReturn(1L);
 
         consumer.consumeEvents();
 
         ArgumentCaptor<InsuranceOffer> offer = ArgumentCaptor.forClass(InsuranceOffer.class);
-        verify(repository).save(offer.capture());
+        verify(creationService).createOrReplay(offer.capture());
         assertEquals("RENT-1", offer.getValue().getRentalId());
         assertEquals(7, offer.getValue().getDailyPremium());
+        assertEquals("Tesla", offer.getValue().getVehicle().brand());
         verify(lists).remove(InsuranceEventConsumer.PROCESSING_QUEUE, 1, EVENT);
     }
 
     @Test
-    void acknowledgesDuplicateWithoutCreatingAnotherOffer() {
+    void acknowledgesRedeliveredEventAfterTransactionalServiceHandlesIt() {
         when(lists.move(
             InsuranceEventConsumer.READY_QUEUE,
             Direction.LEFT,
             InsuranceEventConsumer.PROCESSING_QUEUE,
             Direction.RIGHT
         )).thenReturn(EVENT);
-        when(repository.existsByEventId("event-1")).thenReturn(true);
+        when(creationService.createOrReplay(any(InsuranceOffer.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
         when(lists.remove(InsuranceEventConsumer.PROCESSING_QUEUE, 1, EVENT)).thenReturn(1L);
 
         consumer.consumeEvents();
 
-        verify(repository, never()).save(any());
+        verify(creationService).createOrReplay(any(InsuranceOffer.class));
         verify(lists).remove(InsuranceEventConsumer.PROCESSING_QUEUE, 1, EVENT);
     }
 
     @Test
-    void leavesInvalidEventRecoverable() {
+    void movesInvalidEventToDeadLetterQueue() {
         String invalid = "{\"eventId\":\"event-2\"}";
         when(lists.move(
             InsuranceEventConsumer.READY_QUEUE,
@@ -90,7 +95,7 @@ class InsuranceEventConsumerTest {
 
         consumer.consumeEvents();
 
-        verify(lists, never()).remove(anyString(), anyLong(), anyString());
-        verify(repository, never()).save(any());
+        verify(deadLetterPublisher).moveInvalid(eq(invalid), any(IllegalArgumentException.class));
+        verify(creationService, never()).createOrReplay(any());
     }
 }

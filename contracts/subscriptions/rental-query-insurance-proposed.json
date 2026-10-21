@@ -1,0 +1,6 @@
+{
+  "consumer": "rental-query-service",
+  "eventType": "InsuranceOfferProposed",
+  "eventVersion": 1,
+  "queue": "auction:events:simple:rental-query-service:ready"
+}

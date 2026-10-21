@@ -39,6 +39,7 @@ car-rental-angular/src/app/extension-platform/generated/
 
 # Docker
 .dockerignore
+!car-rental-angular/.dockerignore
 
 # Temporary files
 *.tmp

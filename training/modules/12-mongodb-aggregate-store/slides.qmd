@@ -1,0 +1,114 @@
+---
+title: "MongoDB as an Aggregate Store"
+subtitle: "Module 12 · Business state in one document"
+format:
+  revealjs:
+    theme: simple
+    css: ../../slides.css
+    slide-number: true
+    transition: fade
+    width: 1280
+    height: 720
+---
+
+## Learning objectives
+
+- distinguish a persistence migration from a query projection
+- design a document around an aggregate and its access patterns
+- use `MongoRepository`, embedded documents, and unique indexes
+- reason about document atomicity and schema evolution
+- compare the MongoDB aggregate with the former SQL mapping
+
+## Persistence migration, not a projection
+
+`InsuranceOffer` is business state: it owns the `PROPOSED → ACCEPTED`
+invariant and is the source of truth for accepting complementary insurance.
+
+```{mermaid}
+flowchart LR
+  Auction[AuctionWon v1] --> Insurance[insuranceService]
+  Insurance --> Offer[(insurance.insurance_offers)]
+  UI -->|GET / POST accept| Insurance
+```
+
+Changing its store from H2/PostgreSQL to MongoDB changes persistence. It does
+not make the aggregate derived or safely disposable.
+
+## Access patterns drive the document
+
+The service needs to find an offer by `rentalId`, reject a repeated
+`AuctionWon` by `eventId`, and update status plus acceptance metadata together.
+
+```json
+{
+  "rental_id": "RENT-42",
+  "event_id": "auction-event-uuid",
+  "vehicle": { "car_id": 42, "plate_number": "EDU-042", "brand": "Tesla", "model": "Model 3" },
+  "rental_daily_price": 62,
+  "daily_premium": 7,
+  "status": "PROPOSED"
+}
+```
+
+## Embedding and atomicity
+
+Vehicle facts are embedded because they are read with the offer and do not
+have an independent lifecycle inside this service. A single-document update
+atomically changes status, `accepted_event_id`, `accepted_at`, and `updated_at`.
+
+Atomicity normally stops at one document. Here MongoDB runs as a replica set,
+so one transaction commits the aggregate and an `insurance_outbox` document.
+A relay publishes that durable intent to Redis later. Stable event identifiers
+make the relay's at-least-once delivery safe.
+
+## Repository and indexes
+
+```java
+public interface InsuranceOfferRepository
+    extends MongoRepository<InsuranceOffer, String> {
+  Optional<InsuranceOffer> findByRentalId(String rentalId);
+  Optional<InsuranceOffer> findByEventId(String eventId);
+}
+```
+
+- unique `event_id`: one effect per source event;
+- unique `rental_id`: one current offer per rental;
+- `_id`: MongoDB identity, not the business lookup key.
+
+Indexes accelerate reads but add storage and write work. Auto-creation is
+useful for this lab; managed migrations are preferable in production.
+
+## Schema evolution
+
+- New optional fields can be read with defaults.
+- Renames require dual-read/migration periods.
+- New required invariants require validation and backfill.
+- Event schema version and document schema evolution are separate concerns.
+
+Rolling deployments must tolerate both old and new document shapes.
+
+## SQL versus document storage
+
+| Concern | Former relational mapping | MongoDB aggregate |
+|---|---|---|
+| Aggregate load | row plus joins as model grows | one document |
+| Atomic boundary | transaction across rows | one document by default |
+| Constraints | relational constraints | indexes + application invariants |
+| Evolution | explicit DDL migration | tolerant reads + backfill |
+| Ad hoc relations | strong | deliberately limited |
+
+MongoDB fits this bounded aggregate; it is not automatically better for every query.
+
+## Architecture checkpoint
+
+```{mermaid}
+flowchart TB
+  Redis[[Redis ready/processing Lists]] --> Consumer[Idempotent insurance consumer]
+  Consumer -->|event_id unique| Aggregate[(insurance_offers)]
+  Aggregate --> API[Insurance REST API]
+  Consumer -->|same Mongo transaction| Outbox[(insurance_outbox)]
+  Outbox --> Relay[Retrying outbox relay]
+  Relay --> Published[[events:simple:published]]
+```
+
+Continue with [Lab 12](lab.md).

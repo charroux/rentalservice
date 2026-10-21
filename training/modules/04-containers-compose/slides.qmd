@@ -52,7 +52,9 @@ flowchart TB
     Router[Event router] --> Redis
     Insurance[Insurance] --> Redis
     Rental --> Postgres[(PostgreSQL)]
-    Insurance --> Postgres
+    Insurance --> Mongo[(MongoDB)]
+    Query[Rental query] --> Redis
+    Query --> Mongo
 ```
 
 Compose service names provide DNS names on the shared network. `localhost`
@@ -69,7 +71,7 @@ health conditions. A running process may still reject traffic while it starts.
 
 ## State and cleanup
 
-Named volumes preserve Redis and PostgreSQL data across container replacement.
+Named volumes preserve Redis, PostgreSQL, and MongoDB data across container replacement.
 
 ```bash
 docker compose stop       # retain containers and volumes

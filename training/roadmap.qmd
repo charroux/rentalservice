@@ -2,11 +2,12 @@
 title: "Planned Training and Software Increments"
 ---
 
-The current course stops after a complete Redis Lists implementation. The next
-two increments will coexist with that implementation so learners can compare
-the models on the same business flow.
+The current course stops after a Redis Lists transport, transactional MongoDB
+outbox, and durable MongoDB projection archive. The next two increments will
+coexist with that implementation so learners can compare transport and replay
+models on the same business flow.
 
-## Module 12: Redis Streams in parallel
+## Module 14: Redis Streams in parallel
 
 ### Software increment
 
@@ -29,14 +30,14 @@ pending-entry list, reclaim a message, and compare the result with `LMOVE`.
 - Both paths use the same `AuctionWon` contract version.
 - Metrics make delivery and acknowledgement visible.
 
-## Module 13: CQRS and projections
+## Module 15: Retained-log CQRS operations
 
 ### Software increment
 
 - Introduce an explicit command endpoint and write model.
-- Build a separate rental summary projection from events.
-- Add a query endpoint backed only by the projection.
-- Display projection freshness in Angular.
+- Version and replace the existing rental summary projection.
+- Add lag metrics and operational replay controls.
+- Display retained-log checkpoints in Angular diagnostics.
 - Support idempotent rebuild from a retained event source.
 - Test lag, replay, schema evolution, and projection replacement.
 
@@ -48,7 +49,7 @@ the write model.
 
 ### Entry criteria
 
-- The Streams comparison has identified the retained event source.
+- The current Lists transport and Mongo archive reconstruction runbook are understood.
 - Event ordering and versioning policies are documented.
 - The user interface can display eventual consistency explicitly.
 

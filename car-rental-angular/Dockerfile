@@ -15,9 +15,6 @@ RUN npm ci --no-optional
 # Copy source code
 COPY . .
 
-# Clean any existing node_modules and reinstall for the correct platform
-RUN rm -rf node_modules && npm ci
-
 # Build for production
 RUN npm run build
 

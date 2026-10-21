@@ -123,27 +123,30 @@ flowchart LR
     RentalAPI[Car Rental REST API]
     Auction[Auction gRPC service]
     InsuranceAPI[Insurance REST API]
+    QueryAPI[Rental Query REST API]
 
     Flow[[Redis Lists → Python router<br/>→ per-consumer queues]]
     RentalDB[(Rental aggregate<br/>PostgreSQL)]
-    InsuranceDB[(PostgreSQL: InsuranceOffer<br/>unique rentalId + eventId)]
-    Search[(Candidate wide-column projection<br/>partition: company + day<br/>order: wonAt DESC)]
+    InsuranceDB[(MongoDB: InsuranceOffer aggregate<br/>unique rentalId + eventId)]
+    Search[(MongoDB rental_views projection<br/>unique rentalId)]
 
     UI -->|commands and queries| RentalAPI
-    UI -->|offer query and accept| InsuranceAPI
+    UI -->|accept command| InsuranceAPI
+    UI -->|consolidated query| QueryAPI
     RentalAPI -->|bid| Auction
     RentalAPI -->|aggregate by rentalId| RentalDB
     InsuranceAPI -->|local aggregate| InsuranceDB
     RentalAPI -->|AuctionWon| Flow
     Flow -->|duplicate to rental consumer| RentalAPI
     Flow -->|duplicate to insurance consumer| InsuranceAPI
-    Flow -.->|project event| Search
+    Flow -->|project event| Search
+    QueryAPI --> Search
 ```
 
 **Aggregate:** one transactional business boundary. **Duplication:** the router
-fans out one event. **Partition:** `(companyId, rentalDay)`. **Index/order:**
-`wonAt DESC, rentalId`. The wide-column projection is a proposed learning
-extension; the other components exist in the current project.
+fans out events. **Projection lookup/index:** `rentalId`. The MongoDB aggregate
+migration and the MongoDB projection are separate increments in the current
+project.
 
 ## Aggregate-oriented design
 
@@ -174,7 +177,7 @@ flowchart LR
     Redis[[Redis Lists<br/>event transport]]
     Router[Event Router]
     RentalState[(Rental aggregate<br/>PostgreSQL)]
-    InsuranceState[(InsuranceOffer aggregate<br/>PostgreSQL)]
+    InsuranceState[(InsuranceOffer aggregate<br/>MongoDB)]
 
     UI -->|REST| RentalWeb
     UI -->|REST| InsuranceWeb
@@ -242,7 +245,7 @@ latency/consistency trade-off **else**, during normal operation.
 | Accept-insurance command loses its quorum | Queue a request and expose `PENDING` | Reject/timeout; never confirm two outcomes |
 | Analytics consumer is disconnected | Buffer and catch up later | Stop only if the report is legally real-time |
 
-In the current single-node PostgreSQL setup, a database outage is not a CAP
+In the current single-node development stores, a database outage is not a CAP
 partition scenario. These policies become relevant with replicated databases
 or independently reachable projections.
 
@@ -364,7 +367,7 @@ Matching each responsibility with an explicit persistence strategy
 Benchmark representative data and failure conditions before selecting a
 database for scale claims.
 
-## Polyglot persistence · Step 1: SQL state {.smaller}
+## Polyglot persistence · Step 1: relational baseline {.smaller}
 
 ```{mermaid}
 flowchart LR
@@ -374,9 +377,8 @@ flowchart LR
     Insurance --> InsuranceDB[(InsuranceOffer state<br/>PostgreSQL)]
 ```
 
-Start with durable transactional state and familiar query capabilities. The
-current development stack uses one physical PostgreSQL instance, while the
-tables remain logically owned by their business service.
+The earlier baseline used relational state for both services. It remains a
+useful comparison point, while the current insurance aggregate uses MongoDB.
 
 This architecture is sufficient while every cross-service interaction can be
 synchronous and its temporal coupling is acceptable.
@@ -396,7 +398,7 @@ synchronous and its temporal coupling is acceptable.
 An event log is not automatically the current state, and a state database
 should not become an integration contract shared by every service.
 
-## Polyglot persistence · Step 2: SQL + Redis Lists {.smaller}
+## Polyglot persistence · Step 2: MongoDB aggregate + Redis Lists {.smaller}
 
 ```{mermaid}
 flowchart LR
@@ -407,7 +409,7 @@ flowchart LR
     Router --> InsuranceQ[[Insurance List]]
     RentalQ --> Rental
     InsuranceQ --> Insurance[Insurance service]
-    Insurance --> InsuranceDB[(SQL state)]
+    Insurance --> InsuranceDB[(MongoDB aggregate)]
 ```
 
 | Why Lists now | Limits versus Redis Streams |
@@ -424,7 +426,7 @@ explicit operational choices.
 
 ```{mermaid}
 flowchart LR
-    Services[Business services] --> SQL[(SQL<br/>authoritative state)]
+    Services[Business services] --> State[(PostgreSQL + MongoDB<br/>authoritative aggregates)]
     Services -->|versioned events| Redis[[Redis Lists + Router]]
     Redis --> Projector[Idempotent projector]
     Projector --> Document[(Document view<br/>rental detail)]
@@ -433,12 +435,14 @@ flowchart LR
     Wide --> Web
 ```
 
-- Keep invariants and transactions in service-owned SQL state.
+- Keep invariants and transactions in service-owned aggregate state.
 - Build read models shaped for Web queries without cross-service joins.
 - Scale and index projections independently from command processing.
 - Accept observable projection lag; support replay, rebuild, and reconciliation.
 
-The NoSQL stores are **derived query models**, not new shared sources of truth.
+`insurance_offers` is authoritative aggregate state; `rental_views` is a
+derived query model. Technology alone does not decide whether data is a
+projection—ownership and derivation do.
 
 ## Module investigation
 

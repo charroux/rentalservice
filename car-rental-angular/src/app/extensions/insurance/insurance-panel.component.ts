@@ -24,6 +24,7 @@ import {InsuranceService} from './insurance.service';
         <p *ngIf="offer.status === 'ACCEPTED'">✅ Complementary insurance added</p>
       </ng-container>
       <p *ngIf="!loading && !offer">No insurance offer is currently available.</p>
+      <p class="eventual-consistency" *ngIf="loading">The rental view may take a few seconds to catch up.</p>
     </section>
   `,
   styles: [`
@@ -41,6 +42,7 @@ import {InsuranceService} from './insurance.service';
       background: #1976d2;
       cursor: pointer;
     }
+    .eventual-consistency { color: #555; font-size: 0.9rem; }
   `]
 })
 export class InsurancePanelComponent implements RentalExtensionComponent, OnInit {
@@ -64,9 +66,14 @@ export class InsurancePanelComponent implements RentalExtensionComponent, OnInit
   }
 
   accept(): void {
+    this.loading = true;
     this.insurance.accept(this.context.auctionResult.rentalId).subscribe({
-      next: offer => this.offer = offer,
+      next: offer => {
+        this.offer = offer;
+        this.loading = false;
+      },
       error: error => {
+        this.loading = false;
         console.error('Unable to accept insurance offer:', error);
         alert('The insurance offer could not be accepted.');
       }
