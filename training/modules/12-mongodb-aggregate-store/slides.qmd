@@ -19,6 +19,16 @@ format:
 - reason about document atomicity and schema evolution
 - compare the MongoDB aggregate with the former SQL mapping
 
+## Prerequisite: direct document manipulation
+
+[Tutorial 11b](../11b-mongodb-with-mongosh/slides.qmd) introduces BSON,
+embedded documents, update operators, indexes, query plans, aggregation, and
+single-document atomicity directly in `mongosh`.
+
+This module now applies those mechanics to production code: Spring Data maps
+the domain aggregate, unique indexes enforce business identities, and a MongoDB
+transaction commits the aggregate together with its outbox intent.
+
 ## Persistence migration, not a projection
 
 `InsuranceOffer` is business state: it owns the `PROPOSED → ACCEPTED`

@@ -1,0 +1,232 @@
+---
+title: "MongoDB Documents with mongosh"
+subtitle: "Tutorial 11b · From document modeling to direct manipulation"
+format:
+  revealjs:
+    theme: simple
+    css: ../../slides.css
+    slide-number: true
+    transition: fade
+    width: 1280
+    height: 720
+---
+
+## Learning objectives
+
+By the end of this tutorial, you should be able to:
+
+- distinguish databases, collections, documents, embedded documents, and arrays
+- recognize BSON values that have no direct JSON equivalent
+- choose between embedding and referencing from concrete access patterns
+- create, read, update, and delete documents with `mongosh`
+- create a unique index and inspect a query plan
+- build a small aggregation pipeline
+- explain what MongoDB guarantees atomically for one document
+
+## From Redis structures to MongoDB documents
+
+Redis exposes several structures with distinct commands: Strings, Hashes,
+Sets, Sorted Sets, and Lists. MongoDB starts from one richer unit: the BSON
+document.
+
+| MongoDB structure | Role |
+|---|---|
+| Database | Namespace grouping related collections |
+| Collection | Set of documents serving one responsibility |
+| Document | Record made of fields and values |
+| Embedded document | Nested data owned by its parent |
+| Array | Ordered values or embedded documents |
+| Index | Additional access path over one or more fields |
+
+A collection can contain documents with different shapes, but the application
+still owns a schema and its evolution.
+
+## JSON shape, BSON values
+
+MongoDB stores BSON, a binary document format that adds useful types to JSON.
+
+```javascript
+{
+  _id: ObjectId("..."),
+  rentalId: "RENT-42",
+  startedAt: ISODate("2026-10-21T08:00:00Z"),
+  price: Decimal128("149.90"),
+  vehicle: { plateNumber: "EDU-042", category: "SUV" },
+  options: ["GPS", "CHILD_SEAT"]
+}
+```
+
+`ObjectId`, dates, decimals, integers, binary values, embedded documents, and
+arrays retain type information. That type is part of the data contract.
+
+## The document is the usual atomic boundary
+
+```{mermaid}
+flowchart LR
+  Rental[Rental document] --> Vehicle[Embedded vehicle]
+  Rental --> Price[Embedded price]
+  Rental --> Options[Options array]
+```
+
+When these values are read and changed together, embedding makes the aggregate
+available in one read and lets one write update it atomically.
+
+Embedding is not “put everything in one document.” MongoDB documents have a
+size limit, unbounded arrays keep growing, and independently owned data may
+need a separate collection.
+
+## Embed or reference? {.smaller}
+
+| Question | Embed | Reference |
+|---|---|---|
+| Is the child read with the parent? | Usually | Not necessarily |
+| Is its lifecycle owned by the parent? | Yes | Often independent |
+| Must both change atomically? | Fits one document | May require coordination |
+| Can the relationship grow without bound? | Risky | Easier to bound separately |
+| Is the same value shared by many parents? | Duplication is explicit | Shared identity is explicit |
+
+Start from reads, writes, cardinality, ownership, and growth. Do not translate
+relational tables mechanically into collections.
+
+## One model shaped by access patterns
+
+The tutorial uses a rental document for these operations:
+
+- load a rental by `rentalId`;
+- list open rentals for a vehicle category;
+- add or remove an option;
+- change `OPEN` to `CONFIRMED` only once;
+- calculate revenue grouped by category.
+
+```javascript
+{
+  rentalId: "RENT-42",
+  customerId: "CUSTOMER-7",
+  vehicle: { plateNumber: "EDU-042", category: "SUV" },
+  status: "OPEN",
+  options: ["GPS"],
+  price: { amount: Decimal128("149.90"), currency: "EUR" },
+  days: 3
+}
+```
+
+## `mongosh` makes the storage model visible
+
+```powershell
+docker compose --env-file .env.dev -f docker-compose.dev.yml `
+  up -d mongodb mongodb-init
+
+docker compose --env-file .env.dev -f docker-compose.dev.yml `
+  exec mongodb mongosh
+```
+
+The shell evaluates JavaScript-like expressions and prints the server's BSON
+results. The lab uses only the disposable `rental_training` database; it does
+not touch `insurance` or `rental_query`.
+
+## CRUD: commands map to intentions {.smaller}
+
+| Intention | `mongosh` operation |
+|---|---|
+| Create one or many documents | `insertOne()`, `insertMany()` |
+| Filter documents | `find()`, `findOne()` |
+| Return selected fields | second argument to `find()` |
+| Change selected fields | `updateOne()` with update operators |
+| Replace the complete shape | `replaceOne()` |
+| Delete documents | `deleteOne()`, `deleteMany()` |
+
+```javascript
+db.rentals.find(
+  { status: "OPEN", "vehicle.category": "SUV" },
+  { _id: 0, rentalId: 1, "price.amount": 1 }
+)
+```
+
+The first document is a filter. The second is a field projection—not the
+event-fed query projection introduced later in Module 13.
+
+## Updates use explicit operators
+
+```javascript
+db.rentals.updateOne(
+  { rentalId: "RENT-42" },
+  {
+    $set: { status: "CONFIRMED" },
+    $addToSet: { options: "CHILD_SEAT" },
+    $inc: { days: 1 }
+  }
+)
+```
+
+- `$set` replaces selected field values;
+- `$inc` performs a numeric read-modify-write on the server;
+- `$push` appends even when the value already exists;
+- `$addToSet` adds only when absent;
+- `$pull` removes matching array values.
+
+Update operators preserve fields that the command does not mention.
+
+## Indexes encode supported access paths
+
+```javascript
+db.rentals.createIndex({ rentalId: 1 }, { unique: true })
+db.rentals.createIndex({ status: 1, "vehicle.category": 1 })
+db.rentals.getIndexes()
+```
+
+- The unique index enforces one current document per `rentalId`.
+- The compound index supports a known filter prefix.
+- Every index consumes storage and adds work to writes.
+- An index does not replace the application's business invariants.
+
+Use `explain("executionStats")` to compare the query plan with the intended
+access path instead of assuming that an index is used.
+
+## Aggregation is a document pipeline
+
+```javascript
+db.rentals.aggregate([
+  { $match: { status: "CONFIRMED" } },
+  { $group: {
+      _id: "$vehicle.category",
+      rentalCount: { $sum: 1 },
+      totalDays: { $sum: "$days" }
+  } },
+  { $sort: { rentalCount: -1, _id: 1 } }
+])
+```
+
+Each stage receives documents and emits documents for the next stage. Pipelines
+can filter, reshape, group, join, and calculate, but their cost still depends
+on cardinality, indexes, memory, and data distribution.
+
+## Atomic conditional state transition
+
+```javascript
+db.rentals.updateOne(
+  { rentalId: "RENT-42", status: "OPEN" },
+  { $set: { status: "CONFIRMED", confirmedAt: new Date() } }
+)
+```
+
+The filter is part of the write. The first matching transition reports one
+modified document; repeating it reports none because the state is no longer
+`OPEN`.
+
+This protects one document from a lost state transition. It does not make a
+multi-document workflow or an external message publication atomic.
+
+## What this tutorial proves—and does not
+
+It proves that you can:
+
+- model owned data as a bounded document;
+- manipulate it directly without an object mapper;
+- enforce and inspect an indexed access path;
+- express a conditional atomic update;
+- aggregate stored documents.
+
+It does not yet cover Spring Data repositories, multi-document transactions,
+the transactional outbox, event idempotence, or rebuildable read models.
+
+Continue with [Lab 11b](lab.md), then [Module 12](../12-mongodb-aggregate-store/slides.qmd).

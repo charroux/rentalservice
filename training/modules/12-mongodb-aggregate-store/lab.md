@@ -4,6 +4,10 @@
 
 Migrate and verify the insurance aggregate without confusing it with a read projection.
 
+Complete [Tutorial 11b](../11b-mongodb-with-mongosh/lab.md) first. This lab
+assumes that you can inspect BSON documents, nested fields, indexes, and query
+plans directly with `mongosh`.
+
 ## Tasks
 
 1. Start MongoDB, Redis, the router, and `insuranceService`.

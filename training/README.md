@@ -10,10 +10,11 @@ Modules 01 to 13 form the testable course. Each module contains a RevealJS
 deck and a lab. Modules 12 and 13 distinguish aggregate persistence from a
 query projection; Redis Streams remains a future comparison in `roadmap.qmd`.
 
-The NoSQL sequence has two parts:
+The NoSQL sequence has three parts:
 
 1. data models, aggregate design, consistency, and technology selection;
-2. Redis data structures, persistence, and messaging semantics.
+2. Redis data structures, persistence, and messaging semantics;
+3. MongoDB document manipulation, aggregate persistence, and query projections.
 
 Tutorial 08b bridges Redis CLI and Java with two isolated Spring Boot services
 connected by one Redis List. Its standalone code lives under
@@ -21,6 +22,12 @@ connected by one Redis List. Its standalone code lives under
 rental platform implementation. The companion 08b+ assignment evolves this
 deliberately naive delivery into acknowledgement, recovery, and idempotence;
 its optional tracks expose the limits of building messaging semantics on Lists.
+
+Tutorial 11b introduces MongoDB through `mongosh` before Spring Data hides the
+storage operations. Learners manipulate an isolated `rental_training` database
+to practise BSON, nested documents, CRUD, update operators, indexes, query
+plans, aggregation pipelines, and single-document atomicity. Modules 12 and 13
+then apply that foundation to the insurance aggregate and rental projection.
 
 ## Review workflow
 

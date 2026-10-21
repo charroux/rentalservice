@@ -21,6 +21,7 @@ graduate computer science students and software professionals.
 9. [Event-driven architecture with Redis Lists](modules/09-event-driven-lists/slides.qmd)
 10. [Consumer decoupling and application extensions](modules/10-consumer-decoupling/slides.qmd)
 11. [Operability and architectural evaluation](modules/11-operability-evaluation/slides.qmd)
+    - [Tutorial 11b: MongoDB documents with mongosh](modules/11b-mongodb-with-mongosh/slides.qmd)
 12. [MongoDB as an aggregate store](modules/12-mongodb-aggregate-store/slides.qmd)
 13. [MongoDB as a query projection](modules/13-mongodb-query-projection/slides.qmd)
 
