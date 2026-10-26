@@ -190,9 +190,12 @@ insurance offer already exists.
 ```powershell
 docker compose up --build -d redis rental-producer
 
-curl.exe -X POST http://localhost:8091/rentals `
-  -H "Content-Type: application/json" `
-  -d '{"rentalId":"RENT-42","vehicleId":"CAR-7","dailyPrice":62}'
+$body = @{
+  rentalId = "RENT-42"; vehicleId = "CAR-7"; dailyPrice = 62
+} | ConvertTo-Json -Compress
+
+Invoke-RestMethod -Method Post -Uri "http://localhost:8091/rentals" `
+  -ContentType "application/json" -Body $body
 ```
 
 Now inspect exactly what Java wrote:
@@ -203,6 +206,28 @@ docker compose exec redis redis-cli `
 ```
 
 An offline consumer does not lose a value already retained in the List.
+
+## Windows shells do not quote JSON alike {.smaller}
+
+The PowerShell example uses `ConvertTo-Json`, which avoids manual escaping.
+
+From `cmd.exe`, escape every JSON double quote:
+
+```cmd
+curl.exe -X POST http://localhost:8091/rentals ^
+  -H "Content-Type: application/json" ^
+  -d "{\"rentalId\":\"RENT-42\",\"vehicleId\":\"CAR-7\",\"dailyPrice\":62}"
+```
+
+Bash-style single-quoted JSON must not be copied unchanged to `cmd.exe`:
+single quotes become request characters, the body is invalid JSON, and Spring
+returns HTTP `400 Bad Request`.
+
+For diagnostics:
+
+```powershell
+docker compose logs --tail 100 rental-producer
+```
 
 ## Consumer: poll one value
 
@@ -248,7 +273,7 @@ docker compose logs -f insurance-consumer
 Then query the result:
 
 ```powershell
-curl.exe http://localhost:8092/insurance/offers/RENT-42
+Invoke-RestMethod http://localhost:8092/insurance/offers/RENT-42
 ```
 
 Expected premium: `7` EUR/day because 10% of 62 rounds up to 7.

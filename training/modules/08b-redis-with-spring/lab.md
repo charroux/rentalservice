@@ -11,7 +11,7 @@ Estimated time: 60–75 minutes.
 ## Prerequisites
 
 - Docker with Compose
-- `curl.exe` on Windows, or an equivalent HTTP client
+- PowerShell `Invoke-RestMethod`, `curl`, or an equivalent HTTP client
 - Module 08 completed
 - The repository root as the current directory
 
@@ -35,12 +35,32 @@ docker compose up --build -d redis rental-producer
 docker compose ps
 ```
 
-Create one rental:
+Create one rental from PowerShell. Generate the JSON rather than relying on
+shell-specific quote handling:
 
 ```powershell
-curl.exe -X POST http://localhost:8091/rentals `
-  -H "Content-Type: application/json" `
-  -d '{"rentalId":"RENT-42","vehicleId":"CAR-7","dailyPrice":62}'
+$body = @{
+  rentalId = "RENT-42"
+  vehicleId = "CAR-7"
+  dailyPrice = 62
+} | ConvertTo-Json -Compress
+
+Invoke-RestMethod -Method Post -Uri "http://localhost:8091/rentals" `
+  -ContentType "application/json" -Body $body
+```
+
+If you use `cmd.exe` instead, escape the JSON double quotes:
+
+```cmd
+curl.exe -X POST http://localhost:8091/rentals -H "Content-Type: application/json" -d "{\"rentalId\":\"RENT-42\",\"vehicleId\":\"CAR-7\",\"dailyPrice\":62}"
+```
+
+Do not use Bash-style single-quoted JSON unchanged in `cmd.exe`. The apostrophes
+become part of the request body, so Spring responds with HTTP `400 Bad Request`.
+If a request still fails, inspect the service:
+
+```powershell
+docker compose logs --tail 100 rental-producer
 ```
 
 Record the HTTP status, `eventId`, and `queueSize`.
@@ -75,7 +95,7 @@ docker compose logs --tail 50 insurance-consumer
 Query the calculated offer:
 
 ```powershell
-curl.exe http://localhost:8092/insurance/offers/RENT-42
+Invoke-RestMethod http://localhost:8092/insurance/offers/RENT-42
 ```
 
 Verify with `LLEN`, `EXISTS`, and `TYPE` what happened to the List after its last
