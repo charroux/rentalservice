@@ -1,0 +1,562 @@
+---
+title: "Sample Solution 08 · Redis Data and Messaging"
+subtitle: "Public reference solution"
+---
+
+## Scope and startup
+
+This solution follows the validated Lab 08. All disposable keys use the
+`training:` prefix so that the application queues remain untouched.
+
+From the repository root:
+
+```powershell
+docker compose --env-file .env.dev -f docker-compose.dev.yml up -d redis
+docker compose --env-file .env.dev -f docker-compose.dev.yml ps redis
+docker compose --env-file .env.dev -f docker-compose.dev.yml exec redis redis-cli PING
+```
+
+The expected answer to `PING` is `PONG`. If `exec` says that the service is not
+running, inspect it before attempting to open the client:
+
+```powershell
+docker compose --env-file .env.dev -f docker-compose.dev.yml logs redis
+```
+
+Then start the interactive client:
+
+```powershell
+docker compose --env-file .env.dev -f docker-compose.dev.yml exec redis redis-cli
+```
+
+Redis CLI usually displays integers as `(integer) n`, bulk strings in quotes,
+and an absent value as `(nil)`. Exact decoration can vary between CLI versions;
+the semantic values below are what matter.
+
+## Part A: Inspect the keyspace safely
+
+### Commands and expected results
+
+```redis
+SET training:probe demo
+```
+
+Expected: `OK`.
+
+```redis
+EXISTS training:probe
+TYPE training:probe
+TTL training:probe
+```
+
+Expected, in order:
+
+- `1`: one requested key exists;
+- `string`: the key contains a Redis String;
+- `-1`: the key exists but has no expiration.
+
+Add a lifetime and observe it:
+
+```redis
+EXPIRE training:probe 60
+TTL training:probe
+TTL training:probe
+```
+
+`EXPIRE` returns `1`. Both TTL values should be between `0` and `60`, with the
+second less than or equal to the first. TTL resolution is one second, so two
+immediate reads can return the same value.
+
+```redis
+DEL training:probe
+TTL training:probe
+```
+
+`DEL` returns `1`; the final `TTL` returns `-2` because the key no longer
+exists. Thus, `-1` means **existing key without expiry**, while `-2` means
+**missing key**.
+
+Inspect the exercise namespace incrementally:
+
+```redis
+SCAN 0 MATCH training:* COUNT 100
+```
+
+The first item in the reply is a cursor. If it is not `0`, use it in the next
+call:
+
+```redis
+SCAN <returned-cursor> MATCH training:* COUNT 100
+```
+
+Repeat until Redis returns cursor `0`. `COUNT 100` is a work hint, not a strict
+number of results. A scan can return an empty batch before completion and may
+return duplicates while the keyspace changes.
+
+`KEYS *` walks the entire keyspace in one blocking command. `SCAN` divides that
+work into short incremental calls and is therefore safer for production
+inspection, although the caller must manage the cursor and possible duplicates.
+
+## Part B: String — value, counter, and conditional write
+
+### Ordinary values and multiple reads
+
+```redis
+SET training:rental:RENT-42:status PENDING
+GET training:rental:RENT-42:status
+SET training:rental:RENT-42:status CONFIRMED
+GET training:rental:RENT-42:status
+```
+
+Both writes return `OK`; the reads return `PENDING`, then `CONFIRMED`. A plain
+`SET` replaces the previous value.
+
+```redis
+SET training:rental:RENT-42:summary "Tesla Model 3 | 62 EUR" EX 300
+TTL training:rental:RENT-42:summary
+MGET training:rental:RENT-42:status training:rental:RENT-42:summary
+```
+
+The TTL is at most 300 seconds. `MGET` returns both independent String values in
+the requested order and saves network round trips compared with two `GET`s.
+
+### Atomic counter
+
+```redis
+DEL training:metrics:auctions
+INCR training:metrics:auctions
+INCRBY training:metrics:auctions 5
+GET training:metrics:auctions
+```
+
+Expected results are `0`, `1`, `6`, then the String value `6`. `INCR` treats an
+absent key as zero and performs the read-modify-write atomically. Concurrent
+clients therefore do not lose increments.
+
+An invalid numeric value demonstrates type validation:
+
+```redis
+SET training:not-a-counter hello
+INCR training:not-a-counter
+```
+
+The second command returns an error similar to `ERR value is not an integer or
+out of range`; the original value remains `hello`.
+
+### Conditional creation
+
+```redis
+DEL training:claim:RENT-42
+SET training:claim:RENT-42 worker-1 NX EX 30
+SET training:claim:RENT-42 worker-2 NX EX 30
+GET training:claim:RENT-42
+TTL training:claim:RENT-42
+```
+
+The first conditional write returns `OK`. The second returns `(nil)` because
+`NX` permits creation only when the key is absent. The stored owner remains
+`worker-1` until the key is deleted or expires.
+
+This pattern is useful for short-lived ownership, but a production distributed
+lock needs more:
+
+- a unique, unpredictable token per acquisition—not only a worker name;
+- an ownership-checked release, normally an atomic Lua script that deletes the
+  key only if its value still matches the caller's token;
+- a lease duration and renewal strategy compatible with the protected work;
+- a clear failure model when processes pause, networks partition, or leases
+  expire during work.
+
+Without ownership checking, an old owner could delete a lock that expired and
+was subsequently acquired by another worker.
+
+## Part C: Hash — update fields independently
+
+Start from a known state:
+
+```redis
+DEL training:rental:RENT-42
+HSET training:rental:RENT-42 status CONFIRMED carModel "Model 3" finalPrice 62 retryCount 0
+```
+
+`HSET` returns `4`, because it added four fields.
+
+```redis
+HGET training:rental:RENT-42 status
+HMGET training:rental:RENT-42 carModel finalPrice
+HGETALL training:rental:RENT-42
+HLEN training:rental:RENT-42
+```
+
+Expected observations:
+
+- `HGET` returns `CONFIRMED`;
+- `HMGET` returns `Model 3` and `62` in the requested order;
+- `HGETALL` returns all four field/value pairs;
+- `HLEN` returns `4`.
+
+Redis does not promise a meaningful presentation order for Hash fields. Code
+must access them by field name, not by their displayed position.
+
+```redis
+HINCRBY training:rental:RENT-42 retryCount 1
+HEXISTS training:rental:RENT-42 finalPrice
+HDEL training:rental:RENT-42 retryCount
+HLEN training:rental:RENT-42
+```
+
+The expected results are `1`, `1`, `1`, and `3`. `HINCRBY` updates the numeric
+field atomically. `HDEL` removes exactly one existing field.
+
+Now compare field creation with field replacement:
+
+```redis
+HSET training:rental:RENT-42 status ACTIVE
+HGET training:rental:RENT-42 status
+```
+
+The `HSET` result is `0`, even though the value changed: its integer result
+counts **new fields added**, not existing fields updated. The read returns
+`ACTIVE`.
+
+```redis
+EXPIRE training:rental:RENT-42 300
+TTL training:rental:RENT-42
+```
+
+The lifetime applies to the Hash key and therefore to all its fields together.
+Portable Redis designs do not attach independent TTLs to individual Hash
+fields; separate keys are appropriate when fields require different lifetimes.
+
+## Part D: Set — unique membership and set algebra
+
+```redis
+DEL training:car:42:features training:request:required
+SADD training:car:42:features electric automatic gps gps
+SADD training:request:required automatic gps child-seat
+```
+
+The first `SADD` returns `3`, not `4`, because the duplicate `gps` is not added.
+The second also returns `3`.
+
+```redis
+SCARD training:car:42:features
+SISMEMBER training:car:42:features gps
+SISMEMBER training:car:42:features sunroof
+SMISMEMBER training:car:42:features gps sunroof
+```
+
+Expected results:
+
+- `SCARD`: `3` unique car features;
+- `SISMEMBER gps`: `1`;
+- `SISMEMBER sunroof`: `0`;
+- `SMISMEMBER`: one result per requested member, here `1` then `0`.
+
+```redis
+SINTER training:car:42:features training:request:required
+SDIFF training:request:required training:car:42:features
+```
+
+The intersection contains `automatic` and `gps`. The directional difference
+contains `child-seat`, the required feature missing from the car. Reversing the
+two keys in `SDIFF` answers a different question.
+
+```redis
+SREM training:car:42:features gps
+SMEMBERS training:car:42:features
+SCARD training:car:42:features
+```
+
+`SREM` returns `1`; the remaining Set contains `electric` and `automatic`, and
+its cardinality is `2`.
+
+A Set is unsuitable for display order because it models unordered unique
+membership. Use a List for an explicit sequence or a Sorted Set when ordering
+is derived from a score. `SMEMBERS` materializes the entire Set; inspect a very
+large Set incrementally with `SSCAN` and its returned cursor.
+
+## Part E: Sorted Set — ranking and score ranges
+
+```redis
+DEL training:insurance:offers
+ZADD training:insurance:offers 12.5 OFFER-A 9 OFFER-B 16 OFFER-C
+```
+
+`ZADD` returns `3` because it added three new members.
+
+```redis
+ZRANGE training:insurance:offers 0 -1 WITHSCORES
+```
+
+Expected ascending result:
+
+```text
+OFFER-B  9
+OFFER-A  12.5
+OFFER-C  16
+```
+
+```redis
+ZRANGE training:insurance:offers 0 1 WITHSCORES
+ZRANK training:insurance:offers OFFER-A
+ZSCORE training:insurance:offers OFFER-A
+ZRANGE training:insurance:offers 0 12.5 BYSCORE WITHSCORES
+```
+
+The first command returns `OFFER-B` and `OFFER-A`. `ZRANK` returns `1` because
+ranks are zero-based; `ZSCORE` returns `12.5`. The score-range query returns
+offers B and A because both bounds are inclusive by default.
+
+```redis
+ZINCRBY training:insurance:offers -1 OFFER-A
+ZSCORE training:insurance:offers OFFER-A
+ZADD training:insurance:offers 10 OFFER-B
+ZCARD training:insurance:offers
+ZRANGE training:insurance:offers 0 -1 WITHSCORES
+```
+
+`OFFER-A` now costs `11.5`. Re-adding `OFFER-B` returns `0`: its score changes
+from 9 to 10, but its unique member identity is not duplicated. Cardinality
+remains `3`.
+
+```redis
+ZREM training:insurance:offers OFFER-C
+ZCARD training:insurance:offers
+```
+
+Both commands return `1` then `2`: one member was removed and two remain.
+
+Equal scores are resolved lexicographically by member:
+
+```redis
+ZADD training:insurance:offers 20 OFFER-Z 20 OFFER-D
+ZRANGE training:insurance:offers 20 20 BYSCORE WITHSCORES
+```
+
+`OFFER-D` appears before `OFFER-Z`. Applications needing another tie-breaker
+must encode it in the score or member, with due care for precision and identity.
+
+## Part F: List — FIFO and recoverable processing
+
+### FIFO behavior
+
+```redis
+DEL training:queue:ready training:queue:processing
+RPUSH training:queue:ready event-1 event-2 event-3
+LLEN training:queue:ready
+LRANGE training:queue:ready 0 9
+LPOP training:queue:ready
+LRANGE training:queue:ready 0 9
+```
+
+Expected results:
+
+- `RPUSH` returns the new length, `3`;
+- the first range contains `event-1`, `event-2`, `event-3`;
+- `LPOP` returns `event-1`;
+- the remaining range contains `event-2`, `event-3`.
+
+Appending on the right and consuming on the left preserves first-in,
+first-out order.
+
+### Move, process, and acknowledge
+
+```redis
+LMOVE training:queue:ready training:queue:processing LEFT RIGHT
+LRANGE training:queue:ready 0 9
+LRANGE training:queue:processing 0 9
+```
+
+`LMOVE` returns `event-2`. It atomically removes that item from `ready` and
+appends it to `processing`. At this point, `ready` contains `event-3` and
+`processing` contains `event-2`.
+
+After the business transaction succeeds, acknowledge the exact processed
+value:
+
+```redis
+LREM training:queue:processing 1 event-2
+LLEN training:queue:processing
+```
+
+Both commands return `1` then `0`. This acknowledgement is an application
+protocol; Redis Lists do not provide a native acknowledgement operation.
+
+### Failure and recovery
+
+```redis
+LMOVE training:queue:ready training:queue:processing LEFT RIGHT
+LRANGE training:queue:processing 0 9
+```
+
+The moved value is `event-3`. Simulate a crash by deliberately omitting `LREM`.
+Recovery can return the last processing item to the front of the ready queue:
+
+```redis
+LMOVE training:queue:processing training:queue:ready RIGHT LEFT
+LRANGE training:queue:ready 0 9
+LLEN training:queue:processing
+```
+
+The ready List contains `event-3` again and processing is empty.
+
+Two consumers using destructive `LPOP` compete: Redis executes each command
+atomically, so one item is removed and returned to only one caller. This is why
+two independent services must not share one delivery List when both must see
+every event.
+
+`BLPOP` and `BLMOVE` wait until data is available or their timeout expires;
+they avoid repeated empty polling. A timeout of `0` waits indefinitely.
+
+At-least-once recovery can create a duplicate if the consumer commits its
+database transaction and crashes before `LREM`. The processing item is later
+returned and delivered again. A stable event ID plus a database uniqueness
+constraint or processed-event table makes repeated handling idempotent.
+
+Finally, `LRANGE 0 -1` transfers an entire List to the client. It is convenient
+for these tiny exercise queues but can consume substantial CPU, network, and
+client memory on a large queue. Production diagnostics should use `LLEN` and a
+bounded range such as `LRANGE key 0 99`.
+
+## Part G: Persistence and messaging choices
+
+### Persistence experiment
+
+The Compose configuration contains:
+
+```yaml
+volumes:
+  - redis-data:/data
+command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+```
+
+`--appendonly yes` enables the append-only file, while the named Docker volume
+keeps `/data` outside the lifecycle of an individual container.
+
+In Redis:
+
+```redis
+SET training:persistence:check survives-restart
+GET training:persistence:check
+```
+
+Leave the client, then restart only Redis:
+
+```powershell
+docker compose --env-file .env.dev -f docker-compose.dev.yml restart redis
+docker compose --env-file .env.dev -f docker-compose.dev.yml exec redis redis-cli GET training:persistence:check
+```
+
+Expected: `survives-restart`. The restart keeps the named volume, and Redis
+reconstructs its state from persisted data.
+
+`docker compose --env-file .env.dev -f docker-compose.dev.yml down -v` would
+remove the Compose containers **and named volumes**, including `redis-data`.
+The lab correctly asks learners to explain but not execute it: it would erase
+the local Redis dataset.
+
+::: {.callout-warning title="Persistence is not a complete durability guarantee"}
+The current configuration also uses `maxmemory-policy allkeys-lru`. Under
+memory pressure, Redis may evict any key, including a queue. AOF persists the
+resulting state; it does not resurrect deliberately evicted messages. A
+production queue requires a compatible eviction policy, capacity planning,
+monitoring, backups, and tested restoration.
+:::
+
+### Messaging comparison
+
+| Property | Pub/Sub | Lists | Streams |
+|---|---|---|---|
+| Event sent while consumer is offline | Lost for that consumer | Retained while the List/key survives | Retained while the Stream entry survives |
+| Multiple consumers of one logical subscription | Broadcast to connected subscribers; no durable ownership | Compete destructively for List items | Share work within one consumer group |
+| Independent services each need every event | Each must be connected when published | Give each service its own List | Give each service its own consumer group |
+| Acknowledgement | None | Application convention such as processing List + `LREM` | Native pending entries and `XACK` |
+| Replay/history | None | Manual and limited by the chosen List protocol | Range reads and retained entries |
+| Current repository use | No | Yes | Planned parallel architecture |
+
+The platform's router consumes the published List once and copies each relevant
+event into a consumer-specific ready List. Rental and Insurance therefore do
+not compete for the same event. Each service owns:
+
+- its ready and processing delivery state;
+- its retry and recovery timing;
+- its idempotence records;
+- its business transaction and failure handling.
+
+If both services called `LPOP` or `LMOVE` on the same List, each event would be
+removed by only one of them. Some events would reach Rental and others
+Insurance, which is load sharing—not broadcast. Separate routed Lists emulate
+independent subscriptions using the current Redis List transport. Streams
+could later express independent subscriptions as distinct consumer groups and
+provide retained history, pending-entry inspection, and stronger replay tools,
+at the cost of additional concepts and operational management.
+
+## Access-pattern summary
+
+| Access pattern | Structure | Reason |
+|---|---|---|
+| Store one status or cached summary | String | Direct lookup and optional TTL |
+| Increment a metric | String | Atomic `INCR`/`INCRBY` |
+| Update selected rental attributes | Hash | Independent named fields below one key |
+| Test feature eligibility | Set | Unique membership and set algebra |
+| Rank offers by price | Sorted Set | Unique members ordered and filtered by score |
+| Deliver work in order | List | Ordered append/pop and atomic ready-to-processing move |
+
+## Review-question answers
+
+1. **TTL:** cache summaries, temporary claims, leases, and other explicitly
+   temporary data need a TTL. Ready and processing queues must not expire while
+   they contain unprocessed work unless the business explicitly accepts loss.
+2. **Atomicity:** individual commands such as `INCR`, `HINCRBY`, `SADD`, and
+   `LMOVE` are atomic. Business processing still spans the queue move, database
+   transaction, and acknowledgement; idempotence bridges failures between them.
+3. **Unbounded growth:** persistent keys without TTL, Sets, Sorted Sets, and
+   especially ready/processing Lists can grow indefinitely. Monitor depth,
+   oldest-item age, memory, eviction, and failed recovery.
+4. **Durability assumptions:** AOF policy and flush behavior, volume retention,
+   eviction policy, memory limits, replication, backup/restore, and tolerated
+   loss windows all matter. Persistence alone does not mean zero loss.
+5. **Selection:** Set for eligibility, Sorted Set for ranking, Hash for object
+   fields, String for counters, and List for the current work-queue protocol.
+   The access pattern—not the data's superficial appearance—drives the choice.
+
+## Cleanup
+
+First inspect the namespace and complete every returned cursor:
+
+```redis
+SCAN 0 MATCH training:* COUNT 100
+```
+
+Then delete only the exercise keys that were created:
+
+```redis
+DEL training:rental:RENT-42:status training:rental:RENT-42:summary
+DEL training:metrics:auctions training:claim:RENT-42 training:not-a-counter
+DEL training:rental:RENT-42
+DEL training:car:42:features training:request:required
+DEL training:insurance:offers
+DEL training:queue:ready training:queue:processing
+DEL training:persistence:check training:probe
+```
+
+`DEL` returns the number of keys that existed. A smaller number is normal when
+temporary keys have already expired. Never use `FLUSHDB` in this shared Redis
+database because it would also remove application queues.
+
+## Suggested rubric
+
+| Criterion | Points |
+|---|---:|
+| Safe key inspection and TTL interpretation | 2 |
+| String operations and conditional-write analysis | 3 |
+| Hash operations and field semantics | 3 |
+| Set membership and algebra | 3 |
+| Sorted Set ranking and update semantics | 3 |
+| List FIFO, acknowledgement, recovery, and duplicate analysis | 3 |
+| Persistence and durability reasoning | 2 |
+| Messaging comparison and router explanation | 1 |
+| **Total** | **20** |
+
+

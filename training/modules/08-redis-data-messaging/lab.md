@@ -197,3 +197,9 @@ database may also contain application queues.
 4. Which Redis configuration assumptions affect durability?
 5. Which structure would you choose for eligibility, ranking, object fields,
    counters, and work queues—and why?
+
+## Reference solution
+
+After completing and discussing the lab, compare your work with the
+[public reference solution](solution.qmd). Treat it as one defensible solution,
+not as the only acceptable answer.

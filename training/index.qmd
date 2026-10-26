@@ -16,6 +16,7 @@ graduate computer science students and software professionals.
 6. [Kubernetes fundamentals](modules/06-kubernetes-fundamentals/slides.qmd)
 7. [NoSQL foundations](modules/07-nosql-foundations/slides.qmd)
 8. [Redis data and messaging](modules/08-redis-data-messaging/slides.qmd)
+   - [Lab 08 public reference solution](modules/08-redis-data-messaging/solution.qmd)
    - [Tutorial 08b: Redis Lists with Spring Boot](modules/08b-redis-with-spring/slides.qmd)
    - [Independent assignment 08b+: Reliable processing](modules/08b-redis-with-spring/assignment.md)
 9. [Event-driven architecture with Redis Lists](modules/09-event-driven-lists/slides.qmd)

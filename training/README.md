@@ -50,3 +50,8 @@ After classroom testing:
 5. tag the published state.
 
 No manifest should be created before that decision.
+
+## Public solutions
+
+Only the reference solution for Lab 08 is published with the learner material.
+All other instructor solutions remain local and excluded from Git.
