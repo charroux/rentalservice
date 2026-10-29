@@ -1,5 +1,7 @@
 # Lab 11b: MongoDB documents with `mongosh`
 
+[Open the public reference solution](solution.qmd) after completing the lab.
+
 ## Goal
 
 Model and manipulate rental documents directly in MongoDB before introducing
