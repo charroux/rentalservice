@@ -1,0 +1,223 @@
+---
+title: "MongoDB with Spring Data"
+subtitle: "Tutorial 11c · From BSON documents to Java repositories"
+format:
+  revealjs:
+    theme: simple
+    css: ../../slides.css
+    slide-number: true
+    transition: fade
+    width: 1280
+    height: 720
+---
+
+## Learning objectives
+
+By the end of this tutorial, you should be able to:
+
+- configure a Spring Boot application for MongoDB
+- map an aggregate and embedded values to one BSON document
+- use `MongoRepository` for CRUD and derived queries
+- define indexes and translate a duplicate key into an HTTP response
+- inspect Spring Data's result with `mongosh`
+- decide when repository abstraction is enough and when lower-level APIs help
+
+## From `mongosh` to Spring Data
+
+Tutorial 11b made every database operation explicit. Spring Data keeps the
+same MongoDB model but moves the mapping and routine access code into Java.
+
+```{mermaid}
+flowchart LR
+  Client[HTTP client] --> Controller[RentalController]
+  Controller --> Repository[RentalRepository]
+  Repository --> Mapping[Spring Data mapping]
+  Mapping --> Mongo[(rentals collection)]
+  Shell[mongosh] -. inspect .-> Mongo
+```
+
+The abstraction does not remove the need to understand documents, access
+patterns, indexes, atomicity, or query plans.
+
+## A deliberately isolated demonstration
+
+The code lives in `training/demos/mongodb-spring-data` and does not import the
+rental platform. It has one Spring Boot process, one MongoDB container, and one
+aggregate.
+
+| Component | Local port | Responsibility |
+|---|---:|---|
+| `rental-api` | 8093 | Create and query tutorial rentals |
+| `mongodb` | 27018 | Store `rental_spring_training.rentals` |
+
+Isolation lets us learn persistence APIs before outbox, messaging, projection,
+and service integration enter the picture.
+
+## Dependency and connection
+
+```groovy
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
+}
+```
+
+```properties
+spring.data.mongodb.uri=${SPRING_DATA_MONGODB_URI:mongodb://localhost:27018/rental_spring_training}
+spring.data.mongodb.auto-index-creation=true
+```
+
+Spring Boot creates the MongoDB client, mapping converter, and repository
+implementation. Environment variables replace the local URI in Compose.
+
+## Map one aggregate to one document {.smaller}
+
+```java
+@Document(collection = "rentals")
+public record Rental(
+    @Id String id,
+    @Indexed(unique = true) @Field("rental_id") String rentalId,
+    @Indexed @Field("customer_id") String customerId,
+    Vehicle vehicle,
+    Status status,
+    List<String> options,
+    Price price,
+    @Field("created_at") Instant createdAt) {
+
+  public record Vehicle(
+      @Field("plate_number") String plateNumber,
+      String category) {}
+  public record Price(BigDecimal amount, String currency) {}
+}
+```
+
+`Vehicle` and `Price` are embedded because they belong to the rental aggregate.
+
+## Java names and stored names
+
+| Java | MongoDB | Purpose |
+|---|---|---|
+| `id` + `@Id` | `_id` | Technical document identity |
+| `rentalId` | `rental_id` | Stable business identity |
+| `customerId` | `customer_id` | Query field |
+| `vehicle.plateNumber` | `vehicle.plate_number` | Nested value |
+| `Instant` | BSON date | Time with a precise type |
+| `BigDecimal` | Decimal128 | Decimal value without binary rounding |
+
+Mapping annotations are a persistence contract. Renaming a Java property does
+not migrate documents already stored in MongoDB.
+
+## `MongoRepository`: generated CRUD
+
+```java
+public interface RentalRepository
+    extends MongoRepository<Rental, String> {
+
+  Optional<Rental> findByRentalId(String rentalId);
+
+  List<Rental> findByCustomerIdAndStatus(
+      String customerId, Rental.Status status);
+}
+```
+
+Spring supplies `save`, `findById`, `findAll`, `deleteById`, and the
+implementation of both declared methods. The method name becomes a query; it
+does not automatically create the matching index.
+
+## Save: insert or replace?
+
+```java
+Rental saved = repository.save(new Rental(
+    null, request.rentalId(), request.customerId(), request.vehicle(),
+    request.status(), request.options(), request.price(), Instant.now()));
+```
+
+- a null `@Id` normally produces an insert and MongoDB assigns `_id`;
+- an existing `@Id` normally produces an update/replacement;
+- business identity is protected separately by the unique `rental_id` index;
+- blind `save` is not a substitute for domain validation or concurrency control.
+
+Use an explicit service layer when business rules become more than mapping.
+
+## Indexes express access and integrity
+
+```java
+@Indexed(unique = true)
+@Field("rental_id")
+String rentalId
+```
+
+The unique index prevents two documents from owning the same rental identity,
+including concurrent requests. A second index on `customer_id` supports the
+tutorial query, although a compound index may better match
+`customer_id + status` at scale.
+
+`auto-index-creation=true` is convenient for a lab. Production systems usually
+manage index changes explicitly and observe their deployment cost.
+
+## Persistence failures need API semantics
+
+```java
+@RestControllerAdvice
+class ApiExceptionHandler {
+  @ExceptionHandler(DuplicateKeyException.class)
+  @ResponseStatus(HttpStatus.CONFLICT)
+  Map<String, String> duplicateKey(DuplicateKeyException exception) {
+    return Map.of("error", "A rental with this identifier already exists");
+  }
+}
+```
+
+MongoDB enforces the invariant; Spring translates the driver failure into
+`DuplicateKeyException`; the API translates it into HTTP `409 Conflict`.
+Do not expose database exception details to clients.
+
+## Keep `mongosh` in the feedback loop
+
+```javascript
+use rental_spring_training
+db.rentals.findOne({ rental_id: "RENT-42" })
+db.rentals.getIndexes()
+db.rentals.find({ customer_id: "CUSTOMER-7", status: "OPEN" })
+          .explain("executionStats")
+```
+
+Inspect the real field names, BSON types, generated `_id`, and chosen query
+plan. A repository method compiling successfully proves neither efficient
+access nor correct persisted shape.
+
+## Repository methods versus `MongoTemplate`
+
+| Prefer repositories | Consider `MongoTemplate` |
+|---|---|
+| CRUD around aggregates | Dynamic or conditional queries |
+| Stable derived queries | Partial updates with operators |
+| Simple pagination | Custom aggregation pipelines |
+| Domain-oriented interfaces | Fine control of query/update documents |
+
+Both use the same mapping infrastructure. Use the smallest abstraction that
+expresses the operation clearly; dropping lower does not make a query better
+designed.
+
+## Atomicity and transactions
+
+- One MongoDB document is the natural atomic write boundary.
+- Embedded values change atomically with their parent document.
+- A repository call does not create a transaction spanning several documents.
+- Multidocument transactions require a replica set and a
+  `MongoTransactionManager`.
+
+This tutorial intentionally needs no multidocument transaction. Module 12 adds
+one because the insurance aggregate and its outbox intent must commit together.
+
+## What Spring Data does—and does not do
+
+Spring Data provides mapping, conversions, repository implementations,
+exception translation, and integration with Spring transactions.
+
+It does **not** choose aggregate boundaries, invent access patterns, guarantee
+useful indexes, solve schema evolution, make distributed writes atomic, or
+turn a mutable aggregate into a CQRS projection.
+
+Continue with [Lab 11c](lab.md), then apply the concepts to the real
+[insurance aggregate](../12-mongodb-aggregate-store/slides.qmd).

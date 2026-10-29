@@ -4,9 +4,10 @@
 
 Migrate and verify the insurance aggregate without confusing it with a read projection.
 
-Complete [Tutorial 11b](../11b-mongodb-with-mongosh/lab.md) first. This lab
-assumes that you can inspect BSON documents, nested fields, indexes, and query
-plans directly with `mongosh`.
+Complete [Tutorial 11b](../11b-mongodb-with-mongosh/lab.md) and
+[Tutorial 11c](../11c-mongodb-with-spring-data/lab.md) first. This lab assumes
+that you can inspect BSON documents, nested fields, indexes, and query plans
+with `mongosh`, then map them with Spring Data repositories.
 
 ## Tasks
 

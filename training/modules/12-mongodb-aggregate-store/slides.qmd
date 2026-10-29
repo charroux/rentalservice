@@ -21,9 +21,10 @@ format:
 
 ## Prerequisite: direct document manipulation
 
-[Tutorial 11b](../11b-mongodb-with-mongosh/slides.qmd) introduces BSON,
-embedded documents, update operators, indexes, query plans, aggregation, and
-single-document atomicity directly in `mongosh`.
+[Tutorial 11b](../11b-mongodb-with-mongosh/slides.qmd) introduces BSON and
+document operations directly in `mongosh`. [Tutorial 11c](../11c-mongodb-with-spring-data/slides.qmd)
+then introduces mapping, repositories, derived queries, and index-backed
+integrity in an isolated Spring Boot application.
 
 This module now applies those mechanics to production code: Spring Data maps
 the domain aggregate, unique indexes enforce business identities, and a MongoDB

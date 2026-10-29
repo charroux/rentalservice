@@ -26,8 +26,11 @@ its optional tracks expose the limits of building messaging semantics on Lists.
 Tutorial 11b introduces MongoDB through `mongosh` before Spring Data hides the
 storage operations. Learners manipulate an isolated `rental_training` database
 to practise BSON, nested documents, CRUD, update operators, indexes, query
-plans, aggregation pipelines, and single-document atomicity. Modules 12 and 13
-then apply that foundation to the insurance aggregate and rental projection.
+plans, aggregation pipelines, and single-document atomicity. Tutorial 11c then
+maps the same ideas to an isolated Spring Boot application using `@Document`,
+embedded values, `MongoRepository`, derived queries, and index-backed
+integrity. Modules 12 and 13 apply that foundation to the insurance aggregate
+and rental projection.
 
 ## Review workflow
 

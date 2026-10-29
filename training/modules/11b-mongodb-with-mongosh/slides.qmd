@@ -229,4 +229,5 @@ It proves that you can:
 It does not yet cover Spring Data repositories, multi-document transactions,
 the transactional outbox, event idempotence, or rebuildable read models.
 
-Continue with [Lab 11b](lab.md), then [Module 12](../12-mongodb-aggregate-store/slides.qmd).
+Continue with [Lab 11b](lab.md), then map the same concepts with
+[Spring Data MongoDB](../11c-mongodb-with-spring-data/slides.qmd).

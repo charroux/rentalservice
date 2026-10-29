@@ -23,6 +23,7 @@ graduate computer science students and software professionals.
 10. [Consumer decoupling and application extensions](modules/10-consumer-decoupling/slides.qmd)
 11. [Operability and architectural evaluation](modules/11-operability-evaluation/slides.qmd)
     - [Tutorial 11b: MongoDB documents with mongosh](modules/11b-mongodb-with-mongosh/slides.qmd)
+    - [Tutorial 11c: MongoDB with Spring Data](modules/11c-mongodb-with-spring-data/slides.qmd)
 12. [MongoDB as an aggregate store](modules/12-mongodb-aggregate-store/slides.qmd)
 13. [MongoDB as a query projection](modules/13-mongodb-query-projection/slides.qmd)
 

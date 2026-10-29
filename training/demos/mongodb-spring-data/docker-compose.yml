@@ -1,0 +1,25 @@
+services:
+  mongodb:
+    image: mongo:7
+    ports:
+      - "27018:27017"
+    volumes:
+      - tutorial-mongodb-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand({ ping: 1 }).ok"]
+      interval: 2s
+      timeout: 2s
+      retries: 20
+
+  rental-api:
+    build: .
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://mongodb:27017/rental_spring_training
+    ports:
+      - "8093:8093"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+
+volumes:
+  tutorial-mongodb-data:
