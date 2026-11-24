@@ -1,234 +1,142 @@
-# Quick dev using Docker Compose
+# Local development with Docker Compose
 
-A ready-to-use Docker Compose file for development has been added: `docker-compose.dev.yml` and an environment file `.env.dev`.
+The development stack is defined in `docker-compose.dev.yml`. It runs the
+complete rental journey with the application services, their databases, and
+the Redis event path used by the training repositories.
 
-## Basic workflow
+## Prerequisites
 
-1. Copy or edit the example environment file (optional):
+- Docker Desktop or Docker Engine with Compose v2
+- ports 4200, 6379, 8080, 8081, 8082, 9090, 5432, and 27017 available
+- the development credentials from `.env.dev`
 
-```bash
-cp .env.dev .env
-# edit .env to change POSTGRES_USER/POSTGRES_PASSWORD/POSTGRES_DB if needed
-```
+The values in `.env.dev` are intended for local development only.
 
-2. Start the stack (build images and run all services):
+## Start the complete stack
 
-```bash
-docker compose -f docker-compose.dev.yml --env-file .env.dev up
-```
-
-This command:
-- Uses development environment variables from `.env.dev`
-- Starts PostgreSQL database
-- Starts car-rental service (REST API)
-- Starts agreement-service (gRPC)
-
-This will:
-- Build and start the Postgres database
-- Build and start the car-rental service on port 8080
-- Build and start the auction-service (gRPC) on port 9090
-- Build and start the Angular frontend on port 4200 (served by nginx)
-
-3. Run in detached mode:
+Build the service images and start the stack:
 
 ```bash
-docker compose -f docker-compose.dev.yml --env-file .env.dev up -d
+docker compose --env-file .env.dev -f docker-compose.dev.yml up --build
 ```
 
-4. View logs:
+Run it in the background:
 
 ```bash
-docker compose -f docker-compose.dev.yml logs -f car-rental
+docker compose --env-file .env.dev -f docker-compose.dev.yml up --build -d
 ```
 
-5. Stop and remove containers:
+Inspect service state and logs:
 
 ```bash
-docker compose -f docker-compose.dev.yml --env-file .env.dev down
+docker compose --env-file .env.dev -f docker-compose.dev.yml ps
+docker compose --env-file .env.dev -f docker-compose.dev.yml logs -f
 ```
 
-Note: Add `-v` flag to also remove volumes (this will delete persistent data):
-```bash
-docker compose -f docker-compose.dev.yml --env-file .env.dev down -v
+## Services
+
+| Compose service | Role | Host access |
+|---|---|---|
+| `frontend-angular` | Angular frontend served by nginx | <http://localhost:4200> |
+| `car-rental` | Rental REST API and event producer | <http://localhost:8080> |
+| `auction-service` | Auction gRPC server | `localhost:9090` |
+| `event-router` | Redis List subscription router | internal port 8090 |
+| `insurance-service` | Insurance event consumer and API | <http://localhost:8081> |
+| `rental-query-service` | MongoDB rental projection and query API | <http://localhost:8082> |
+| `redis` | Event transport | `localhost:6379` |
+| `postgres` | Rental relational state | `localhost:5432` |
+| `mongodb` | Insurance state and rental projections | `localhost:27017` |
+| `mongodb-init` | One-shot MongoDB replica-set initialization | no host port |
+
+Persistent data is stored in the named volumes `car_rental_redis_data`,
+`car_rental_postgres_data`, and `car_rental_mongo_data`.
+
+## Event path
+
+The current event path is:
+
+```text
+car-rental
+  -> events:simple:published
+  -> event-router
+  -> one Redis List per subscription
+  -> rental, insurance, and query consumers
 ```
 
-## Commandes curl pour tester l'application
+The router reads the versioned descriptors from `contracts/subscriptions`.
+Event schemas and examples are stored under `contracts/events`.
 
-### Accès via le frontend (recommandé)
-Le frontend Angular est accessible sur http://localhost:4200 et expose les mêmes endpoints via son proxy nginx.
-
-**Via le frontend nginx (port 4200):**
-```bash
-# Lister les offres
-curl -X GET http://localhost:4200/api/offers
-
-# Participer à une enchère
-curl -X POST http://localhost:4200/api/auction/participate \
-  -H "Content-Type: application/json" \
-  -d '{"carModelId": 1}'
-```
-
-**Directement sur le backend (port 8080):**
-```bash
-# Lister les offres
-curl -X GET http://localhost:8080/offers
-
-# Participer à une enchère
-curl -X POST http://localhost:8080/auction/participate \
-  -H "Content-Type: application/json" \
-  -d '{"carModelId": 1}'
-```
-
-### 1. **Lister les offres de location (endpoint principal Angular)**
-```bash
-curl -X GET http://localhost:8080/offers
-```
-**Réponse attendue:**
-```json
-[
-  {
-    "id": 1,
-    "brand": "Ferrari",
-    "model": "F8",
-    "photoUrl": "/assets/cars/ferrari-f8.jpg",
-    "rentalPrice": 1500.00
-  },
-  {
-    "id": 2,
-    "brand": "Porsche",
-    "model": "911",
-    "photoUrl": "/assets/cars/porsche-911.jpg",
-    "rentalPrice": 900.00
-  }
-]
-```
-
-### 2. **Lister les modèles de voitures (legacy endpoint)**
-```bash
-curl -X GET http://localhost:8080/car-models
-```
-
-### 3. **Lister les voitures disponibles avec plaques (legacy endpoint)**
-```bash
-curl -X GET http://localhost:8080/cars
-```
-
-### 4. **Obtenir une voiture spécifique par plaque**
-```bash
-curl -X GET http://localhost:8080/cars/FE-001-F8
-```
-
-### 5. **Participer à une enchère (endpoint principal Angular)**
-```bash
-# Enchère avec carModelId (utilisé par Angular)
-curl -X POST http://localhost:8080/auction/participate \
-  -H "Content-Type: application/json" \
-  -d '{"carModelId": 1}'
-```
-**Réponse attendue:**
-```json
-{
-  "plateNumber": "FE-001-F8",
-  "finalPrice": 1200.00,
-  "originalPrice": 1500.00,
-  "discountAmount": 300.00,
-  "discountApplied": true
-}
-```
-
-### 6. **Soumettre une demande de location (formulaire Angular)**
-```bash
-curl -X POST "http://localhost:8080/cars/FE-001-F8?firstName=John&lastName=Doe&email=john.doe@example.com&beginDate=2025-12-01&endDate=2025-12-10"
-```
-
-### 7. **Tests d'enchères pour différents modèles**
-```bash
-# Ferrari F8 (carModelId: 1)
-curl -X POST http://localhost:8080/auction/participate \
-  -H "Content-Type: application/json" \
-  -d '{"carModelId": 1}'
-
-# Porsche 911 (carModelId: 2)
-curl -X POST http://localhost:8080/auction/participate \
-  -H "Content-Type: application/json" \
-  -d '{"carModelId": 2}'
-
-# Tesla Model S (carModelId: 3)
-curl -X POST http://localhost:8080/auction/participate \
-  -H "Content-Type: application/json" \
-  -d '{"carModelId": 3}'
-
-# Lamborghini Huracan (carModelId: 4)
-curl -X POST http://localhost:8080/auction/participate \
-  -H "Content-Type: application/json" \
-  -d '{"carModelId": 4}'
-```
-
-### 8. **Tests d'enchères simultanées**
-Pour tester la logique de concurrence, lancez plusieurs enchères en parallèle :
+Inspect the published List:
 
 ```bash
-# Terminal 1
-curl -X POST http://localhost:8080/auction/participate \
-  -H "Content-Type: application/json" \
-  -d '{"carModelId": 1}' &
-
-# Terminal 2
-curl -X POST http://localhost:8080/auction/participate \
-  -H "Content-Type: application/json" \
-  -d '{"carModelId": 1}' &
-
-# Terminal 3
-curl -X POST http://localhost:8080/auction/participate \
-  -H "Content-Type: application/json" \
-  -d '{"carModelId": 1}' &
+docker compose --env-file .env.dev -f docker-compose.dev.yml exec redis \
+  redis-cli LLEN events:simple:published
 ```
 
-## Rebuild specific services
+## Start only the infrastructure needed by a lab
+
+Redis only:
 
 ```bash
-# Rebuild single service
-docker compose -f docker-compose.dev.yml --env-file .env.dev build car-rental
-docker compose -f docker-compose.dev.yml --env-file .env.dev up -d car-rental
-
-# Rebuild frontend
-docker compose -f docker-compose.dev.yml --env-file .env.dev build frontend-angular
-docker compose -f docker-compose.dev.yml --env-file .env.dev up -d frontend-angular
-
-# Rebuild all services
-docker compose -f docker-compose.dev.yml --env-file .env.dev build
-docker compose -f docker-compose.dev.yml --env-file .env.dev up -d
+docker compose --env-file .env.dev -f docker-compose.dev.yml up -d redis
 ```
 
-## What this compose file does
+Redis and MongoDB:
 
-- Starts a Postgres container (`postgres:15`) with a persistent volume `postgres-data`.
-- Builds the `car-rental` image from `carRental/Dockerfile` and runs it with `SPRING_PROFILES_ACTIVE=prod` so the app will read Postgres connection settings from the `SPRING_DATASOURCE_*` env vars provided by compose.
-- Builds and starts the `agreement-service` gRPC server from `agreementServiceServer/Dockerfile`.
-- Exposes the following ports on the host:
-  - `8080`: car-rental REST API
-  - `9090`: auction-service gRPC endpoint
-  - `4200`: Angular frontend (nginx serves the app and proxies `/api/` to car-rental service)
+```bash
+docker compose --env-file .env.dev -f docker-compose.dev.yml up -d \
+  redis mongodb mongodb-init
+```
 
-## Frontend access
+Redis and PostgreSQL:
 
-Once the stack is running, you can access:
+```bash
+docker compose --env-file .env.dev -f docker-compose.dev.yml up -d \
+  redis postgres
+```
 
-- **Angular Frontend**: http://localhost:4200
-- **Backend API (direct)**: http://localhost:8080
-- **Backend API (via frontend proxy)**: http://localhost:4200/api/
+## Health checks
 
-The frontend nginx automatically proxies all `/api/*` requests to the `car-rental` service, so the Angular app can make API calls to `/api/offers`, `/api/auction/participate`, etc.
+Compose waits for the infrastructure health checks before starting dependent
+services. Check the Spring Boot services directly when diagnosing startup:
 
-## Healthchecks and caveats
+```bash
+curl http://localhost:8080/actuator/health
+curl http://localhost:8081/actuator/health
+curl http://localhost:8082/actuator/health
+```
 
-- The `docker-compose.dev.yml` includes healthchecks for Postgres and the `car-rental` service. The car-rental healthcheck calls the actuator `/actuator/health` endpoint. If your runtime image does not include `curl`, the healthcheck may fail — in that case either:
-    - install `curl` in the runtime image, or
-    - change the healthcheck to use a simple TCP check (nc) or remove it for local development, or
-    - run the app with a mounted development image that includes curl.
+Follow one service:
 
-## Environment overrides
+```bash
+docker compose --env-file .env.dev -f docker-compose.dev.yml logs -f event-router
+docker compose --env-file .env.dev -f docker-compose.dev.yml logs -f insurance-service
+docker compose --env-file .env.dev -f docker-compose.dev.yml logs -f rental-query-service
+```
 
-- You can override any Spring property by passing environment variables in the compose file (already wired for the datasource). For production, prefer using a secret manager or Kubernetes Secrets instead of plain env files.
+## Rebuild one service
 
-Docker Compose is suitable for quick local development. For CI and production use Kubernetes manifests in `k8s/`.
+```bash
+docker compose --env-file .env.dev -f docker-compose.dev.yml build --no-cache car-rental
+docker compose --env-file .env.dev -f docker-compose.dev.yml up -d car-rental
+```
+
+Replace `car-rental` with any Compose service that has a `build` section.
+
+## Stop and clean up
+
+Stop containers while preserving data:
+
+```bash
+docker compose --env-file .env.dev -f docker-compose.dev.yml down
+```
+
+Remove containers and all three persistent data volumes:
+
+```bash
+docker compose --env-file .env.dev -f docker-compose.dev.yml down -v
+```
+
+The `-v` form permanently deletes the local PostgreSQL, MongoDB, and Redis
+data. Use it only when a lab or troubleshooting procedure requires a clean
+state.

@@ -243,47 +243,23 @@ Lorsque vous modifiez un fichier `.proto` (comme `/auctionService/src/main/proto
 
 ## Build the Docker images (optional)
 
-Docker images for the services can be built locally. New Dockerfiles have been added to the repository:
+Each application service has its own Dockerfile:
 
-- `carRental/Dockerfile` — multi-stage builder (Gradle + JDK 21) and runtime (Temurin JRE).
-- `agreementService/Dockerfile` — builds the agreement service artifacts and packages them.
-- `agreementServiceServer/Dockerfile` — builds the gRPC server service.
-- `Dockerfile.multi` — multi-target Dockerfile at repository root with targets `carRental` and `postgres`.
+- `carRental/Dockerfile`
+- `auctionServiceServer/Dockerfile`
+- `eventRouterService/Dockerfile`
+- `insuranceService/Dockerfile`
+- `rentalQueryService/Dockerfile`
+- `car-rental-angular/Dockerfile`
 
-You can also find some images published to Docker Hub under the `charroux` namespace; if you prefer to use those, update the manifests in `k8s/` accordingly.
+Build every service image through the development Compose file:
 
-Examples — build and push to your registry (replace `charroux` with your registry/namespace):
-
-Build the car-rental image (single-service Dockerfile):
 ```bash
-docker build -f carRental/Dockerfile -t charroux/car-rental:latest .
-docker push charroux/car-rental:latest
+docker compose --env-file .env.dev -f docker-compose.dev.yml build
 ```
 
-Build the agreement-service image:
-```bash
-docker build -f agreementService/Dockerfile -t charroux/agreement-service:latest .
-docker push charroux/agreement-service:latest
-```
-
-Build the agreement-service-server image:
-```bash
-docker build -f agreementServiceServer/Dockerfile -t charroux/agreement-service-server:latest .
-docker push charroux/agreement-service-server:latest
-```
-
-Build the car-rental image using the multi-target root Dockerfile (alternate):
-```bash
-# build only the carRental target from Dockerfile.multi
-docker build -f Dockerfile.multi --target carRental -t charroux/car-rental:latest .
-docker push charroux/car-rental:latest
-```
-
-Build a custom Postgres image (optional, includes init scripts if present):
-```bash
-docker build -f Dockerfile.multi --target postgres -t charroux/postgres:15 .
-docker push charroux/postgres:15
-```
+To build a single image, pass its Compose service name, for example
+`car-rental`, `insurance-service`, or `rental-query-service`.
 
 ## Quick dev using Docker Compose
 
