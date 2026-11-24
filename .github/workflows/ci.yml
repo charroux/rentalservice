@@ -45,12 +45,6 @@ jobs:
           pytest --basetemp .tools/pytest-ci tools/training-ci/tests eventRouterService/tests
           training-ci validate-contracts contracts/events
 
-      - name: Set up Quarto
-        uses: quarto-dev/quarto-actions/setup@v2
-
-      - name: Render training material
-        run: quarto render training
-
       - name: Build Java services
         run: |
           chmod +x gradlew

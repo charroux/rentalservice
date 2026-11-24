@@ -56,13 +56,14 @@ istio-*/
 # Workspace-local development tools
 .tools/
 
+# Legacy local course copies (the maintained sources now live in separate repos)
+/training/
+/training-solutions/
+/output/
+
 # Python
 __pycache__/
 *.py[cod]
 .pytest_cache/
 *.egg-info/
 .venv/
-
-# Quarto generated output
-training/_site/
-training/.quarto/

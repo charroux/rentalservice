@@ -12,7 +12,13 @@ Projet microservives composé de :
 Au démarrage, le front angular sollicite le service REST qui demande au serveur gRPC des modèles de voitures (créés à la volée) dont il dispose. Le service REST stocke les modèles de voiture dans une base postgres et les renvoie au front. Quand l'utilisateur choisit un modèle, une requête est envoyée au service REST qui déclenche des enchères pour récupérer une voiture particulière d'un modèle particulier. Le serveur gRPC est unique. C'est lui qui reçoit les enchères venant potentiellement de plusieurs service REST (chaque service REST est censé être la propriété d'un loueur de voiture). Le service REST qui remporte l'enchère fait une réduction à l'utilisateur final sur le prix de la location de la voiture. La durée de l'enchère est fixée à quelques secondes (mode test). L'événement d'enchère gagnée est ensuite distribué par Redis Lists au service de location et au service d'assurance. Le front récupère la proposition d'assurance et permet de l'accepter.
 
 Le parcours du service d'assurance est détaillé dans [docs/INSURANCE_SERVICE.md](docs/INSURANCE_SERVICE.md).
-Le support de formation Quarto se trouve dans [training/README.md](training/README.md).
+Les supports de formation sont désormais maintenus dans des dépôts séparés :
+
+- [NoSQL](https://github.com/charroux/NoSQL) pour le cours et les TP Redis/MongoDB ;
+- [EventDrivenArchitecture](https://github.com/charroux/EventDrivenArchitecture) pour le cursus d'architecture événementielle.
+
+Chaque dépôt de formation référence une révision compatible de cette
+application dans son fichier `case-study.yml`.
 
 
 ## Build Instructions avec Gradle

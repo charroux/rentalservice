@@ -1,4 +1,0 @@
-rootProject.name = 'redis-list-spring-tutorial'
-
-include 'rental-producer'
-include 'insurance-consumer'

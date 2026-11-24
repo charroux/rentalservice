@@ -29,11 +29,13 @@ une extension ne modifie donc ni la page hôte ni les extensions publiées.
 
 ## Formation
 
-Les sources Quarto sont dans `training/modules`. Pendant la phase d'évaluation,
-la CI vérifie uniquement que l'ensemble du support peut être rendu. Les decks,
-les laboratoires et le code pédagogique restent modifiables à partir des retours
-des apprenants.
+Les sources Quarto sont maintenues dans deux dépôts séparés :
+[`NoSQL`](https://github.com/charroux/NoSQL) et
+[`EventDrivenArchitecture`](https://github.com/charroux/EventDrivenArchitecture).
+Chaque dépôt enregistre dans `case-study.yml` la révision compatible de
+`rentalservice`. Les decks, les laboratoires et le code pédagogique peuvent
+ainsi évoluer sans modifier le dépôt applicatif.
 
 Le gel par empreinte demeure disponible dans `tools/training-ci`, mais aucun
-manifeste n'est actif. Il ne sera réintroduit qu'après validation explicite de
-chaque module en situation de formation.
+manifeste n'est actif. Il pourra être transféré dans les dépôts de formation
+après validation explicite de chaque module en situation de formation.
